@@ -25,78 +25,81 @@ import { GraphStateService } from '../graph-state.service';
     (click)="deselect()"
   >
     <div class="canvas-inner" [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px)' }">
+ 
+       <!-- Edges -->
+       <svg class="edge-svg">
+         <ng-container *ngFor="let e of graph().edges">
+           <line
+             [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
+             [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
+             stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
+         </ng-container>
+         <defs>
+           <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
+             <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
+           </marker>
+         </defs>
+       </svg>
+ 
+       <!-- Nodes -->
+       <div
+         *ngFor="let n of graph().nodes"
+         cdkDrag
+         (cdkDragEnded)="dragEnd(n, $event)"
+         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
+        class="node-wrapper">
 
-      <!-- Edges -->
-      <svg class="edge-svg">
-        <ng-container *ngFor="let e of graph().edges">
-          <line
-            [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
-            [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
-            stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
-        </ng-container>
-        <defs>
-          <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
-          </marker>
-        </defs>
-      </svg>
+        <div
+          class="node"
+          [class.question]="n.kind === 'question'"
+          [class.condition]="n.kind === 'condition'"
+          [class.action]="n.kind === 'action'"
+          [class.selected]="isSelected(n.id)"
+          (click)="$event.stopPropagation(); select(n.id)">
 
-      <!-- Nodes -->
-      <div
-        *ngFor="let n of graph().nodes"
-        cdkDrag
-        (cdkDragEnded)="dragEnd(n, $event)"
-        [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
-        class="node"
-        [class.question]="n.kind === 'question'"
-        [class.condition]="n.kind === 'condition'"
-        [class.action]="n.kind === 'action'"
-        [class.selected]="isSelected(n.id)"
-        (click)="$event.stopPropagation(); select(n.id)">
+          <ng-container [ngSwitch]="n.kind">
 
-        <ng-container [ngSwitch]="n.kind">
+            <!-- Question = Parallelogram -->
+            <div *ngSwitchCase="'question'" class="content">
+              <div class="title">💬 Questão</div>
+              <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
+              <div class="sub">{{ n.data.type | titlecase }}</div>
+              <div class="actions">
+                <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
+                  <mat-icon>call_made</mat-icon>
+                </button>
+                <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+             </div>
+ 
+            <!-- Condition = Diamond -->
+            <div *ngSwitchCase="'condition'" class="diamond">
+              <div class="content">
+                <div class="title">🔗 Condição</div>
+                <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
+              </div>
+             </div>
 
-          <!-- Question = Parallelogram -->
-          <div *ngSwitchCase="'question'" class="content">
-            <div class="title">💬 Questão</div>
-            <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
-            <div class="sub">{{ n.data.type | titlecase }}</div>
-            <div class="actions">
-              <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                <mat-icon>call_made</mat-icon>
-              </button>
-              <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </div>
-
-          <!-- Condition = Diamond -->
-          <div *ngSwitchCase="'condition'" class="diamond">
-            <div class="content">
-              <div class="title">🔗 Condição</div>
-              <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
-            </div>
-          </div>
-
-          <!-- Action = Rectangle -->
-          <div *ngSwitchCase="'action'">
-            <div class="title">✉️ Ação</div>
-            <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
-            <div class="actions" style="margin-top:8px">
-              <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                <mat-icon>call_made</mat-icon>
-              </button>
-              <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </div>
-
-        </ng-container>
-      </div>
-    </div>
-  </div>
+            <!-- Action = Rectangle -->
+            <div *ngSwitchCase="'action'">
+              <div class="title">✉️ Ação</div>
+              <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
+              <div class="actions" style="margin-top:8px">
+                <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
+                  <mat-icon>call_made</mat-icon>
+                </button>
+                <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+             </div>
+          </ng-container>
+        </div>
+       </div>
+     </div>
+   </div>         
   `
 })
 export class CanvasComponent {
@@ -134,8 +137,12 @@ export class CanvasComponent {
 
   // drag do nó
   dragEnd(n: GraphNode, ev: CdkDragEnd) {
-    const p = ev.source.getFreeDragPosition();
-    this.state.moveNode(n.id, { x: p.x, y: p.y });
+    const delta = ev.source.getFreeDragPosition();
+    this.state.moveNode(n.id, {
+      x: n.position.x + delta.x,
+      y: n.position.y + delta.y
+    });
+    ev.source.reset();
   }
 
   // remover
@@ -149,11 +156,11 @@ export class CanvasComponent {
   }
   private connectNext = (ev: MouseEvent) => {
     const target = ev.target as HTMLElement;
-    const nodeEl = target.closest('.node') as HTMLElement | null;
-    if (nodeEl) {
-      const siblings = Array.from(nodeEl.parentElement!.children)
-        .filter(el => el.classList.contains('node')) as HTMLElement[];
-      const idx = siblings.indexOf(nodeEl);
+    const wrapper = target.closest('.node-wrapper') as HTMLElement | null;
+    if (wrapper) {
+      const siblings = Array.from(wrapper.parentElement!.children)
+        .filter(el => el.classList.contains('node-wrapper')) as HTMLElement[];
+      const idx = siblings.indexOf(wrapper);
       const to = this.graph().nodes[idx];
       if (this.pendingFrom && to) this.state.connect(this.pendingFrom, to.id);
     }

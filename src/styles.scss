@@ -16,6 +16,10 @@
 }
 
 /* Nó base */
+.node-wrapper {
+  position: absolute;
+}
+
 .node {
   position: absolute;
   user-select: none;
