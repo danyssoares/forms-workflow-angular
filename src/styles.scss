@@ -16,8 +16,11 @@
 }
 
 /* Nó base */
-.node {
+.node-wrapper {
   position: absolute;
+}
+
+.node {
   user-select: none;
   background: #fff;
   box-shadow: 0 1px 3px rgba(16,24,40,.08);
@@ -27,7 +30,6 @@
 }
 .node .title { font-weight: 700; opacity: .9; }
 .node .sub   { color: #6b7280; }
-.node .actions { display:flex; gap:6px; margin-top:6px; opacity:.9; }
 
 /* Seleção — borda mais grossa */
 .node.selected { border-width: 4px; }
@@ -40,15 +42,15 @@
 .node.question {
   border-color: #4978ff;
   color: #1f4fd1;
-  min-width: 260px;
-  min-height: 110px;
+  min-width: 200px;
+  min-height: 90px;
   border-radius: 12px;
   transform: skewX(-12deg);
   padding: 0; /* conteúdo compensa o skew */
 }
 .node.question .content {
   transform: skewX(12deg);
-  padding: 16px 18px;
+  padding: 12px 14px;
 }
 
 /* Condição = Losango (border no filho .diamond para não perder rotação) */
@@ -58,9 +60,9 @@
   width: 0; height: 0; /* o tamanho fica no .diamond */
 }
 .node.condition .diamond {
-  width: 200px; height: 200px;
+  width: 160px; height: 160px;
   border: 2px solid #a66bff;
-  border-radius: 16px;
+  border-radius: 12px;
   transform: rotate(45deg);
   background: #fff;
   display: flex; align-items: center; justify-content: center;
@@ -71,7 +73,7 @@
 .node.condition .diamond .content {
   transform: rotate(-45deg);
   text-align: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: #7b3fe0;
 }
 
@@ -79,11 +81,11 @@
 .node.action {
   border-color: #1fa463;
   color: #107a4a;
-  min-width: 240px;
-  min-height: 110px;
+  min-width: 200px;
+  min-height: 90px;
   border-radius: 12px;
   display:flex; flex-direction:column; justify-content:center;
-  padding: 16px 18px;
+  padding: 12px 14px;
 }
 
 /* Arestas */
