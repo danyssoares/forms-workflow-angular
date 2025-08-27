@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { GraphModel, GraphNode } from '../graph.types';
@@ -13,7 +11,7 @@ import { GraphStateService } from '../graph-state.service';
   standalone: true,
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatIconModule, MatButtonModule
+    DragDropModule
   ],
   template: `
   <div
@@ -47,53 +45,41 @@ import { GraphStateService } from '../graph-state.service';
         cdkDrag
         (cdkDragEnded)="dragEnd(n, $event)"
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
-        class="node"
-        [class.question]="n.kind === 'question'"
-        [class.condition]="n.kind === 'condition'"
-        [class.action]="n.kind === 'action'"
-        [class.selected]="isSelected(n.id)"
-        (click)="$event.stopPropagation(); select(n.id)">
+        class="node-wrapper">
 
-        <ng-container [ngSwitch]="n.kind">
+        <div
+          class="node"
+          [class.question]="n.kind === 'question'"
+          [class.condition]="n.kind === 'condition'"
+          [class.action]="n.kind === 'action'"
+          [class.selected]="isSelected(n.id)"
+          (click)="$event.stopPropagation(); select(n.id)">
 
-          <!-- Question = Parallelogram -->
-          <div *ngSwitchCase="'question'" class="content">
-            <div class="title">💬 Questão</div>
-            <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
-            <div class="sub">{{ n.data.type | titlecase }}</div>
-            <div class="actions">
-              <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                <mat-icon>call_made</mat-icon>
-              </button>
-              <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                <mat-icon>delete</mat-icon>
-              </button>
+          <ng-container [ngSwitch]="n.kind">
+
+            <!-- Question = Parallelogram -->
+            <div *ngSwitchCase="'question'" class="content">
+              <div class="title">💬 Questão #{{ n.data.seq }}</div>
+              <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
+              <div class="sub">{{ n.data.type | titlecase }}</div>
             </div>
-          </div>
 
-          <!-- Condition = Diamond -->
-          <div *ngSwitchCase="'condition'" class="diamond">
-            <div class="content">
-              <div class="title">🔗 Condição</div>
-              <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
+            <!-- Condition = Diamond -->
+            <div *ngSwitchCase="'condition'" class="diamond">
+              <div class="content">
+                <div class="title">🔗 Condição #{{ n.data.seq }}</div>
+                <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
+              </div>
             </div>
-          </div>
 
-          <!-- Action = Rectangle -->
-          <div *ngSwitchCase="'action'">
-            <div class="title">✉️ Ação</div>
-            <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
-            <div class="actions" style="margin-top:8px">
-              <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                <mat-icon>call_made</mat-icon>
-              </button>
-              <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                <mat-icon>delete</mat-icon>
-              </button>
+            <!-- Action = Rectangle -->
+            <div *ngSwitchCase="'action'">
+              <div class="title">✉️ Ação #{{ n.data.seq }}</div>
+              <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
             </div>
-          </div>
 
-        </ng-container>
+          </ng-container>
+        </div>
       </div>
     </div>
   </div>
@@ -118,12 +104,12 @@ export class CanvasComponent {
   // helpers p/ arestas (centros aproximados por tipo)
   centerX(id: string) {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const w = n.kind === 'condition' ? 200 : (n.kind === 'action' ? 240 : 260);
+    const w = n.kind === 'condition' ? 160 : 200;
     return n.position.x + w / 2;
   }
   centerY(id: string) {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const h = n.kind === 'condition' ? 200 : 110;
+    const h = n.kind === 'condition' ? 160 : 90;
     return n.position.y + h / 2;
   }
 
@@ -134,31 +120,13 @@ export class CanvasComponent {
 
   // drag do nó
   dragEnd(n: GraphNode, ev: CdkDragEnd) {
-    const p = ev.source.getFreeDragPosition();
-    this.state.moveNode(n.id, { x: p.x, y: p.y });
+    const delta = ev.source.getFreeDragPosition();
+    this.state.moveNode(n.id, {
+      x: n.position.x + delta.x,
+      y: n.position.y + delta.y
+    });
+    ev.source.reset();
   }
-
-  // remover
-  remove(id: string) { this.state.removeNode(id); }
-
-  // conectar nós (origem -> próximo clique)
-  private pendingFrom: string | null = null;
-  connectFrom(n: GraphNode) {
-    this.pendingFrom = n.id;
-    document.addEventListener('click', this.connectNext, { once: true });
-  }
-  private connectNext = (ev: MouseEvent) => {
-    const target = ev.target as HTMLElement;
-    const nodeEl = target.closest('.node') as HTMLElement | null;
-    if (nodeEl) {
-      const siblings = Array.from(nodeEl.parentElement!.children)
-        .filter(el => el.classList.contains('node')) as HTMLElement[];
-      const idx = siblings.indexOf(nodeEl);
-      const to = this.graph().nodes[idx];
-      if (this.pendingFrom && to) this.state.connect(this.pendingFrom, to.id);
-    }
-    this.pendingFrom = null;
-  };
 
   // pan do canvas (arrastar o fundo)
   startPan(ev: MouseEvent) {
