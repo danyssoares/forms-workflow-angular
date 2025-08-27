@@ -1,1 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+/* Material já é configurado pelo ng add; abaixo, estilos do canvas */
+.canvas { position: relative; background: #f8f9fd; height: calc(100vh - 64px); overflow: hidden;
+    background-image: radial-gradient(#e0e4ef 1px, transparent 1px); background-size: 16px 16px; }
+  .node { position: absolute; padding: 12px 14px; user-select: none; background:#fff; box-shadow: 0 1px 3px rgba(16,24,40,.08);
+    border:2px solid transparent; }
+  .node .title{font-weight:600;opacity:.9}
+  .node .sub{color:#6b7280}
+  .node .actions { display:flex; gap:6px; margin-top:6px; opacity:.8; }
+  .node.question { border-color:#4978ff; border-radius:16px; color:#1f4fd1; min-width:220px; }
+  .node.condition { border-color:#a66bff; color:#7b3fe0; width:180px; height:180px; border-radius:16px; transform: rotate(45deg);
+    display:flex; align-items:center; justify-content:center; }
+  .node.condition .inner { transform: rotate(-45deg); text-align:center; }
+  .node.action { border-color:#1fa463; color:#107a4a; width:180px; height:180px; border-radius:999px; display:flex; align-items:center; justify-content:center; text-align:center; }
+  .edge-svg { position:absolute; inset:0; pointer-events:none; }
+  .sidebar { width: 320px; border-left:1px solid #eef0f6; padding:12px; background:#fff; }
+  .palette { padding:8px; border-bottom:1px solid #eef0f6; background:#fff; display:flex; gap:8px }
+  .flow-shell { display:grid; grid-template-columns: 1fr 320px; height: calc(100vh - 64px); }
