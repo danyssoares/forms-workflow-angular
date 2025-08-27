@@ -16,8 +16,11 @@
 }
 
 /* Nó base */
-.node {
+.node-wrapper {
   position: absolute;
+}
+
+.node {
   user-select: none;
   background: #fff;
   box-shadow: 0 1px 3px rgba(16,24,40,.08);

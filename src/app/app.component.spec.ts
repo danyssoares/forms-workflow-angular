@@ -14,16 +14,13 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'forms-workflow-angular' title`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('forms-workflow-angular');
-  });
-
-  it('should render title', () => {
+  // AppComponent does not expose a title property or h1 heading in its template.
+  // The toolbar contains the application name, so we assert its presence instead.
+  it('should render toolbar title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, forms-workflow-angular');
+    expect(compiled.querySelector('mat-toolbar span')?.textContent)
+      .toContain('Forms Workflow');
   });
 });
