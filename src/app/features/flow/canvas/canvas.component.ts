@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { GraphModel, GraphNode } from '../graph.types';
@@ -13,7 +11,7 @@ import { GraphStateService } from '../graph-state.service';
   standalone: true,
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatIconModule, MatButtonModule
+    DragDropModule
   ],
   template: `
   <div
@@ -25,28 +23,28 @@ import { GraphStateService } from '../graph-state.service';
     (click)="deselect()"
   >
     <div class="canvas-inner" [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px)' }">
- 
-       <!-- Edges -->
-       <svg class="edge-svg">
-         <ng-container *ngFor="let e of graph().edges">
-           <line
-             [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
-             [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
-             stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
-         </ng-container>
-         <defs>
-           <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
-             <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
-           </marker>
-         </defs>
-       </svg>
- 
-       <!-- Nodes -->
-       <div
-         *ngFor="let n of graph().nodes"
-         cdkDrag
-         (cdkDragEnded)="dragEnd(n, $event)"
-         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
+
+      <!-- Edges -->
+      <svg class="edge-svg">
+        <ng-container *ngFor="let e of graph().edges">
+          <line
+            [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
+            [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
+            stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
+        </ng-container>
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
+          </marker>
+        </defs>
+      </svg>
+
+      <!-- Nodes -->
+      <div
+        *ngFor="let n of graph().nodes"
+        cdkDrag
+        (cdkDragEnded)="dragEnd(n, $event)"
+        [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
         class="node-wrapper">
 
         <div
@@ -61,45 +59,30 @@ import { GraphStateService } from '../graph-state.service';
 
             <!-- Question = Parallelogram -->
             <div *ngSwitchCase="'question'" class="content">
-              <div class="title">💬 Questão</div>
+              <div class="title">💬 Questão #{{ n.data.seq }}</div>
               <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
               <div class="sub">{{ n.data.type | titlecase }}</div>
-              <div class="actions">
-                <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                  <mat-icon>call_made</mat-icon>
-                </button>
-                <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-             </div>
- 
+            </div>
+
             <!-- Condition = Diamond -->
             <div *ngSwitchCase="'condition'" class="diamond">
               <div class="content">
-                <div class="title">🔗 Condição</div>
+                <div class="title">🔗 Condição #{{ n.data.seq }}</div>
                 <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
               </div>
-             </div>
+            </div>
 
             <!-- Action = Rectangle -->
             <div *ngSwitchCase="'action'">
-              <div class="title">✉️ Ação</div>
+              <div class="title">✉️ Ação #{{ n.data.seq }}</div>
               <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
-              <div class="actions" style="margin-top:8px">
-                <button mat-icon-button (click)="connectFrom(n); $event.stopPropagation()">
-                  <mat-icon>call_made</mat-icon>
-                </button>
-                <button mat-icon-button (click)="remove(n.id); $event.stopPropagation()">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-             </div>
+            </div>
+
           </ng-container>
         </div>
-       </div>
-     </div>
-   </div>         
+      </div>
+    </div>
+  </div>
   `
 })
 export class CanvasComponent {
@@ -121,12 +104,12 @@ export class CanvasComponent {
   // helpers p/ arestas (centros aproximados por tipo)
   centerX(id: string) {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const w = n.kind === 'condition' ? 200 : (n.kind === 'action' ? 240 : 260);
+    const w = n.kind === 'condition' ? 160 : 200;
     return n.position.x + w / 2;
   }
   centerY(id: string) {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const h = n.kind === 'condition' ? 200 : 110;
+    const h = n.kind === 'condition' ? 160 : 90;
     return n.position.y + h / 2;
   }
 
@@ -144,28 +127,6 @@ export class CanvasComponent {
     });
     ev.source.reset();
   }
-
-  // remover
-  remove(id: string) { this.state.removeNode(id); }
-
-  // conectar nós (origem -> próximo clique)
-  private pendingFrom: string | null = null;
-  connectFrom(n: GraphNode) {
-    this.pendingFrom = n.id;
-    document.addEventListener('click', this.connectNext, { once: true });
-  }
-  private connectNext = (ev: MouseEvent) => {
-    const target = ev.target as HTMLElement;
-    const wrapper = target.closest('.node-wrapper') as HTMLElement | null;
-    if (wrapper) {
-      const siblings = Array.from(wrapper.parentElement!.children)
-        .filter(el => el.classList.contains('node-wrapper')) as HTMLElement[];
-      const idx = siblings.indexOf(wrapper);
-      const to = this.graph().nodes[idx];
-      if (this.pendingFrom && to) this.state.connect(this.pendingFrom, to.id);
-    }
-    this.pendingFrom = null;
-  };
 
   // pan do canvas (arrastar o fundo)
   startPan(ev: MouseEvent) {

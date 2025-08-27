@@ -21,6 +21,6 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('mat-toolbar span')?.textContent)
-    .toContain('Forms Workflow');
+      .toContain('Forms Workflow');
   });
 });
