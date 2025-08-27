@@ -3,14 +3,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PaletteComponent } from '../palette/palette.component';
 import { CanvasComponent } from '../canvas/canvas.component';
-import { InspectorComponent } from '../inspector/inspector.component';
 import { GraphStateService } from '../graph-state.service';
 import { GraphMapperService } from '../graph-mapper.service';
 
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
@@ -19,7 +18,6 @@ import { GraphMapperService } from '../graph-mapper.service';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector></app-inspector>
   </div>
   `
 })
