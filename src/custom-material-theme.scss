@@ -1,28 +1,29 @@
 @use '@angular/material' as mat;
+@use '@angular/material/typography' as mat-typography;
 
-// Configuração tipográfica personalizada com a fonte Nunito
-$nunito-typography: mat.define-typography-config(
-  $font-family: 'Nunito, sans-serif',
-  $headline-1: mat.define-typography-level(112px, 112px, 300, 'Nunito, sans-serif'),
-  $headline-2: mat.define-typography-level(56px, 56px, 300, 'Nunito, sans-serif'),
-  $headline-3: mat.define-typography-level(45px, 48px, 400, 'Nunito, sans-serif'),
-  $headline-4: mat.define-typography-level(34px, 40px, 400, 'Nunito, sans-serif'),
-  $headline-5: mat.define-typography-level(24px, 32px, 400, 'Nunito, sans-serif'),
-  $headline-6: mat.define-typography-level(20px, 32px, 500, 'Nunito, sans-serif'),
-  $subtitle-1: mat.define-typography-level(16px, 28px, 400, 'Nunito, sans-serif'),
-  $subtitle-2: mat.define-typography-level(14px, 22px, 500, 'Nunito, sans-serif'),
-  $body-1: mat.define-typography-level(16px, 24px, 400, 'Nunito, sans-serif'),
-  $body-2: mat.define-typography-level(14px, 20px, 400, 'Nunito, sans-serif'),
-  $button: mat.define-typography-level(14px, 14px, 500, 'Nunito, sans-serif'),
-  $caption: mat.define-typography-level(12px, 20px, 400, 'Nunito, sans-serif'),
-  $overline: mat.define-typography-level(12px, 20px, 500, 'Nunito, sans-serif')
+// Inicializa mixins e funções base do Angular Material.
+@include mat.core();
+
+// Configuração tipográfica personalizada com a fonte Nunito.
+$nunito-typography: mat-typography.define-typography-config(
+  $font-family: 'Nunito', sans-serif,
+  $headline-1: mat-typography.define-typography-level(112px, 112px, 300),
+  $headline-2: mat-typography.define-typography-level(56px, 56px, 300),
+  $headline-3: mat-typography.define-typography-level(45px, 48px, 400),
+  $headline-4: mat-typography.define-typography-level(34px, 40px, 400),
+  $headline-5: mat-typography.define-typography-level(24px, 32px, 400),
+  $headline-6: mat-typography.define-typography-level(20px, 32px, 500),
+  $subtitle-1: mat-typography.define-typography-level(16px, 28px, 400),
+  $subtitle-2: mat-typography.define-typography-level(14px, 22px, 500),
+  $body-1: mat-typography.define-typography-level(16px, 24px, 400),
+  $body-2: mat-typography.define-typography-level(14px, 20px, 400),
+  $button: mat-typography.define-typography-level(14px, 14px, 500),
+  $caption: mat-typography.define-typography-level(12px, 20px, 400),
+  $overline: mat-typography.define-typography-level(12px, 20px, 500),
 );
 
-// Incluir tipografia do Angular Material com a configuração personalizada
-@include mat.typography-hierarchy($nunito-typography);
-
-// Definir o tema padrão do Azure Blue do Angular Material
-@include mat.all-component-themes(mat.define-theme((
+// Define o tema padrão do Angular Material usando a tipografia Nunito.
+$custom-theme: mat.define-theme((
   color: (
     theme-type: light,
     primary: mat.$azure-blue-palette,
@@ -30,7 +31,9 @@ $nunito-typography: mat.define-typography-config(
     use-system-variables: true,
   ),
   typography: $nunito-typography,
-  density: (
-    scale: 0,
-  )
-)));
+  density: (scale: 0),
+));
+
+// Aplica o tema e a hierarquia tipográfica.
+@include mat.all-component-themes($custom-theme);
+@include mat-typography.typography-hierarchy($custom-theme);
