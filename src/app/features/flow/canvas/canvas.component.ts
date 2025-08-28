@@ -1,10 +1,11 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit, faTimes, faTrash, faComment, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 
 import { GraphModel, GraphNode } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
@@ -15,7 +16,7 @@ import { GraphStateService } from '../graph-state.service';
   styleUrl: './canvas.component.scss',
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatButtonModule, FontAwesomeModule
+    DragDropModule, MatButtonModule, FontAwesomeModule, FormsModule
   ],
   template: `
   <div
@@ -65,35 +66,73 @@ import { GraphStateService } from '../graph-state.service';
           
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
-            <button mat-icon-button class="action-btn edit-btn" (click)="editNode(n)" title="Editar">
-              <fa-icon [icon]="faEdit"></fa-icon>
-            </button>
-            <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
-              <fa-icon [icon]="faTrash"></fa-icon>
-            </button>
+            <ng-container *ngIf="editingNodeId === n.id; else viewButtons">
+              <button mat-icon-button class="action-btn edit-btn" (click)="confirmEdit(n)" title="Confirmar">
+                <fa-icon [icon]="faCheck"></fa-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-btn" (click)="cancelEdit()" title="Cancelar">
+                <fa-icon [icon]="faTimes"></fa-icon>
+              </button>
+            </ng-container>
+            <ng-template #viewButtons>
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+                <fa-icon [icon]="faEdit"></fa-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                <fa-icon [icon]="faTrash"></fa-icon>
+              </button>
+            </ng-template>
           </div>
 
           <ng-container [ngSwitch]="n.kind">
 
             <!-- Question = Parallelogram -->
             <div *ngSwitchCase="'question'" class="content">
-              <div class="title">💬 Questão #{{ n.data.seq }}</div>
-              <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
-              <div class="sub">{{ n.data.type | titlecase }}</div>
+              <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ n.data.seq }}</div>
+              <ng-container *ngIf="editingNodeId === n.id; else viewQuestion">
+                <input [(ngModel)]="editBuffer.label" style="font-size:18px; width:100%;" />
+                <select [(ngModel)]="editBuffer.type" style="width:100%;">
+                  <option value="text">Texto</option>
+                  <option value="boolean">Boolean</option>
+                  <option value="integer">Inteiro</option>
+                  <option value="double">Double</option>
+                  <option value="select">Lista</option>
+                  <option value="radio">Radio</option>
+                  <option value="checkbox">Checkbox</option>
+                  <option value="date">Data</option>
+                  <option value="datetime">Data e Hora</option>
+                  <option value="image">Imagem</option>
+                </select>
+              </ng-container>
+              <ng-template #viewQuestion>
+                <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
+                <div class="sub">{{ n.data.type | titlecase }}</div>
+              </ng-template>
             </div>
 
             <!-- Condition = Diamond -->
             <div *ngSwitchCase="'condition'" class="diamond">
               <div class="content">
-                <div class="title">🔗 Condição #{{ n.data.seq }}</div>
+                <div class="title"><fa-icon [icon]="faCodeBranch"></fa-icon> Condição #{{ n.data.seq }}</div>
                 <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
               </div>
             </div>
 
             <!-- Action = Rectangle -->
             <div *ngSwitchCase="'action'">
-              <div class="title">✉️ Ação #{{ n.data.seq }}</div>
-              <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
+              <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
+              <div *ngIf="editingNodeId === n.id; else viewAction" class="sub">
+                <select [(ngModel)]="editBuffer.type" style="width:100%;">
+                  <option value="emitAlert">emitAlert</option>
+                  <option value="openForm">openForm</option>
+                  <option value="webhook">webhook</option>
+                  <option value="setTag">setTag</option>
+                  <option value="setField">setField</option>
+                </select>
+              </div>
+              <ng-template #viewAction>
+                <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
+              </ng-template>
             </div>
 
           </ng-container>
@@ -123,6 +162,11 @@ export class CanvasComponent {
   // Font Awesome icons
   faEdit = faEdit;
   faTrash = faTrash;
+  faCheck = faCheck;
+  faTimes = faTimes;
+  faComment = faComment;
+  faGear = faGear;
+  faCodeBranch = faCodeBranch;
 
   // pan/zoom do canvas
   offset = { x: 0, y: 0 };
@@ -132,6 +176,9 @@ export class CanvasComponent {
   private panOffsetStart = { x: 0, y: 0 };
   selectedId;
   graph;
+
+  editingNodeId: string | null = null;
+  editBuffer: any = {};
 
   constructor(private state: GraphStateService) {
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
@@ -202,9 +249,22 @@ export class CanvasComponent {
   zoomIn()  { this.zoom = Math.min(2, this.zoom + 0.1); }
   zoomOut() { this.zoom = Math.max(0.5, this.zoom - 0.1); }
 
-  editNode(node: GraphNode) {
-    // Select the node to show its properties in the inspector
+  startEdit(node: GraphNode) {
     this.select(node.id);
+    this.editingNodeId = node.id;
+    this.editBuffer = { ...node.data };
+  }
+
+  confirmEdit(node: GraphNode) {
+    if (this.editingNodeId !== node.id) return;
+    this.state.updateNode(node.id, { ...node.data, ...this.editBuffer });
+    this.editingNodeId = null;
+    this.editBuffer = {};
+  }
+
+  cancelEdit() {
+    this.editingNodeId = null;
+    this.editBuffer = {};
   }
 
   deleteNode(id: string) {
