@@ -1,7 +1,7 @@
 /* Node action buttons */
 .node-actions {
   position: absolute;
-  top: -25px;
+  top: 0;
   right: 0;
   display: flex;
   gap: 4px;
@@ -18,9 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 18px;
   transition: all 0.2s ease;
   border: none;
+  color: #9e9e9e;
 }
 
 .action-btn:hover {
@@ -28,12 +29,12 @@
   box-shadow: 0 2px 5px rgba(16, 24, 40, 0.3);
 }
 
-.edit-btn {
-  color: #4978ff;
+.edit-btn:hover {
+  color: var(--mdc-theme-primary);
 }
 
-.delete-btn {
-  color: #ff4949;
+.delete-btn:hover {
+  color: var(--mdc-theme-error);
 }
 
 /* Override Material button styles */
