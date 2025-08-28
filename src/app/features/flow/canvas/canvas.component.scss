@@ -8,6 +8,12 @@
   z-index: 10;
 }
 
+/* Counter-skew for question nodes so icons aren't slanted */
+.node.question .node-actions {
+  transform: skewX(12deg);
+  transform-origin: top right;
+}
+
 .action-btn {
   width: 16px;
   height: 16px;
