@@ -1,8 +1,14 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 /* Fundo do canvas */
 .canvas {
   position: relative;
   background: #f8f9fd;
-  height: calc(100vh - 64px);
+  height: 100%;
   overflow: hidden;
   background-image: radial-gradient(#e0e4ef 1px, transparent 1px);
   background-size: 16px 16px;
