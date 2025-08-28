@@ -12,6 +12,7 @@ import { GraphStateService } from '../graph-state.service';
 @Component({
   selector: 'app-canvas',
   standalone: true,
+  styleUrl: './canvas.component.scss',
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
     DragDropModule, MatButtonModule, FontAwesomeModule
