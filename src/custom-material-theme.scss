@@ -6,7 +6,7 @@
 
 // Configuração tipográfica personalizada com a fonte Nunito.
 $nunito-typography: mat-typography.define-typography-config(
-  $font-family: 'Nunito', sans-serif,
+  $font-family: '"Nunito", sans-serif',
   $headline-1: mat-typography.define-typography-level(112px, 112px, 300),
   $headline-2: mat-typography.define-typography-level(56px, 56px, 300),
   $headline-3: mat-typography.define-typography-level(45px, 48px, 400),
