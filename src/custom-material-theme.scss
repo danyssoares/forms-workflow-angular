@@ -2,7 +2,8 @@
 //@use '@angular/material/typography' as mat-typography;
 
 // Inicializa mixins e funções base do Angular Material.
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 // Configuração tipográfica personalizada com a fonte Nunito.
 $nunito-typography: mat.define-typography-config(
@@ -29,6 +30,7 @@ $custom-theme: mat.define-theme((
     primary: mat.$azure-blue-palette,
     tertiary: mat.$blue-palette,
     use-system-variables: true,
+    system-variables-prefix: sys,
   ),
   typography: $nunito-typography,
   density: (scale: 0),
