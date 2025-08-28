@@ -11,9 +11,18 @@ export class GraphStateService {
   private _selectedId = new BehaviorSubject<string|null>(null);
   selectedId$ = this._selectedId.asObservable();
 
+  /** Counters to provide incremental numbering per node type */
+  private counters: Record<NodeKind, number> = {
+    question: 0,
+    condition: 0,
+    action: 0,
+    scoreGate: 0
+  };
+
   addNode(kind: NodeKind, data: any, position: Point) {
     const id = crypto.randomUUID();
-    const node: GraphNode = { id, kind, data, position };
+    const seq = ++this.counters[kind];
+    const node: GraphNode = { id, kind, data: { ...data, seq }, position };
     this._graph.next({ ...this.graph, nodes: [...this.graph.nodes, node] });
     this.select(id);
   }

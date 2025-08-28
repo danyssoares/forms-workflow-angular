@@ -1,8 +1,14 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 /* Fundo do canvas */
 .canvas {
   position: relative;
   background: #f8f9fd;
-  height: calc(100vh - 64px);
+  height: 100%;
   overflow: hidden;
   background-image: radial-gradient(#e0e4ef 1px, transparent 1px);
   background-size: 16px 16px;
@@ -16,8 +22,11 @@
 }
 
 /* Nó base */
-.node {
+.node-wrapper {
   position: absolute;
+}
+
+.node {
   user-select: none;
   background: #fff;
   box-shadow: 0 1px 3px rgba(16,24,40,.08);
@@ -27,7 +36,6 @@
 }
 .node .title { font-weight: 700; opacity: .9; }
 .node .sub   { color: #6b7280; }
-.node .actions { display:flex; gap:6px; margin-top:6px; opacity:.9; }
 
 /* Seleção — borda mais grossa */
 .node.selected { border-width: 4px; }
@@ -40,15 +48,15 @@
 .node.question {
   border-color: #4978ff;
   color: #1f4fd1;
-  min-width: 260px;
-  min-height: 110px;
+  min-width: 200px;
+  min-height: 90px;
   border-radius: 12px;
   transform: skewX(-12deg);
   padding: 0; /* conteúdo compensa o skew */
 }
 .node.question .content {
   transform: skewX(12deg);
-  padding: 16px 18px;
+  padding: 12px 14px;
 }
 
 /* Condição = Losango (border no filho .diamond para não perder rotação) */
@@ -58,9 +66,9 @@
   width: 0; height: 0; /* o tamanho fica no .diamond */
 }
 .node.condition .diamond {
-  width: 200px; height: 200px;
+  width: 120px; height: 120px;
   border: 2px solid #a66bff;
-  border-radius: 16px;
+  border-radius: 12px;
   transform: rotate(45deg);
   background: #fff;
   display: flex; align-items: center; justify-content: center;
@@ -71,7 +79,7 @@
 .node.condition .diamond .content {
   transform: rotate(-45deg);
   text-align: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: #7b3fe0;
 }
 
@@ -79,11 +87,11 @@
 .node.action {
   border-color: #1fa463;
   color: #107a4a;
-  min-width: 240px;
-  min-height: 110px;
+  min-width: 180px;
+  min-height: 80px;
   border-radius: 12px;
   display:flex; flex-direction:column; justify-content:center;
-  padding: 16px 18px;
+  padding: 8px 12px;
 }
 
 /* Arestas */
@@ -92,4 +100,40 @@
 /* Painéis */
 .sidebar { width: 320px; border-left:1px solid #eef0f6; padding:12px; background:#fff; }
 .palette { padding:8px; border-bottom:1px solid #eef0f6; background:#fff; display:flex; gap:8px; align-items:center; }
-.flow-shell { display:grid; grid-template-columns: 1fr 320px; height: calc(100vh - 64px); }
+.flow-shell { height: calc(100vh - 64px); }
+
+/* Controles de zoom e minimapa */
+.zoom-controls {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eef0f6;
+  border-radius: 4px;
+}
+.zoom-controls button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+.zoom-controls button + button { border-top: 1px solid #eef0f6; }
+
+.mini-map {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 120px;
+  height: 80px;
+  border: 1px solid #eef0f6;
+  background: #fff;
+}
+.mini-map .view {
+  position: absolute;
+  border: 2px solid #4978ff;
+  background: rgba(73, 120, 255, 0.2);
+}
