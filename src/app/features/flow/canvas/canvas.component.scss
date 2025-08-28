@@ -43,13 +43,23 @@
 }
 
 /* Override Material button styles */
-.mat-mdc-icon-button {
+:host ::ng-deep .mat-mdc-icon-button {
   width: 16px;
   height: 16px;
   padding: 0;
   border-radius: 4px;
 }
 
-.mat-mdc-icon-button .mdc-icon-button__ripple {
+:host ::ng-deep .mat-mdc-icon-button .mat-mdc-button-touch-target,
+:host ::ng-deep .mat-mdc-icon-button .mdc-icon-button__ripple {
+  width: 16px;
+  height: 16px;
   border-radius: 4px;
+}
+
+:host ::ng-deep .mat-mdc-icon-button fa-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
 }
