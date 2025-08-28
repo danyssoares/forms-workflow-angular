@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck, faEdit, faTimes, faTrash, faComment, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,7 +19,8 @@ import { GraphStateService } from '../graph-state.service';
   styleUrl: './canvas.component.scss',
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatButtonModule, FontAwesomeModule, FormsModule
+    DragDropModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, FontAwesomeModule, FormsModule
   ],
   template: `
   <div
@@ -90,19 +94,23 @@ import { GraphStateService } from '../graph-state.service';
             <div *ngSwitchCase="'question'" class="content">
               <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ n.data.seq }}</div>
               <ng-container *ngIf="editingNodeId === n.id; else viewQuestion">
-                <input [(ngModel)]="editBuffer.label" style="font-size:18px; width:100%;" />
-                <select [(ngModel)]="editBuffer.type" style="width:100%;">
-                  <option value="text">Texto</option>
-                  <option value="boolean">Boolean</option>
-                  <option value="integer">Inteiro</option>
-                  <option value="double">Double</option>
-                  <option value="select">Lista</option>
-                  <option value="radio">Radio</option>
-                  <option value="checkbox">Checkbox</option>
-                  <option value="date">Data</option>
-                  <option value="datetime">Data e Hora</option>
-                  <option value="image">Imagem</option>
-                </select>
+                <mat-form-field appearance="outline" style="width:100%; font-size:18px;">
+                  <input matInput [(ngModel)]="editBuffer.label" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="width:100%; font-size:18px;">
+                  <mat-select [(ngModel)]="editBuffer.type">
+                    <mat-option value="text">Texto</mat-option>
+                    <mat-option value="boolean">Boolean</mat-option>
+                    <mat-option value="integer">Inteiro</mat-option>
+                    <mat-option value="double">Double</mat-option>
+                    <mat-option value="select">Lista</mat-option>
+                    <mat-option value="radio">Radio</mat-option>
+                    <mat-option value="checkbox">Checkbox</mat-option>
+                    <mat-option value="date">Data</mat-option>
+                    <mat-option value="datetime">Data e Hora</mat-option>
+                    <mat-option value="image">Imagem</mat-option>
+                  </mat-select>
+                </mat-form-field>
               </ng-container>
               <ng-template #viewQuestion>
                 <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
@@ -122,13 +130,15 @@ import { GraphStateService } from '../graph-state.service';
             <div *ngSwitchCase="'action'">
               <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
               <div *ngIf="editingNodeId === n.id; else viewAction" class="sub">
-                <select [(ngModel)]="editBuffer.type" style="width:100%;">
-                  <option value="emitAlert">emitAlert</option>
-                  <option value="openForm">openForm</option>
-                  <option value="webhook">webhook</option>
-                  <option value="setTag">setTag</option>
-                  <option value="setField">setField</option>
-                </select>
+                <mat-form-field appearance="outline" style="width:100%;">
+                  <mat-select [(ngModel)]="editBuffer.type">
+                    <mat-option value="emitAlert">emitAlert</mat-option>
+                    <mat-option value="openForm">openForm</mat-option>
+                    <mat-option value="webhook">webhook</mat-option>
+                    <mat-option value="setTag">setTag</mat-option>
+                    <mat-option value="setField">setField</mat-option>
+                  </mat-select>
+                </mat-form-field>
               </div>
               <ng-template #viewAction>
                 <div class="sub">{{ n.data.type || 'emitAlert' }}</div>

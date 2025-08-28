@@ -28,6 +28,19 @@
   vertical-align: baseline;
 }
 
+:host ::ng-deep .node .mat-mdc-form-field {
+  width: 100%;
+}
+
+:host ::ng-deep .node .mat-mdc-form-field + .mat-mdc-form-field {
+  margin-top: 4px;
+}
+
+:host ::ng-deep .node .mat-mdc-input-element,
+:host ::ng-deep .node .mat-mdc-select-value-text {
+  font-size: 18px;
+}
+
 .action-btn {
   width: 18px;
   height: 18px;
