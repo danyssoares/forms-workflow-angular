@@ -2,6 +2,9 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 import { GraphModel, GraphNode } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
@@ -11,7 +14,7 @@ import { GraphStateService } from '../graph-state.service';
   standalone: true,
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule
+    DragDropModule, MatButtonModule, FontAwesomeModule
   ],
   template: `
   <div
@@ -22,6 +25,7 @@ import { GraphStateService } from '../graph-state.service';
     (mouseup)="endPan()"
     (mouseleave)="endPan()"
     (click)="deselect()"
+    (wheel)="onWheel($event)"
   >
     <div
       class="canvas-inner"
@@ -57,6 +61,16 @@ import { GraphStateService } from '../graph-state.service';
           [class.action]="n.kind === 'action'"
           [class.selected]="isSelected(n.id)"
           (click)="$event.stopPropagation(); select(n.id)">
+          
+          <!-- Action buttons (show only when node is selected) -->
+          <div class="node-actions" *ngIf="isSelected(n.id)">
+            <button mat-icon-button class="action-btn edit-btn" (click)="editNode(n)" title="Editar">
+              <fa-icon [icon]="faEdit"></fa-icon>
+            </button>
+            <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+              <fa-icon [icon]="faTrash"></fa-icon>
+            </button>
+          </div>
 
           <ng-container [ngSwitch]="n.kind">
 
@@ -104,6 +118,10 @@ import { GraphStateService } from '../graph-state.service';
 })
 export class CanvasComponent {
   @ViewChild('canvasEl') canvasRef!: ElementRef<HTMLDivElement>;
+
+  // Font Awesome icons
+  faEdit = faEdit;
+  faTrash = faTrash;
 
   // pan/zoom do canvas
   offset = { x: 0, y: 0 };
@@ -166,8 +184,33 @@ export class CanvasComponent {
   }
   endPan() { this.panning = false; }
 
+  onWheel(event: WheelEvent) {
+    event.preventDefault();
+    
+    // Calculate zoom factor based on wheel delta
+    const zoomIntensity = 0.1;
+    const delta = event.deltaY > 0 ? -zoomIntensity : zoomIntensity;
+    
+    // Calculate new zoom level
+    const newZoom = this.zoom * (1 + delta);
+    
+    // Clamp zoom level between 0.5 and 2
+    this.zoom = Math.min(Math.max(0.5, newZoom), 2);
+  }
+
   zoomIn()  { this.zoom = Math.min(2, this.zoom + 0.1); }
   zoomOut() { this.zoom = Math.max(0.5, this.zoom - 0.1); }
+
+  editNode(node: GraphNode) {
+    // Select the node to show its properties in the inspector
+    this.select(node.id);
+  }
+
+  deleteNode(id: string) {
+    if (confirm('Tem certeza que deseja excluir este nó?')) {
+      this.state.removeNode(id);
+    }
+  }
 
   get viewBox() {
     const cw = this.canvasRef?.nativeElement.clientWidth || 1;
