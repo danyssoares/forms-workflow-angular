@@ -207,9 +207,7 @@ export class CanvasComponent {
   }
 
   deleteNode(id: string) {
-    if (confirm('Tem certeza que deseja excluir este nó?')) {
-      this.state.removeNode(id);
-    }
+    this.state.removeNode(id);
   }
 
   get viewBox() {
