@@ -94,10 +94,10 @@ import { GraphStateService } from '../graph-state.service';
             <div *ngSwitchCase="'question'" class="content">
               <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ n.data.seq }}</div>
               <ng-container *ngIf="editingNodeId === n.id; else viewQuestion">
-                <mat-form-field appearance="outline" style="width:100%; font-size:18px;">
+                <mat-form-field appearance="outline" class="node-input">
                   <input matInput [(ngModel)]="editBuffer.label" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" style="width:100%; font-size:18px;">
+                <mat-form-field appearance="outline" class="node-input">
                   <mat-select [(ngModel)]="editBuffer.type">
                     <mat-option value="text">Texto</mat-option>
                     <mat-option value="boolean">Boolean</mat-option>
@@ -130,7 +130,7 @@ import { GraphStateService } from '../graph-state.service';
             <div *ngSwitchCase="'action'">
               <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
               <div *ngIf="editingNodeId === n.id; else viewAction" class="sub">
-                <mat-form-field appearance="outline" style="width:100%;">
+                <mat-form-field appearance="outline" class="node-input">
                   <mat-select [(ngModel)]="editBuffer.type">
                     <mat-option value="emitAlert">emitAlert</mat-option>
                     <mat-option value="openForm">openForm</mat-option>
