@@ -34,6 +34,7 @@ This project is an Angular application named "Forms Workflow". It's designed to 
 - Use `ng generate` for creating new components, services, etc., to maintain consistency.
 - Follow Angular style guide for coding practices.
 - Ensure all new features are covered by unit tests.
+- Adhere to best UX/UI practices for a high-quality user experience.
 
 ## Specific Areas of Interest
 - Dynamic form handling (likely in `src/app`).

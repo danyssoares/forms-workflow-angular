@@ -1,11 +1,19 @@
 /* Node action buttons */
 .node-actions {
   position: absolute;
-  top: 15px;
-  right: 10px;
+  top: 10px;
   display: flex;
   gap: 4px;
   z-index: 10;
+  right: 10px;
+}
+
+.node.condition > .node-actions {
+  left: 45px;  
+}
+
+.node-action .node-actions {
+  right: 10px;
 }
 
 /* Counter-skew for question nodes so icons aren't slanted */
@@ -14,29 +22,34 @@
   transform-origin: top right;
 }
 
+:host ::ng-deep .mat-mdc-icon-button svg {
+  width: var(--mat-icon-button-icon-size, 18px);
+  height: var(--mat-icon-button-icon-size, 18px);
+  vertical-align: baseline;
+}
+
 .action-btn {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.2);
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   transition: all 0.2s ease;
   border: none;
   color: #9e9e9e;
 }
 
 .edit-btn {
-  margin-right: 10px;
+  margin-right: 5px;
 }
 
 .action-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 5px rgba(16, 24, 40, 0.3);
+  transform: scale(1.1);  
 }
 
 .edit-btn:hover {
@@ -50,22 +63,22 @@
 
 /* Override Material button styles */
 :host ::ng-deep .mat-mdc-icon-button {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border-radius: 4px;
 }
 
 :host ::ng-deep .mat-mdc-icon-button .mat-mdc-button-touch-target,
 :host ::ng-deep .mat-mdc-icon-button .mdc-icon-button__ripple {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
 }
 
 :host ::ng-deep .mat-mdc-icon-button fa-icon {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
-  line-height: 16px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
 }
