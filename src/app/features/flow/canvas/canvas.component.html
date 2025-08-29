@@ -1,0 +1,158 @@
+<div
+    #canvasEl
+    class="canvas"
+    (mousedown)="startPan($event)"
+    (mousemove)="onPan($event)"
+    (mouseup)="endPan()"
+    (mouseleave)="endPan()"
+    (click)="deselect()"
+    (wheel)="onWheel($event)"
+  >
+    <div
+      class="canvas-inner"
+      [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px) scale(' + zoom + ')', 'transform-origin': '0 0' }">
+
+      <!-- Edges -->
+      <svg class="edge-svg">
+        <ng-container *ngFor="let e of graph().edges">
+          <line
+            [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
+            [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
+            stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
+        </ng-container>
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
+          </marker>
+        </defs>
+      </svg>
+
+      <!-- Nodes -->
+      <div
+        *ngFor="let n of graph().nodes"
+        cdkDrag
+        (cdkDragEnded)="dragEnd(n, $event)"
+        [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
+        class="node-wrapper">
+
+        <div
+          class="node"
+          [class.question]="n.kind === 'question'"
+          [class.condition]="n.kind === 'condition'"
+          [class.action]="n.kind === 'action'"
+          [class.selected]="isSelected(n.id)"
+          (click)="$event.stopPropagation(); select(n.id)">
+          
+          <!-- Action buttons (show only when node is selected) -->
+          <div class="node-actions" *ngIf="isSelected(n.id)">
+            <ng-container *ngIf="editingNodeId === n.id; else viewButtons">
+              <button mat-icon-button class="action-btn edit-btn" (click)="confirmEdit(n)" title="Confirmar">
+                <fa-icon [icon]="faCheck"></fa-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-btn" (click)="cancelEdit()" title="Cancelar">
+                <fa-icon [icon]="faTimes"></fa-icon>
+              </button>
+            </ng-container>
+            <ng-template #viewButtons>
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+                <fa-icon [icon]="faEdit"></fa-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                <fa-icon [icon]="faTrash"></fa-icon>
+              </button>
+            </ng-template>
+          </div>
+
+          <ng-container [ngSwitch]="n.kind">
+
+            <!-- Question = Parallelogram -->
+            <div *ngSwitchCase="'question'" class="content">
+              <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ n.data.seq }}</div>
+              <ng-container *ngIf="editingNodeId === n.id; else viewQuestion">
+                <div class="field-container" [class.focused]="focused === 'label'">
+                  <input
+                    type="text"
+                    [(ngModel)]="editBuffer.label"
+                    class="clean-input"
+                    (focus)="focused = 'label'"
+                    (blur)="focused = null"
+                    placeholder="Digite a pergunta"
+                  />
+                </div>
+                <div class="field-container" [class.focused]="focused === 'type'">
+                  <select
+                    [(ngModel)]="editBuffer.type"
+                    class="clean-input"
+                    (focus)="focused = 'type'"
+                    (blur)="focused = null"
+                  >
+                    <option value="text">Texto</option>
+                    <option value="boolean">Boolean</option>
+                    <option value="integer">Inteiro</option>
+                    <option value="double">Double</option>
+                    <option value="select">Lista</option>
+                    <option value="radio">Radio</option>
+                    <option value="checkbox">Checkbox</option>
+                    <option value="date">Data</option>
+                    <option value="datetime">Data e Hora</option>
+                    <option value="image">Imagem</option>
+                  </select>
+                </div>
+              </ng-container>
+              <ng-template #viewQuestion>
+                <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
+                <div class="sub">{{ n.data.type | titlecase }}</div>
+              </ng-template>
+            </div>
+
+            <!-- Condition = Diamond -->
+            <div *ngSwitchCase="'condition'" class="diamond">
+              <div class="content">
+                <div class="title"><fa-icon [icon]="faCodeBranch"></fa-icon> Condição #{{ n.data.seq }}</div>
+                <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
+              </div>
+            </div>
+
+            <!-- Action = Rectangle -->
+            <div *ngSwitchCase="'action'">
+              <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
+              <div *ngIf="editingNodeId === n.id; else viewAction" class="sub">
+                <div class="field-container" [class.focused]="focused === 'type'">
+                  <select
+                    [(ngModel)]="editBuffer.type"
+                    class="clean-input"
+                    (focus)="focused = 'type'"
+                    (blur)="focused = null"
+                  >
+                  <option value="emitAlert">emitAlert</option>
+                  <option value="openForm">openForm</option>
+                  <option value="webhook">webhook</option>
+                  <option value="setTag">setTag</option>
+                  <option value="setField">setField</option>
+                  </select>
+                </div>
+              </div>
+              <ng-template #viewAction>
+                <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
+              </ng-template>
+            </div>
+
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <div class="zoom-controls">
+      <button (click)="zoomIn()">+</button>
+      <button (click)="zoomOut()">-</button>
+    </div>
+
+    <div class="mini-map">
+      <div class="view" [ngStyle]="{
+          left: viewBox.left + 'px',
+          top: viewBox.top + 'px',
+          width: viewBox.width + 'px',
+          height: viewBox.height + 'px'
+        }"></div>
+    </div>
+  </div>

@@ -28,7 +28,7 @@
   vertical-align: baseline;
 }
 
-:host ::ng-deep .node .mat-mdc-form-field {
+/*:host ::ng-deep .node .mat-mdc-form-field {
   width: 100%;
 }
 
@@ -39,7 +39,7 @@
 :host ::ng-deep .node .mat-mdc-input-element,
 :host ::ng-deep .node .mat-mdc-select-value-text {
   font-size: 18px;
-}
+}*/
 
 .action-btn {
   width: 18px;
@@ -95,3 +95,35 @@
   font-size: 18px;
   line-height: 18px;
 }
+
+:host {
+  display: block;
+}
+
+.field-container {
+  background: #f4f4f7;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  transition: border 0.2s ease;
+  max-width: 280px;
+  margin-bottom: 8px;
+}
+
+.field-container.focused {
+  border-color: #3f51b5; /** ou theme primary */
+}
+
+.clean-input {
+  font-size: 15px;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+
