@@ -16,7 +16,8 @@ export class GraphStateService {
     question: 0,
     condition: 0,
     action: 0,
-    scoreGate: 0
+    scoreGate: 0,
+    end: 0
   };
 
   addNode(kind: NodeKind, data: any, position: Point) {

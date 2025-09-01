@@ -126,4 +126,36 @@
   font-family: inherit;
 }
 
+/* Estilo para o nó final (círculo com borda preta) */
+.node.end {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #ffffff; /* Fundo branco igual aos demais nós */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(16,24,40,.08);
+  position: relative;
+  border: 2px solid #000000; /* Borda preta */
+  color: #111827;
+  cursor: default;
+}
+
+/* Seleção do nó final - borda mais grossa */
+.node.end.selected {
+  border-width: 4px;
+}
+
+.node.end .content {
+  text-align: center;
+  padding: 5px;
+}
+
+.node.end .title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000000;
+}
+
 

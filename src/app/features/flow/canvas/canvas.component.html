@@ -40,6 +40,7 @@
           [class.question]="n.kind === 'question'"
           [class.condition]="n.kind === 'condition'"
           [class.action]="n.kind === 'action'"
+          [class.end]="n.kind === 'end'"
           [class.selected]="isSelected(n.id)"
           (click)="$event.stopPropagation(); select(n.id)">
           
@@ -54,12 +55,20 @@
               </button>
             </ng-container>
             <ng-template #viewButtons>
-              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
-                <fa-icon [icon]="faEdit"></fa-icon>
-              </button>
-              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
-                <fa-icon [icon]="faTrash"></fa-icon>
-              </button>
+              <!-- Para nós do tipo 'end', mostrar apenas o botão de exclusão -->
+              <ng-container *ngIf="n.kind === 'end'; else defaultButtons">
+                <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </ng-container>
+              <ng-template #defaultButtons>
+                <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+                  <fa-icon [icon]="faEdit"></fa-icon>
+                </button>
+                <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </ng-template>
             </ng-template>
           </div>
 
@@ -135,6 +144,13 @@
               <ng-template #viewAction>
                 <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
               </ng-template>
+            </div>
+
+            <!-- End = Circle -->
+            <div *ngSwitchCase="'end'" class="end">
+              <div class="content">
+                <div class="title">FIM</div>
+              </div>
             </div>
 
           </ng-container>
