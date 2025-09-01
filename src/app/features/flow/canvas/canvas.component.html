@@ -13,7 +13,7 @@
       [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px) scale(' + zoom + ')', 'transform-origin': '0 0' }">
 
       <!-- Edges -->
-      <svg class="edge-svg">
+      <svg class="edge-svg" [attr.width]="worldW" [attr.height]="worldH">
         <ng-container *ngFor="let e of graph().edges">
           <line
             [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"

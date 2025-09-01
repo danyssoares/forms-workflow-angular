@@ -47,6 +47,10 @@ export class CanvasComponent {
   selectedId;
   graph;
 
+  // dimensões do "mundo" para posicionamento e arestas
+  readonly worldW = 2000;
+  readonly worldH = 1200;
+
   editingNodeId: string | null = null;
   editBuffer: any = {};
 
@@ -182,13 +186,11 @@ export class CanvasComponent {
   get viewBox() {
     const cw = this.canvasRef?.nativeElement.clientWidth || 1;
     const ch = this.canvasRef?.nativeElement.clientHeight || 1;
-    const worldW = 2000;
-    const worldH = 1200;
     return {
-      width: 120 * (cw / (worldW * this.zoom)),
-      height: 80 * (ch / (worldH * this.zoom)),
-      left: -this.offset.x / (worldW * this.zoom) * 120,
-      top: -this.offset.y / (worldH * this.zoom) * 80
+      width: 120 * (cw / (this.worldW * this.zoom)),
+      height: 80 * (ch / (this.worldH * this.zoom)),
+      left: -this.offset.x / (this.worldW * this.zoom) * 120,
+      top: -this.offset.y / (this.worldH * this.zoom) * 80
     };
   }
 }
