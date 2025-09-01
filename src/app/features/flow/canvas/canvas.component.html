@@ -15,10 +15,21 @@
       <!-- Edges -->
       <svg class="edge-svg" [attr.width]="worldW" [attr.height]="worldH">
         <ng-container *ngFor="let e of graph().edges">
-          <path
-            [attr.d]="pathBetween(e.from, e.to)"
-            fill="none" stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)"
-            (click)="removeEdge(e.id, $event)" />
+          <g (mouseenter)="hoveredEdgeId = e.id" (mouseleave)="hoveredEdgeId = null">
+            <path
+              [attr.d]="pathBetween(e.from, e.to)"
+              fill="none"
+              stroke-width="2"
+              [attr.stroke]="hoveredEdgeId === e.id ? '#ff4d4f' : '#b9bed1'"
+              [attr.marker-end]="hoveredEdgeId === e.id ? 'url(#arrow-red)' : 'url(#arrow)'" />
+            <foreignObject *ngIf="hoveredEdgeId === e.id" [attr.x]="edgeMidpoint(e).x - 12" [attr.y]="edgeMidpoint(e).y - 12" width="24" height="24">
+              <div xmlns="http://www.w3.org/1999/xhtml">
+                <button class="edge-delete" (click)="removeEdge(e.id, $event)">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </div>
+            </foreignObject>
+          </g>
         </ng-container>
         <path *ngIf="connectingFrom"
           [attr.d]="pathToPoint(connectingFrom!, tempConnection)"
@@ -26,6 +37,9 @@
         <defs>
           <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
             <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
+          </marker>
+          <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#ff4d4f" />
           </marker>
         </defs>
       </svg>

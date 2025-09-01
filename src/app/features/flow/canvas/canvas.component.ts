@@ -9,8 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck, faEdit, faTimes, faTrash, faComment, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
-
-import { GraphModel, GraphNode, Point } from '../graph.types';
+import { GraphModel, GraphNode, Point, GraphEdge } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 
 @Component({
@@ -57,6 +56,8 @@ export class CanvasComponent {
   // conexão entre nós
   connectingFrom: string | null = null;
   tempConnection: Point = { x: 0, y: 0 };
+
+  hoveredEdgeId: string | null = null;
 
   // posições temporárias enquanto arrasta
   private dragOffsets: Record<string, Point> = {};
@@ -193,6 +194,12 @@ export class CanvasComponent {
   removeEdge(id: string, ev: MouseEvent) {
     ev.stopPropagation();
     this.state.removeEdge(id);
+  }
+
+  edgeMidpoint(e: GraphEdge): Point {
+    const p1 = this.outPoint(e.from);
+    const p2 = this.inPoint(e.to);
+    return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   }
 
   startEdit(node: GraphNode) {
