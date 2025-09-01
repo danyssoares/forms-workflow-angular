@@ -126,11 +126,11 @@
   font-family: inherit;
 }
 
-/* Estilo para o nó final (círculo com borda preta) */
+/* Estilo para o nó final (terminador em forma de cápsula) */
 .node.end {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 120px;
+  height: 50px;
+  border-radius: 25px;
   background-color: #ffffff; /* Fundo branco igual aos demais nós */
   display: flex;
   align-items: center;
