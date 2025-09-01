@@ -2,9 +2,9 @@
     #canvasEl
     class="canvas"
     (mousedown)="startPan($event)"
-    (mousemove)="onPan($event)"
-    (mouseup)="endPan()"
-    (mouseleave)="endPan()"
+    (mousemove)="onMove($event)"
+    (mouseup)="onCanvasMouseUp()"
+    (mouseleave)="onCanvasMouseUp()"
     (click)="deselect()"
     (wheel)="onWheel($event)"
   >
@@ -13,13 +13,15 @@
       [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px) scale(' + zoom + ')', 'transform-origin': '0 0' }">
 
       <!-- Edges -->
-      <svg class="edge-svg">
+      <svg class="edge-svg" [attr.width]="worldW" [attr.height]="worldH">
         <ng-container *ngFor="let e of graph().edges">
-          <line
-            [attr.x1]="centerX(e.from)" [attr.y1]="centerY(e.from)"
-            [attr.x2]="centerX(e.to)"   [attr.y2]="centerY(e.to)"
-            stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
+          <path
+            [attr.d]="pathBetween(e.from, e.to)"
+            fill="none" stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
         </ng-container>
+        <path *ngIf="connectingFrom"
+          [attr.d]="pathToPoint(connectingFrom!, tempConnection)"
+          fill="none" stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
         <defs>
           <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
             <path d="M0,0 L0,6 L9,3 z" fill="#b9bed1" />
@@ -31,12 +33,16 @@
       <div
         *ngFor="let n of graph().nodes"
         cdkDrag
+        (cdkDragMoved)="dragMove(n, $event)"
         (cdkDragEnded)="dragEnd(n, $event)"
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
         class="node-wrapper">
 
+        <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
+
         <div
           class="node"
+          cdkDragHandle
           [class.question]="n.kind === 'question'"
           [class.condition]="n.kind === 'condition'"
           [class.action]="n.kind === 'action'"
@@ -155,6 +161,8 @@
 
           </ng-container>
         </div>
+
+        <div class="handle out" *ngIf="isSelected(n.id)" (mousedown)="startConnection(n.id, $event)"></div>
       </div>
     </div>
 
