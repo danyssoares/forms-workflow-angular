@@ -96,7 +96,29 @@ html, body {
 }
 
 /* Arestas */
-.edge-svg { position: absolute; inset: 0; pointer-events: none; }
+.edge-svg { position: absolute; inset: 0; }
+.edge-svg path { pointer-events: stroke; cursor: pointer; }
+
+/* Conectores dos nós */
+.node-wrapper .handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #b9bed1;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  cursor: crosshair;
+}
+.node-wrapper .handle.out {
+  right: 0;
+  transform: translate(50%, -50%);
+}
+.node-wrapper .handle.in {
+  left: 0;
+}
 
 /* Conectores dos nós */
 .node-wrapper .handle {

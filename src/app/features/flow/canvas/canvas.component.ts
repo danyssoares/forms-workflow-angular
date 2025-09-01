@@ -190,6 +190,11 @@ export class CanvasComponent {
     if (this.connectingFrom) this.finishConnection(null);
   }
 
+  removeEdge(id: string, ev: MouseEvent) {
+    ev.stopPropagation();
+    this.state.removeEdge(id);
+  }
+
   startEdit(node: GraphNode) {
     this.select(node.id);
     this.editingNodeId = node.id;

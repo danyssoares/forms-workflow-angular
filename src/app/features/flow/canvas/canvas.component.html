@@ -17,7 +17,8 @@
         <ng-container *ngFor="let e of graph().edges">
           <path
             [attr.d]="pathBetween(e.from, e.to)"
-            fill="none" stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)" />
+            fill="none" stroke="#b9bed1" stroke-width="2" marker-end="url(#arrow)"
+            (click)="removeEdge(e.id, $event)" />
         </ng-container>
         <path *ngIf="connectingFrom"
           [attr.d]="pathToPoint(connectingFrom!, tempConnection)"
@@ -152,7 +153,7 @@
               </ng-template>
             </div>
 
-            <!-- End = Circle -->
+            <!-- End = Capsule -->
             <div *ngSwitchCase="'end'" class="end">
               <div class="content">
                 <div class="title">FIM</div>
@@ -162,7 +163,7 @@
           </ng-container>
         </div>
 
-        <div class="handle out" *ngIf="isSelected(n.id)" (mousedown)="startConnection(n.id, $event)"></div>
+        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'end'" (mousedown)="startConnection(n.id, $event)"></div>
       </div>
     </div>
 
