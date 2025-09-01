@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck, faEdit, faTimes, faTrash, faComment, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 
-import { GraphModel, GraphNode } from '../graph.types';
+import { GraphModel, GraphNode, Point } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 
 @Component({
@@ -50,6 +50,10 @@ export class CanvasComponent {
   editingNodeId: string | null = null;
   editBuffer: any = {};
 
+  // conexão entre nós
+  connectingFrom: string | null = null;
+  tempConnection: Point = { x: 0, y: 0 };
+
   constructor(private state: GraphStateService) {
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
@@ -86,21 +90,50 @@ export class CanvasComponent {
 
   // pan do canvas (arrastar o fundo)
   startPan(ev: MouseEvent) {
-    // só inicia pan se clicou no fundo (fora de um .node)
-    const hitNode = (ev.target as HTMLElement).closest('.node');
-    if (hitNode) return;
+    // só inicia pan se clicou fora de um nó/handle e não estivermos conectando
+    const hit = (ev.target as HTMLElement).closest('.node-wrapper');
+    if (hit || this.connectingFrom) return;
 
     this.panning = true;
     this.panStart = { x: ev.clientX, y: ev.clientY };
     this.panOffsetStart = { ...this.offset };
   }
-  onPan(ev: MouseEvent) {
-    if (!this.panning) return;
-    const dx = (ev.clientX - this.panStart.x) / this.zoom;
-    const dy = (ev.clientY - this.panStart.y) / this.zoom;
-    this.offset = { x: this.panOffsetStart.x + dx, y: this.panOffsetStart.y + dy };
+  onMove(ev: MouseEvent) {
+    if (this.panning) {
+      const dx = (ev.clientX - this.panStart.x) / this.zoom;
+      const dy = (ev.clientY - this.panStart.y) / this.zoom;
+      this.offset = { x: this.panOffsetStart.x + dx, y: this.panOffsetStart.y + dy };
+    }
+
+    if (this.connectingFrom) {
+      const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+      this.tempConnection = {
+        x: (ev.clientX - rect.left - this.offset.x * this.zoom) / this.zoom,
+        y: (ev.clientY - rect.top - this.offset.y * this.zoom) / this.zoom
+      };
+    }
   }
   endPan() { this.panning = false; }
+
+  startConnection(fromId: string, ev: MouseEvent) {
+    ev.stopPropagation();
+    ev.preventDefault();
+    this.connectingFrom = fromId;
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    this.tempConnection = {
+      x: (ev.clientX - rect.left - this.offset.x * this.zoom) / this.zoom,
+      y: (ev.clientY - rect.top - this.offset.y * this.zoom) / this.zoom
+    };
+  }
+
+  finishConnection(toId: string | null, ev?: MouseEvent) {
+    ev?.stopPropagation();
+    ev?.preventDefault();
+    if (this.connectingFrom && toId && this.connectingFrom !== toId) {
+      this.state.connect(this.connectingFrom, toId);
+    }
+    this.connectingFrom = null;
+  }
 
   onWheel(event: WheelEvent) {
     event.preventDefault();
@@ -118,6 +151,11 @@ export class CanvasComponent {
 
   zoomIn()  { this.zoom = Math.min(2, this.zoom + 0.1); }
   zoomOut() { this.zoom = Math.max(0.5, this.zoom - 0.1); }
+
+  onCanvasMouseUp() {
+    this.endPan();
+    if (this.connectingFrom) this.finishConnection(null);
+  }
 
   startEdit(node: GraphNode) {
     this.select(node.id);
