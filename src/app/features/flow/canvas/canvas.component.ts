@@ -90,9 +90,9 @@ export class CanvasComponent {
 
   // pan do canvas (arrastar o fundo)
   startPan(ev: MouseEvent) {
-    // só inicia pan se clicou no fundo (fora de um .node)
-    const hitNode = (ev.target as HTMLElement).closest('.node');
-    if (hitNode) return;
+    // só inicia pan se clicou fora de um nó/handle e não estivermos conectando
+    const hit = (ev.target as HTMLElement).closest('.node-wrapper');
+    if (hit || this.connectingFrom) return;
 
     this.panning = true;
     this.panStart = { x: ev.clientX, y: ev.clientY };
@@ -117,6 +117,7 @@ export class CanvasComponent {
 
   startConnection(fromId: string, ev: MouseEvent) {
     ev.stopPropagation();
+    ev.preventDefault();
     this.connectingFrom = fromId;
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
     this.tempConnection = {
@@ -127,6 +128,7 @@ export class CanvasComponent {
 
   finishConnection(toId: string | null, ev?: MouseEvent) {
     ev?.stopPropagation();
+    ev?.preventDefault();
     if (this.connectingFrom && toId && this.connectingFrom !== toId) {
       this.state.connect(this.connectingFrom, toId);
     }

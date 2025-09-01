@@ -39,10 +39,10 @@
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
         class="node-wrapper">
 
-        <div class="handle in" (mouseup)="finishConnection(n.id, $event)"></div>
-
+        <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
         <div
           class="node"
+          cdkDragHandle
           [class.question]="n.kind === 'question'"
           [class.condition]="n.kind === 'condition'"
           [class.action]="n.kind === 'action'"
