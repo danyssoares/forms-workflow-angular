@@ -1,7 +1,7 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -58,6 +58,9 @@ export class CanvasComponent {
   connectingFrom: string | null = null;
   tempConnection: Point = { x: 0, y: 0 };
 
+  // posições temporárias enquanto arrasta
+  private dragOffsets: Record<string, Point> = {};
+
   constructor(private state: GraphStateService) {
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
@@ -65,16 +68,37 @@ export class CanvasComponent {
 
   }
 
-  // helpers p/ arestas (centros aproximados por tipo)
-  centerX(id: string) {
-    const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const w = n.kind === 'condition' ? 120 : n.kind === 'action' ? 180 : 200;
-    return n.position.x + w / 2;
+
+  private nodeSize(kind: string) {
+    const w = kind === 'condition' ? 120 : kind === 'action' ? 180 : kind === 'end' ? 80 : 200;
+    const h = kind === 'condition' ? 120 : kind === 'action' ? 80 : kind === 'end' ? 80 : 90;
+    return { w, h };
   }
-  centerY(id: string) {
+
+  private outPoint(id: string): Point {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const h = n.kind === 'condition' ? 120 : n.kind === 'action' ? 80 : 90;
-    return n.position.y + h / 2;
+    const { w, h } = this.nodeSize(n.kind);
+    const off = this.dragOffsets[id] || { x: 0, y: 0 };
+    return { x: n.position.x + off.x + w, y: n.position.y + off.y + h / 2 };
+  }
+  private inPoint(id: string): Point {
+    const n = this.graph().nodes.find(nn => nn.id === id)!;
+    const { h } = this.nodeSize(n.kind);
+    const off = this.dragOffsets[id] || { x: 0, y: 0 };
+    return { x: n.position.x + off.x, y: n.position.y + off.y + h / 2 };
+  }
+
+  private path(p1: Point, p2: Point) {
+    const mx = (p1.x + p2.x) / 2;
+    return `M ${p1.x} ${p1.y} C ${mx} ${p1.y}, ${mx} ${p2.y}, ${p2.x} ${p2.y}`;
+  }
+
+  pathBetween(fromId: string, toId: string) {
+    return this.path(this.outPoint(fromId), this.inPoint(toId));
+  }
+
+  pathToPoint(fromId: string, to: Point) {
+    return this.path(this.outPoint(fromId), to);
   }
 
   // seleção
@@ -83,6 +107,10 @@ export class CanvasComponent {
   deselect()              { this.state.select(null); }
 
   // drag do nó
+  dragMove(n: GraphNode, ev: CdkDragMove) {
+    this.dragOffsets[n.id] = ev.source.getFreeDragPosition();
+  }
+
   dragEnd(n: GraphNode, ev: CdkDragEnd) {
     const delta = ev.source.getFreeDragPosition();
     this.state.moveNode(n.id, {
@@ -90,6 +118,7 @@ export class CanvasComponent {
       y: n.position.y + delta.y
     });
     ev.source.reset();
+    delete this.dragOffsets[n.id];
   }
 
   // pan do canvas (arrastar o fundo)
