@@ -6,6 +6,7 @@ export interface VisibilityCondition { expression?: string; }
 
 export interface Question {
   id: string; type: QuestionType; label: string; helpText?: string; required?: boolean;
+  trueLabel?: string; falseLabel?: string;
   options?: Option[]; placeholder?: string; defaultValue?: any; validations?: ValidationRule[]; visibility?: VisibilityCondition;
   weight?: number; scoreMap?: Record<string, number>;
 }
