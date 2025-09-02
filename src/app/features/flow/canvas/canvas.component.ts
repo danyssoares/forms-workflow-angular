@@ -71,21 +71,34 @@ export class CanvasComponent {
 
 
   private nodeSize(kind: string) {
-    const w = kind === 'condition' ? 120 : kind === 'action' ? 180 : kind === 'end' ? 80 : 200;
-    const h = kind === 'condition' ? 120 : kind === 'action' ? 80 : kind === 'end' ? 80 : 90;
+    const cond = 120 * Math.SQRT2; // bounding box of rotated square (diamond)
+    const w = kind === 'condition' ? cond : kind === 'action' ? 180 : kind === 'end' ? 80 : 200;
+    const h = kind === 'condition' ? cond : kind === 'action' ? 80 : kind === 'end' ? 80 : 90;
     return { w, h };
   }
 
   private outPoint(id: string): Point {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const { w, h } = this.nodeSize(n.kind);
     const off = this.dragOffsets[id] || { x: 0, y: 0 };
+    if (n.kind === 'condition') {
+      const s = 120;
+      const margin = (s * Math.SQRT2 - s) / 2;
+      const center = (s * Math.SQRT2) / 2;
+      return { x: n.position.x + off.x + s + margin, y: n.position.y + off.y + center };
+    }
+    const { w, h } = this.nodeSize(n.kind);
     return { x: n.position.x + off.x + w, y: n.position.y + off.y + h / 2 };
   }
   private inPoint(id: string): Point {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
-    const { h } = this.nodeSize(n.kind);
     const off = this.dragOffsets[id] || { x: 0, y: 0 };
+    if (n.kind === 'condition') {
+      const s = 120;
+      const margin = (s * Math.SQRT2 - s) / 2;
+      const center = (s * Math.SQRT2) / 2;
+      return { x: n.position.x + off.x + margin, y: n.position.y + off.y + center };
+    }
+    const { h } = this.nodeSize(n.kind);
     return { x: n.position.x + off.x, y: n.position.y + off.y + h / 2 };
   }
 
