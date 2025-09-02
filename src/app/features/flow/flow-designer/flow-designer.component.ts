@@ -20,7 +20,7 @@ import { AsyncPipe } from '@angular/common';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector *ngIf="state.selectedId$ | async"></app-inspector>
+    <app-inspector *ngIf="(state.sidebarOpen$ | async)"></app-inspector>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
@@ -30,7 +30,7 @@ export class FlowDesignerComponent {
 
   onAdd(e:{kind:string,type?:string}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
-    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text' }, pos);
+    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text', score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
     if(e.kind==='condition') this.state.addNode('condition', { operator: '==', value: '' }, pos);
     if(e.kind==='action') this.state.addNode('action', { type:'emitAlert', params:{ alertCode:'ALERTA' } }, pos);
     if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário' }, pos);

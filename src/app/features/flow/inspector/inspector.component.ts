@@ -1,19 +1,20 @@
 import { Component, computed, effect, Signal } from '@angular/core';
-import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NgFor, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
-import { OptionsDialogComponent } from './options-dialog.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GraphModel } from '../graph.types';
 
 @Component({
-  selector: 'app-inspector', standalone: true,
-  imports: [NgIf, NgSwitch, NgSwitchCase, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDialogModule],
+  selector: 'app-inspector',
+  standalone: true,
+  imports: [NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, FontAwesomeModule],
   template: `
   <div class="sidebar" *ngIf="node() as n">
     <h3>Inspector</h3>
@@ -21,7 +22,7 @@ import { GraphModel } from '../graph.types';
       <!-- QUESTION -->
       <form *ngSwitchCase="'question'" [formGroup]="fgQ">
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Label</mat-label>
+          <mat-label>Texto</mat-label>
           <input matInput formControlName="label">
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
@@ -40,8 +41,8 @@ import { GraphModel } from '../graph.types';
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Help</mat-label>
-          <input matInput formControlName="helpText">
+          <mat-label>Score</mat-label>
+          <input matInput type="number" formControlName="score">
         </mat-form-field>
         <div *ngIf="fgQ.get('type')?.value === 'boolean'">
           <mat-form-field appearance="outline" style="width:100%">
@@ -54,10 +55,34 @@ import { GraphModel } from '../graph.types';
           </mat-form-field>
         </div>
         <div *ngIf="['select','radio','checkbox'].includes(fgQ.get('type')?.value)">
-          <button mat-stroked-button color="accent" type="button" (click)="openOptions()">Configurar Opções</button>
+          <div formArrayName="options">
+            <div *ngFor="let opt of options.controls; let i=index" [formGroupName]="i" class="option-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Label</mat-label>
+                <input matInput formControlName="label">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Valor</mat-label>
+                <input matInput formControlName="value">
+              </mat-form-field>
+              <button mat-icon-button type="button" (click)="removeOption(i)">
+                <fa-icon [icon]="faTrash"></fa-icon>
+              </button>
+            </div>
+            <button mat-stroked-button type="button" (click)="addOption()">Adicionar Opção</button>
+          </div>
         </div>
-        <button mat-raised-button color="primary" (click)="saveQ()">Salvar</button>
-        </form>
+        <div class="actions">
+          <button mat-raised-button color="primary" type="button" (click)="saveQ()">
+            <fa-icon [icon]="faSave"></fa-icon>
+            Salvar
+          </button>
+          <button mat-button type="button" (click)="cancel()">
+            <fa-icon [icon]="faTimes"></fa-icon>
+            Cancelar
+          </button>
+        </div>
+      </form>
 
       <!-- CONDITION -->
       <form *ngSwitchCase="'condition'" [formGroup]="fgC">
@@ -82,7 +107,16 @@ import { GraphModel } from '../graph.types';
           <mat-label>Valor</mat-label>
           <input matInput formControlName="value">
         </mat-form-field>
-        <button mat-raised-button color="primary" (click)="saveC()">Salvar</button>
+        <div class="actions">
+          <button mat-raised-button color="primary" type="button" (click)="saveC()">
+            <fa-icon [icon]="faSave"></fa-icon>
+            Salvar
+          </button>
+          <button mat-button type="button" (click)="cancel()">
+            <fa-icon [icon]="faTimes"></fa-icon>
+            Cancelar
+          </button>
+        </div>
       </form>
 
       <!-- ACTION -->
@@ -97,15 +131,21 @@ import { GraphModel } from '../graph.types';
             <mat-option value="setField">setField</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" style="width:100%">
-          <mat-label>Parâmetros (JSON simples)</mat-label>
-          <input matInput formControlName="params" placeholder='{"alertCode":"ALERTA"}'>
-        </mat-form-field>
-        <button mat-raised-button color="primary" (click)="saveA()">Salvar</button>
+        <div class="actions">
+          <button mat-raised-button color="primary" type="button" (click)="saveA()">
+            <fa-icon [icon]="faSave"></fa-icon>
+            Salvar
+          </button>
+          <button mat-button type="button" (click)="cancel()">
+            <fa-icon [icon]="faTimes"></fa-icon>
+            Cancelar
+          </button>
+        </div>
       </form>
     </div>
   </div>
-  `
+  `,
+  styleUrl: './inspector.component.scss'
 })
 export class InspectorComponent {
   graph: Signal<GraphModel>;
@@ -116,10 +156,17 @@ export class InspectorComponent {
   fgC: FormGroup;
   fgA: FormGroup;
 
-  constructor(private state: GraphStateService, private fb: FormBuilder, private dialog: MatDialog) {
-    this.fgQ = this.fb.group({ label: [''], type: ['text'], helpText: [''], trueLabel: ['Verdadeiro'], falseLabel: ['Falso'] });
+  constructor(private state: GraphStateService, private fb: FormBuilder) {
+    this.fgQ = this.fb.group({
+      label: [''],
+      type: ['text'],
+      score: [0],
+      trueLabel: ['Verdadeiro'],
+      falseLabel: ['Falso'],
+      options: this.fb.array([])
+    });
     this.fgC = this.fb.group({ sourceQuestionId: [''], operator: ['=='], value: [''] });
-    this.fgA = this.fb.group({ type: ['emitAlert'], params: ['{"alertCode":"RISCO"}'] });
+    this.fgA = this.fb.group({ type: ['emitAlert'] });
 
     this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
     this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});
@@ -127,24 +174,53 @@ export class InspectorComponent {
     effect(() => {
       const n = this.node();
       if (!n) return;
-      if (n.kind === 'question') this.fgQ.patchValue(n.data);
+      if (n.kind === 'question') {
+        const opts = n.data.options || [];
+        const arr = this.options;
+        arr.clear();
+        opts.forEach((o: { label: any; value: any; }) => arr.push(this.fb.group({ label: [o.label], value: [o.value] })));
+        this.fgQ.patchValue({ label: n.data.label, type: n.data.type, score: n.data.score || 0, trueLabel: n.data.trueLabel || 'Verdadeiro', falseLabel: n.data.falseLabel || 'Falso' });
+      }
       if (n.kind === 'condition') this.fgC.patchValue(n.data);
-      if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type, params: JSON.stringify(n.data.params) });
+      if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type });
     });
   }
 
-  openOptions(){
-    const n = this.node(); if(!n) return;
-    const dialogRef = this.dialog.open(OptionsDialogComponent, {
-      width: '400px',
-      data: { options: n.data.options || [] }
-    });
-    dialogRef.afterClosed().subscribe(res => {
-      if(res){ this.state.updateNode(n.id, { ...n.data, options: res }); }
-    });
+  get options() { return this.fgQ.get('options') as FormArray; }
+  addOption() { this.options.push(this.fb.group({ label: [''], value: [''] })); }
+  removeOption(i: number) { this.options.removeAt(i); }
+
+  saveQ() {
+    const n = this.node();
+    if (!n) return;
+    const formValue = this.fgQ.value as any;
+    const data: any = { ...n.data, label: formValue.label, type: formValue.type, score: formValue.score };
+    data.id = n.data.id || `q_${n.id.slice(0,4)}`;
+    if (formValue.type === 'boolean') {
+      data.trueLabel = formValue.trueLabel;
+      data.falseLabel = formValue.falseLabel;
+    }
+    if (['select', 'radio', 'checkbox'].includes(formValue.type)) {
+      data.options = formValue.options || [];
+    }
+    this.state.updateNode(n.id, data);
+    this.state.closeSidebar();
   }
 
-  saveQ(){ const n = this.node(); if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgQ.value, id: n.data.id||`q_${n.id.slice(0,4)}` }); }
-  saveC(){ const n = this.node(); if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgC.value }); }
-  saveA(){ const n = this.node(); if(!n) return; let params:any={}; try{ params = JSON.parse(this.fgA.value.params||'{}'); }catch{} this.state.updateNode(n.id, { ...n.data, type:this.fgA.value.type, params }); }
+  saveC() {
+    const n = this.node();
+    if (!n) return;
+    this.state.updateNode(n.id, { ...n.data, ...this.fgC.value });
+    this.state.closeSidebar();
+  }
+
+  saveA() {
+    const n = this.node();
+    if (!n) return;
+    this.state.updateNode(n.id, { ...n.data, type: this.fgA.value.type });
+    this.state.closeSidebar();
+  }
+
+  cancel() { this.state.closeSidebar(); }
 }
+
