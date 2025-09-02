@@ -11,6 +11,9 @@ export class GraphStateService {
   private _selectedId = new BehaviorSubject<string|null>(null);
   selectedId$ = this._selectedId.asObservable();
 
+  private _sidebarOpen = new BehaviorSubject<boolean>(false);
+  sidebarOpen$ = this._sidebarOpen.asObservable();
+
   /** Counters to provide incremental numbering per node type */
   private counters: Record<NodeKind, number> = {
     question: 0,
@@ -50,6 +53,16 @@ export class GraphStateService {
     this._graph.next({ ...this.graph, edges: this.graph.edges.filter(e => e.id !== id) });
   }
   select(id: string | null) { this._selectedId.next(id); }
+
+  openSidebar(id: string) {
+    this.select(id);
+    this._sidebarOpen.next(true);
+  }
+
+  closeSidebar() {
+    this._sidebarOpen.next(false);
+    this.select(null);
+  }
 
   get selectedNode(): GraphNode|undefined { return this.graph.nodes.find(n=>n.id===this._selectedId.value||''); }
 }

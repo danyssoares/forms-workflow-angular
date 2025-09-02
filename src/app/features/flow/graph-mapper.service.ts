@@ -12,6 +12,10 @@ export class GraphMapperService {
         type: n.data.type,
         label: n.data.label,
         helpText: n.data.helpText,
+        weight: n.data.score,
+        trueLabel: n.data.trueLabel,
+        falseLabel: n.data.falseLabel,
+        options: n.data.options,
       } as Question));
 
     const rules: Rule[] = [];
