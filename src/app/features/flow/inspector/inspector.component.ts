@@ -1,4 +1,4 @@
-import { Component, computed, effect } from '@angular/core';
+import { Component, computed, effect, Signal } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { GraphStateService } from '../graph-state.service';
 import { OptionsDialogComponent } from './options-dialog.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { GraphModel } from '../graph.types';
 
 @Component({
   selector: 'app-inspector', standalone: true,
@@ -107,8 +108,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
   `
 })
 export class InspectorComponent {
-  graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
-  selectedId = toSignal(this.state.selectedId$, {initialValue: null});
+  graph: Signal<GraphModel>;
+  selectedId: Signal<string | null>;
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
 
   fgQ: FormGroup;
@@ -119,6 +120,9 @@ export class InspectorComponent {
     this.fgQ = this.fb.group({ label: [''], type: ['text'], helpText: [''], trueLabel: ['Verdadeiro'], falseLabel: ['Falso'] });
     this.fgC = this.fb.group({ sourceQuestionId: [''], operator: ['=='], value: [''] });
     this.fgA = this.fb.group({ type: ['emitAlert'], params: ['{"alertCode":"RISCO"}'] });
+
+    this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
+    this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});
 
     effect(() => {
       const n = this.node();

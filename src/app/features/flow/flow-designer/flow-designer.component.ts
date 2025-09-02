@@ -6,11 +6,12 @@ import { CanvasComponent } from '../canvas/canvas.component';
 import { InspectorComponent } from '../inspector/inspector.component';
 import { GraphStateService } from '../graph-state.service';
 import { GraphMapperService } from '../graph-mapper.service';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [AsyncPipe, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
@@ -19,7 +20,7 @@ import { GraphMapperService } from '../graph-mapper.service';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector *ngIf="(state.selectedId$ | async) as sel && sel"></app-inspector>
+    <app-inspector *ngIf="state.selectedId$ | async"></app-inspector>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
