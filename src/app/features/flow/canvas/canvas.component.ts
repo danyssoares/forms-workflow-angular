@@ -1,14 +1,10 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCheck, faEdit, faTimes, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { GraphModel, GraphNode, Point, GraphEdge } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 import { NodeQuestionComponent } from '../node-question/node-question.component';
@@ -19,8 +15,7 @@ import { NodeQuestionComponent } from '../node-question/node-question.component'
   styleUrl: './canvas.component.scss',
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, FontAwesomeModule, FormsModule, NodeQuestionComponent
+    DragDropModule, MatButtonModule, FontAwesomeModule, NodeQuestionComponent
   ],
   templateUrl: './canvas.component.html'
 })
@@ -30,12 +25,8 @@ export class CanvasComponent {
   // Font Awesome icons
   faEdit = faEdit;
   faTrash = faTrash;
-  faCheck = faCheck;
-  faTimes = faTimes;
   faGear = faGear;
   faCodeBranch = faCodeBranch;
-
-  focused: 'label' | 'type' | null = null;
 
   // pan/zoom do canvas
   offset = { x: 0, y: 0 };
@@ -49,9 +40,6 @@ export class CanvasComponent {
   // dimensões do "mundo" para posicionamento e arestas
   readonly worldW = 2000;
   readonly worldH = 1200;
-
-  editingNodeId: string | null = null;
-  editBuffer: any = {};
 
   // conexão entre nós
   connectingFrom: string | null = null;
@@ -215,22 +203,9 @@ export class CanvasComponent {
     return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   }
 
-  startEdit(node: GraphNode) {
-    this.select(node.id);
-    this.editingNodeId = node.id;
-    this.editBuffer = { ...node.data };
-  }
-
-  confirmEdit(node: GraphNode) {
-    if (this.editingNodeId !== node.id) return;
-    this.state.updateNode(node.id, { ...node.data, ...this.editBuffer });
-    this.editingNodeId = null;
-    this.editBuffer = {};
-  }
-
-  cancelEdit() {
-    this.editingNodeId = null;
-    this.editBuffer = {};
+  startEdit(node: GraphNode, ev: MouseEvent) {
+    ev.stopPropagation();
+    this.state.openSidebar(node.id);
   }
 
   deleteNode(id: string) {

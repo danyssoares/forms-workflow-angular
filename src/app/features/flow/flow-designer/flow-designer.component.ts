@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NgIf, AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PaletteComponent } from '../palette/palette.component';
@@ -10,7 +11,7 @@ import { GraphMapperService } from '../graph-mapper.service';
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [NgIf, AsyncPipe, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
@@ -19,17 +20,19 @@ import { GraphMapperService } from '../graph-mapper.service';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector *ngIf="(state.selectedId$ | async) as sel && sel"></app-inspector>
+    <app-inspector *ngIf="(sidebarOpen$ | async)"></app-inspector>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
 })
 export class FlowDesignerComponent {
+  sidebarOpen$ = this.state.sidebarOpen$;
+
   constructor(private state: GraphStateService, private mapper: GraphMapperService) {}
 
   onAdd(e:{kind:string,type?:string}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
-    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text' }, pos);
+    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text', score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
     if(e.kind==='condition') this.state.addNode('condition', { operator: '==', value: '' }, pos);
     if(e.kind==='action') this.state.addNode('action', { type:'emitAlert', params:{ alertCode:'ALERTA' } }, pos);
     if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário' }, pos);

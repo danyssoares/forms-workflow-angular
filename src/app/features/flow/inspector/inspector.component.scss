@@ -3,3 +3,20 @@
     margin-top: 0;
   }
 }
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.option-row mat-form-field {
+  flex: 1;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}

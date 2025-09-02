@@ -68,41 +68,25 @@
           
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
-            <ng-container *ngIf="editingNodeId === n.id; else viewButtons">
-              <button mat-icon-button class="action-btn edit-btn" (click)="confirmEdit(n)" title="Confirmar">
-                <fa-icon [icon]="faCheck"></fa-icon>
-              </button>
-              <button mat-icon-button class="action-btn delete-btn" (click)="cancelEdit()" title="Cancelar">
-                <fa-icon [icon]="faTimes"></fa-icon>
+            <ng-container *ngIf="n.kind === 'end'; else defaultButtons">
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                <fa-icon [icon]="faTrash"></fa-icon>
               </button>
             </ng-container>
-            <ng-template #viewButtons>
-              <!-- Para nós do tipo 'end', mostrar apenas o botão de exclusão -->
-              <ng-container *ngIf="n.kind === 'end'; else defaultButtons">
-                <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </ng-container>
-              <ng-template #defaultButtons>
-                <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
-                  <fa-icon [icon]="faEdit"></fa-icon>
-                </button>
-                <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
-              </ng-template>
+            <ng-template #defaultButtons>
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n, $event)" title="Editar">
+                <fa-icon [icon]="faEdit"></fa-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+                <fa-icon [icon]="faTrash"></fa-icon>
+              </button>
             </ng-template>
           </div>
 
           <ng-container [ngSwitch]="n.kind">
 
             <!-- Question = Parallelogram -->
-            <app-node-question
-              *ngSwitchCase="'question'"
-              [node]="n"
-              [editing]="editingNodeId === n.id"
-              [editBuffer]="editBuffer"
-            ></app-node-question>
+            <app-node-question *ngSwitchCase="'question'" [node]="n"></app-node-question>
 
             <!-- Condition = Diamond -->
             <div *ngSwitchCase="'condition'" class="diamond">
@@ -115,26 +99,8 @@
             <!-- Action = Rectangle -->
             <div *ngSwitchCase="'action'">
               <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
-              <div *ngIf="editingNodeId === n.id; else viewAction" class="sub">
-                <div class="field-container" [class.focused]="focused === 'type'">
-                  <select
-                    [(ngModel)]="editBuffer.type"
-                    class="clean-input"
-                    (focus)="focused = 'type'"
-                    (blur)="focused = null"
-                  >
-                  <option value="emitAlert">emitAlert</option>
-                  <option value="openForm">openForm</option>
-                  <option value="webhook">webhook</option>
-                  <option value="setTag">setTag</option>
-                  <option value="setField">setField</option>
-                  </select>
-                </div>
+              <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
               </div>
-              <ng-template #viewAction>
-                <div class="sub">{{ n.data.type || 'emitAlert' }}</div>
-              </ng-template>
-            </div>
 
             <!-- End = Capsule -->
             <div *ngSwitchCase="'end'" class="end">
