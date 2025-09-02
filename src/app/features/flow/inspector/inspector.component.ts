@@ -5,11 +5,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { GraphStateService } from '../graph-state.service';
+import { OptionsDialogComponent } from './options-dialog.component';
 
 @Component({
   selector: 'app-inspector', standalone: true,
-  imports: [NgIf, NgSwitch, NgSwitchCase, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule],
+  imports: [NgIf, NgSwitch, NgSwitchCase, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatDialogModule],
   template: `
   <div class="sidebar" *ngIf="node() as n">
     <h3>Inspector</h3>
@@ -39,8 +41,21 @@ import { GraphStateService } from '../graph-state.service';
           <mat-label>Help</mat-label>
           <input matInput formControlName="helpText">
         </mat-form-field>
+        <div *ngIf="fgQ.get('type')?.value === 'boolean'">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Label Verdadeiro</mat-label>
+            <input matInput formControlName="trueLabel">
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Label Falso</mat-label>
+            <input matInput formControlName="falseLabel">
+          </mat-form-field>
+        </div>
+        <div *ngIf="['select','radio','checkbox'].includes(fgQ.get('type')?.value)">
+          <button mat-stroked-button color="accent" type="button" (click)="openOptions()">Configurar Opções</button>
+        </div>
         <button mat-raised-button color="primary" (click)="saveQ()">Salvar</button>
-      </form>
+        </form>
 
       <!-- CONDITION -->
       <form *ngSwitchCase="'condition'" [formGroup]="fgC">
@@ -96,11 +111,22 @@ export class InspectorComponent {
   fgQ: FormGroup;
   fgC: FormGroup;
   fgA: FormGroup;
-  
-  constructor(private state: GraphStateService, private fb: FormBuilder) {
-    this.fgQ = this.fb.group({ label: [''], type: ['text'], helpText: [''] });
+
+  constructor(private state: GraphStateService, private fb: FormBuilder, private dialog: MatDialog) {
+    this.fgQ = this.fb.group({ label: [''], type: ['text'], helpText: [''], trueLabel: ['Verdadeiro'], falseLabel: ['Falso'] });
     this.fgC = this.fb.group({ sourceQuestionId: [''], operator: ['=='], value: [''] });
     this.fgA = this.fb.group({ type: ['emitAlert'], params: ['{"alertCode":"RISCO"}'] });
+  }
+
+  openOptions(){
+    const n = this.state.selectedNode; if(!n) return;
+    const dialogRef = this.dialog.open(OptionsDialogComponent, {
+      width: '400px',
+      data: { options: n.data.options || [] }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if(res){ this.state.updateNode(n.id, { ...n.data, options: res }); }
+    });
   }
 
   saveQ(){ const n = this.state.selectedNode; if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgQ.value, id: n.data.id||`q_${n.id.slice(0,4)}` }); }
