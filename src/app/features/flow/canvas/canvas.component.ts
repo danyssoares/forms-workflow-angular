@@ -203,7 +203,8 @@ export class CanvasComponent {
     return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   }
 
-  startEdit(node: GraphNode) {
+  startEdit(node: GraphNode, ev: MouseEvent) {
+    ev.stopPropagation();
     this.state.openSidebar(node.id);
   }
 

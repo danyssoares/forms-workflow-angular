@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NgIf, AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PaletteComponent } from '../palette/palette.component';
@@ -10,7 +11,7 @@ import { GraphMapperService } from '../graph-mapper.service';
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [NgIf, AsyncPipe, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
@@ -19,12 +20,14 @@ import { GraphMapperService } from '../graph-mapper.service';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector *ngIf="(state.sidebarOpen$ | async)"></app-inspector>
+    <app-inspector *ngIf="(sidebarOpen$ | async)"></app-inspector>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
 })
 export class FlowDesignerComponent {
+  sidebarOpen$ = this.state.sidebarOpen$;
+
   constructor(private state: GraphStateService, private mapper: GraphMapperService) {}
 
   onAdd(e:{kind:string,type?:string}){

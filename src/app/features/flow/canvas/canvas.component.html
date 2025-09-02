@@ -74,7 +74,7 @@
               </button>
             </ng-container>
             <ng-template #defaultButtons>
-              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n, $event)" title="Editar">
                 <fa-icon [icon]="faEdit"></fa-icon>
               </button>
               <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
