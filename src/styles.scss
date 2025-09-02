@@ -133,6 +133,25 @@ html, body {
   left: 0;
 }
 
+/* Ajustes para o losango (condição) */
+.node-wrapper.condition {
+  width: 170px;
+  height: 170px;
+}
+.node-wrapper.condition .node.condition {
+  position: absolute;
+  left: 25px;
+  top: 25px;
+  width: 120px;
+  height: 120px;
+}
+.node-wrapper.condition .handle.in {
+  left: 25px;
+}
+.node-wrapper.condition .handle.out {
+  right: 25px;
+}
+
 /* Painéis */
 .sidebar { width: 320px; border-left:1px solid #eef0f6; padding:12px; background:#fff; }
 .palette { padding:8px; border-bottom:1px solid #eef0f6; background:#fff; display:flex; gap:8px; align-items:center; }

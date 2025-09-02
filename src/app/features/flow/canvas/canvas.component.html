@@ -51,7 +51,8 @@
         (cdkDragMoved)="dragMove(n, $event)"
         (cdkDragEnded)="dragEnd(n, $event)"
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
-        class="node-wrapper">
+        class="node-wrapper"
+        [class.condition]="n.kind === 'condition'">
 
         <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
 
@@ -177,7 +178,7 @@
           </ng-container>
         </div>
 
-        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'end'" (mousedown)="startConnection(n.id, $event)"></div>
+        <div class="handle out" *ngIf="isSelected(n.id)" (mousedown)="startConnection(n.id, $event)"></div>
       </div>
     </div>
 
