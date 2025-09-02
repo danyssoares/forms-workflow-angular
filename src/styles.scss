@@ -65,6 +65,8 @@ html, body {
   /* a borda visual fica no .diamond */
   border-color: transparent;
   width: 0; height: 0; /* o tamanho fica no .diamond */
+  background: transparent;
+  box-shadow: none;
 }
 .node.condition .diamond {
   width: 120px; height: 120px;
@@ -72,6 +74,7 @@ html, body {
   border-radius: 12px;
   transform: rotate(45deg);
   background: #fff;
+  box-shadow: 0 1px 3px rgba(16,24,40,.08);
   display: flex; align-items: center; justify-content: center;
 }
 .node.condition.selected .diamond {
@@ -146,10 +149,10 @@ html, body {
   height: 120px;
 }
 .node-wrapper.condition .handle.in {
-  left: 25px;
+  left: 0;
 }
 .node-wrapper.condition .handle.out {
-  right: 25px;
+  right: 0;
 }
 
 /* Painéis */
