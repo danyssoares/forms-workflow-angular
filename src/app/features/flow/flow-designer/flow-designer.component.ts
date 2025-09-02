@@ -19,7 +19,7 @@ import { GraphMapperService } from '../graph-mapper.service';
   </div>
   <div class="flow-shell">
     <app-canvas></app-canvas>
-    <app-inspector></app-inspector>
+    <app-inspector *ngIf="(state.selectedId$ | async) as sel && sel"></app-inspector>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
