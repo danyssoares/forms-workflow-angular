@@ -97,44 +97,12 @@
           <ng-container [ngSwitch]="n.kind">
 
             <!-- Question = Parallelogram -->
-            <div *ngSwitchCase="'question'" class="content">
-              <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ n.data.seq }}</div>
-              <ng-container *ngIf="editingNodeId === n.id; else viewQuestion">
-                <div class="field-container" [class.focused]="focused === 'label'">
-                  <input
-                    type="text"
-                    [(ngModel)]="editBuffer.label"
-                    class="clean-input"
-                    (focus)="focused = 'label'"
-                    (blur)="focused = null"
-                    placeholder="Digite a pergunta"
-                  />
-                </div>
-                <div class="field-container" [class.focused]="focused === 'type'">
-                  <select
-                    [(ngModel)]="editBuffer.type"
-                    class="clean-input"
-                    (focus)="focused = 'type'"
-                    (blur)="focused = null"
-                  >
-                    <option value="text">Texto</option>
-                    <option value="boolean">Boolean</option>
-                    <option value="integer">Inteiro</option>
-                    <option value="double">Double</option>
-                    <option value="select">Lista</option>
-                    <option value="radio">Radio</option>
-                    <option value="checkbox">Checkbox</option>
-                    <option value="date">Data</option>
-                    <option value="datetime">Data e Hora</option>
-                    <option value="image">Imagem</option>
-                  </select>
-                </div>
-              </ng-container>
-              <ng-template #viewQuestion>
-                <div style="font-size:18px">{{ n.data.label || 'Pergunta' }}</div>
-                <div class="sub">{{ n.data.type | titlecase }}</div>
-              </ng-template>
-            </div>
+            <app-node-question
+              *ngSwitchCase="'question'"
+              [node]="n"
+              [editing]="editingNodeId === n.id"
+              [editBuffer]="editBuffer"
+            ></app-node-question>
 
             <!-- Condition = Diamond -->
             <div *ngSwitchCase="'condition'" class="diamond">

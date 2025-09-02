@@ -8,9 +8,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCheck, faEdit, faTimes, faTrash, faComment, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faEdit, faTimes, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { GraphModel, GraphNode, Point, GraphEdge } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
+import { NodeQuestionComponent } from '../node-question/node-question.component';
 
 @Component({
   selector: 'app-canvas',
@@ -19,7 +20,7 @@ import { GraphStateService } from '../graph-state.service';
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
     DragDropModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, FontAwesomeModule, FormsModule
+    MatSelectModule, FontAwesomeModule, FormsModule, NodeQuestionComponent
   ],
   templateUrl: './canvas.component.html'
 })
@@ -31,7 +32,6 @@ export class CanvasComponent {
   faTrash = faTrash;
   faCheck = faCheck;
   faTimes = faTimes;
-  faComment = faComment;
   faGear = faGear;
   faCodeBranch = faCodeBranch;
 
