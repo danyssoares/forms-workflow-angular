@@ -1,4 +1,4 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, effect } from '@angular/core';
 import { NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { GraphStateService } from '../graph-state.service';
 import { OptionsDialogComponent } from './options-dialog.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-inspector', standalone: true,
@@ -106,7 +107,9 @@ import { OptionsDialogComponent } from './options-dialog.component';
   `
 })
 export class InspectorComponent {
-  node = computed(() => this.state.selectedNode);
+  graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
+  selectedId = toSignal(this.state.selectedId$, {initialValue: null});
+  node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
 
   fgQ: FormGroup;
   fgC: FormGroup;
@@ -116,10 +119,18 @@ export class InspectorComponent {
     this.fgQ = this.fb.group({ label: [''], type: ['text'], helpText: [''], trueLabel: ['Verdadeiro'], falseLabel: ['Falso'] });
     this.fgC = this.fb.group({ sourceQuestionId: [''], operator: ['=='], value: [''] });
     this.fgA = this.fb.group({ type: ['emitAlert'], params: ['{"alertCode":"RISCO"}'] });
+
+    effect(() => {
+      const n = this.node();
+      if (!n) return;
+      if (n.kind === 'question') this.fgQ.patchValue(n.data);
+      if (n.kind === 'condition') this.fgC.patchValue(n.data);
+      if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type, params: JSON.stringify(n.data.params) });
+    });
   }
 
   openOptions(){
-    const n = this.state.selectedNode; if(!n) return;
+    const n = this.node(); if(!n) return;
     const dialogRef = this.dialog.open(OptionsDialogComponent, {
       width: '400px',
       data: { options: n.data.options || [] }
@@ -129,7 +140,7 @@ export class InspectorComponent {
     });
   }
 
-  saveQ(){ const n = this.state.selectedNode; if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgQ.value, id: n.data.id||`q_${n.id.slice(0,4)}` }); }
-  saveC(){ const n = this.state.selectedNode; if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgC.value }); }
-  saveA(){ const n = this.state.selectedNode; if(!n) return; let params:any={}; try{ params = JSON.parse(this.fgA.value.params||'{}'); }catch{} this.state.updateNode(n.id, { ...n.data, type:this.fgA.value.type, params }); }
+  saveQ(){ const n = this.node(); if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgQ.value, id: n.data.id||`q_${n.id.slice(0,4)}` }); }
+  saveC(){ const n = this.node(); if(!n) return; this.state.updateNode(n.id, { ...n.data, ...this.fgC.value }); }
+  saveA(){ const n = this.node(); if(!n) return; let params:any={}; try{ params = JSON.parse(this.fgA.value.params||'{}'); }catch{} this.state.updateNode(n.id, { ...n.data, type:this.fgA.value.type, params }); }
 }
