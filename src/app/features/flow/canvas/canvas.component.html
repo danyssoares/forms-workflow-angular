@@ -17,7 +17,7 @@
         <ng-container *ngFor="let e of graph().edges">
           <g (mouseenter)="hoveredEdgeId = e.id" (mouseleave)="hoveredEdgeId = null">
             <path
-              [attr.d]="pathBetween(e.from, e.to)"
+              [attr.d]="pathBetween(e)"
               fill="none"
               stroke-width="2"
               [attr.stroke]="hoveredEdgeId === e.id ? '#ff4d4f' : '#b9bed1'"
@@ -113,7 +113,7 @@
             *ngFor="let condition of n.data.conditions; let i = index"
             class="handle out condition-handle"
             [attr.data-condition-id]="condition.id"
-            (mousedown)="startConnection(n.id, $event)"
+            (mousedown)="startConnection(n.id, $event, condition.id)"
             [ngStyle]="{ top: (20 + i * 30) + 'px' }">
             <span class="handle-label">{{ condition.name || 'Condição ' + (i + 1) }}</span>
           </div>
