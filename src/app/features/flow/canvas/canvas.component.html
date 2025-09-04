@@ -89,12 +89,7 @@
             <app-node-question *ngSwitchCase="'question'" [node]="n"></app-node-question>
 
             <!-- Condition = Diamond -->
-            <div *ngSwitchCase="'condition'" class="diamond">
-              <div class="content">
-                <div class="title"><fa-icon [icon]="faCodeBranch"></fa-icon> Condição #{{ n.data.seq }}</div>
-                <div class="sub">{{ n.data.operator || 'É igual a' }} {{ n.data.value ?? '' }}</div>
-              </div>
-            </div>
+            <app-node-condition *ngSwitchCase="'condition'" [node]="n"></app-node-condition>
 
             <!-- Action = Rectangle -->
             <div *ngSwitchCase="'action'">
@@ -112,7 +107,20 @@
           </ng-container>
         </div>
 
-        <div class="handle out" *ngIf="isSelected(n.id)" (mousedown)="startConnection(n.id, $event)"></div>
+        <!-- Handles de saída para condições -->
+        <ng-container *ngIf="n.kind === 'condition' && (isSelected(n.id) || n.data.conditions?.length > 1)">
+          <div 
+            *ngFor="let condition of n.data.conditions; let i = index"
+            class="handle out condition-handle"
+            [attr.data-condition-id]="condition.id"
+            (mousedown)="startConnection(n.id, $event)"
+            [ngStyle]="{ top: (20 + i * 30) + 'px' }">
+            <span class="handle-label">{{ condition.name || 'Condição ' + (i + 1) }}</span>
+          </div>
+        </ng-container>
+        
+        <!-- Handle de saída padrão para outros nós -->
+        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition'" (mousedown)="startConnection(n.id, $event)"></div>
       </div>
     </div>
 

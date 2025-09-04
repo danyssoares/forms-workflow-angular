@@ -1,0 +1,40 @@
+.diamond {
+  width: 120px;
+  height: 120px;
+  transform: rotate(45deg);
+  background: white;
+  border: 2px solid #5c6bc0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.diamond .content {
+  transform: rotate(-45deg);
+  text-align: center;
+  padding: 10px;
+  width: 100%;
+}
+
+.diamond .title {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.conditions-list {
+  font-size: 11px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.condition-item {
+  padding: 2px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.condition-item:last-child {
+  border-bottom: none;
+}

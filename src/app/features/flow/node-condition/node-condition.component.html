@@ -1,1 +1,13 @@
-<p>node-condition works!</p>
+<div class="diamond">
+  <div class="content">
+    <div class="title">
+      <fa-icon [icon]="faCodeBranch"></fa-icon> 
+      Condição #{{ node.data.seq }}
+    </div>
+    <div class="conditions-list">
+      <div *ngFor="let condition of node.data.conditions" class="condition-item">
+        {{ condition.name || 'Condição ' + (node.data.conditions.indexOf(condition) + 1) }}
+      </div>
+    </div>
+  </div>
+</div>

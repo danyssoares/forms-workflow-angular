@@ -44,9 +44,9 @@ export class GraphStateService {
     this._graph.next({ nodes, edges });
     this.select(null);
   }
-  connect(fromId: string, toId: string, label?: string) {
+  connect(fromId: string, toId: string, label?: string, conditionId?: string) {
     const id = crypto.randomUUID();
-    const edge: GraphEdge = { id, from: fromId, to: toId, label };
+    const edge: GraphEdge = { id, from: fromId, to: toId, label, conditionId };
     this._graph.next({ ...this.graph, edges: [...this.graph.edges, edge] });
   }
   removeEdge(id: string) {

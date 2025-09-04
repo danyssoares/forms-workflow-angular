@@ -1,0 +1,37 @@
+.condition-editor {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #fafafa;
+}
+
+.condition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.condition-header h4 {
+  margin: 0;
+}
+
+.value-section,
+.compare-value-section {
+  margin-top: 16px;
+}
+
+.compare-value-section h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.value-toggle {
+  margin-bottom: 16px;
+}
+
+.value-toggle mat-radio-group {
+  display: flex;
+  gap: 16px;
+}

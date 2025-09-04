@@ -161,7 +161,7 @@ html, body {
 .flow-shell { height: calc(100vh - 64px); }
 
 /* Controles de zoom e minimapa */
-.zoom-controls {
+/*.zoom-controls {
   position: absolute;
   bottom: 8px;
   left: 8px;
@@ -179,12 +179,12 @@ html, body {
   cursor: pointer;
   font-size: 18px;
 }
-.zoom-controls button + button { border-top: 1px solid #eef0f6; }
+.zoom-controls button + button { border-top: 1px solid #eef0f6; }*/
 
 .mini-map {
   position: absolute;
   bottom: 8px;
-  right: 8px;
+  left: 8px;
   width: 120px;
   height: 80px;
   border: 1px solid #eef0f6;

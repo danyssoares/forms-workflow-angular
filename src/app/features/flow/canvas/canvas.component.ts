@@ -5,17 +5,19 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
-import { GraphModel, GraphNode, Point, GraphEdge } from '../graph.types';
+import { GraphModel, GraphNode, Point, GraphEdge, ConditionNodeData } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 import { NodeQuestionComponent } from '../node-question/node-question.component';
+import { NodeConditionComponent } from '../node-condition/node-condition.component';
 
 @Component({
   selector: 'app-canvas',
   standalone: true,
   styleUrl: './canvas.component.scss',
   imports: [
-    NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe,
-    DragDropModule, MatButtonModule, FontAwesomeModule, NodeQuestionComponent
+    NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase,
+    DragDropModule, MatButtonModule, FontAwesomeModule, 
+    NodeQuestionComponent, NodeConditionComponent
   ],
   templateUrl: './canvas.component.html'
 })
@@ -69,6 +71,7 @@ export class CanvasComponent {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
     const off = this.dragOffsets[id] || { x: 0, y: 0 };
     if (n.kind === 'condition') {
+      // Se for um nó de condição, retornar o ponto central (para compatibilidade)
       const s = 120;
       const margin = (s * Math.SQRT2 - s) / 2;
       const center = (s * Math.SQRT2) / 2;
@@ -77,6 +80,45 @@ export class CanvasComponent {
     const { w, h } = this.nodeSize(n.kind);
     return { x: n.position.x + off.x + w, y: n.position.y + off.y + h / 2 };
   }
+  
+  // Método para calcular pontos de saída para cada condição específica
+  private conditionOutPoint(nodeId: string, conditionIndex: number): Point {
+    const n = this.graph().nodes.find(nn => nn.id === nodeId);
+    if (!n || n.kind !== 'condition') return { x: 0, y: 0 };
+    
+    const off = this.dragOffsets[nodeId] || { x: 0, y: 0 };
+    const conditions = (n.data as ConditionNodeData).conditions || [];
+    
+    // Calcular posição para a condição específica ao longo do lado direito do losango
+    const s = 120;
+    const margin = (s * Math.SQRT2 - s) / 2;
+    
+    // Para a condição específica, calcular um ponto ao longo do lado direito
+    const t = conditions.length === 1 ? 0.5 : conditionIndex / (conditions.length - 1);
+    const x = n.position.x + off.x + s + margin;
+    const y = n.position.y + off.y + margin + t * s;
+    
+    return { x, y };
+  }
+  
+  // Método para obter o ponto de saída correto com base na edge
+  private getOutPointForEdge(edge: GraphEdge): Point {
+    const fromNode = this.graph().nodes.find(n => n.id === edge.from);
+    if (!fromNode || fromNode.kind !== 'condition' || !edge.conditionId) {
+      return this.outPoint(edge.from);
+    }
+    
+    // Encontrar o índice da condição com base no conditionId
+    const conditions = (fromNode.data as ConditionNodeData).conditions || [];
+    const conditionIndex = conditions.findIndex(c => c.id === edge.conditionId);
+    
+    if (conditionIndex === -1) {
+      return this.outPoint(edge.from);
+    }
+    
+    return this.conditionOutPoint(edge.from, conditionIndex);
+  }
+  
   private inPoint(id: string): Point {
     const n = this.graph().nodes.find(nn => nn.id === id)!;
     const off = this.dragOffsets[id] || { x: 0, y: 0 };
@@ -96,17 +138,41 @@ export class CanvasComponent {
   }
 
   pathBetween(fromId: string, toId: string) {
+    const fromNode = this.graph().nodes.find(n => n.id === fromId);
+    
+    // Se o nó de origem for um nó de condição, usar o ponto de saída específico da condição
+    if (fromNode && fromNode.kind === 'condition') {
+      // Encontrar a edge correspondente
+      const edge = this.graph().edges.find(e => e.from === fromId && e.to === toId);
+      if (edge) {
+        const outPoint = this.getOutPointForEdge(edge);
+        return this.path(outPoint, this.inPoint(toId));
+      }
+    }
+    
     return this.path(this.outPoint(fromId), this.inPoint(toId));
   }
 
   pathToPoint(fromId: string, to: Point) {
+    const fromNode = this.graph().nodes.find(n => n.id === fromId);
+    
+    // Se o nó de origem for um nó de condição e estivermos conectando de uma condição específica
+    if (fromNode && fromNode.kind === 'condition' && this.connectingFrom) {
+      // Encontrar a edge correspondente (se existir)
+      const edge = this.graph().edges.find(e => e.from === fromId);
+      if (edge) {
+        const outPoint = this.getOutPointForEdge(edge);
+        return this.path(outPoint, to);
+      }
+    }
+    
     return this.path(this.outPoint(fromId), to);
   }
 
   // seleção
   isSelected(id: string) { return this.selectedId() === id; }
   select(id: string)      { this.state.select(id); }
-  deselect()              { this.state.select(null); }
+  deselect()              { this.state.closeSidebar(); }
 
   // drag do nó
   dragMove(n: GraphNode, ev: CdkDragMove) {
@@ -165,7 +231,12 @@ export class CanvasComponent {
     ev?.stopPropagation();
     ev?.preventDefault();
     if (this.connectingFrom && toId && this.connectingFrom !== toId) {
-      this.state.connect(this.connectingFrom, toId);
+      // Verificar se estamos conectando de um handle específico de condição
+      const target = ev?.target as HTMLElement;
+      const conditionHandle = target?.closest('.condition-handle');
+      const conditionId = conditionHandle?.getAttribute('data-condition-id') || undefined;
+      
+      this.state.connect(this.connectingFrom, toId, undefined, conditionId);
     }
     this.connectingFrom = null;
   }
@@ -198,7 +269,7 @@ export class CanvasComponent {
   }
 
   edgeMidpoint(e: GraphEdge): Point {
-    const p1 = this.outPoint(e.from);
+    const p1 = this.getOutPointForEdge(e);
     const p2 = this.inPoint(e.to);
     return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   }
