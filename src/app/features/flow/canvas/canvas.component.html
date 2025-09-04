@@ -109,12 +109,12 @@
 
         <!-- Handles de saída para condições -->
         <ng-container *ngIf="n.kind === 'condition' && (isSelected(n.id) || n.data.conditions?.length > 1)">
-          <div 
+          <div
             *ngFor="let condition of n.data.conditions; let i = index"
             class="handle out condition-handle"
             [attr.data-condition-id]="condition.id"
             (mousedown)="startConnection(n.id, $event, condition.id)"
-            [ngStyle]="{ top: (20 + i * 30) + 'px' }">
+            [ngStyle]="{ top: conditionHandleTop(n.data.conditions.length, i) + 'px' }">
             <span class="handle-label">{{ condition.name || 'Condição ' + (i + 1) }}</span>
           </div>
         </ng-container>
