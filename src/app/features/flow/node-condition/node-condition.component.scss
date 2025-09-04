@@ -3,7 +3,7 @@
   height: 120px;
   transform: rotate(45deg);
   background: white;
-  border: 2px solid #5c6bc0;
+  border: 2px solid #a66bff;
   position: relative;
   display: flex;
   align-items: center;
@@ -24,17 +24,6 @@
   margin-bottom: 8px;
 }
 
-.conditions-list {
+.condition-count {
   font-size: 11px;
-  max-height: 80px;
-  overflow-y: auto;
-}
-
-.condition-item {
-  padding: 2px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.condition-item:last-child {
-  border-bottom: none;
 }
