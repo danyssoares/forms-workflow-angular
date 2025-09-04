@@ -139,7 +139,7 @@
 /* Handles de condição */
 .condition-handle {
   position: absolute;
-  right: -12px;
+  right: -12px !important;
   width: 12px;
   height: 12px;
   background: #5c6bc0;
@@ -147,6 +147,7 @@
   border-radius: 50%;
   cursor: crosshair;
   z-index: 5;
+  transform: none !important;
 }
 
 .condition-handle .handle-label {

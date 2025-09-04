@@ -87,19 +87,16 @@ export class CanvasComponent {
   private conditionOutPoint(nodeId: string, conditionIndex: number): Point {
     const n = this.graph().nodes.find(nn => nn.id === nodeId);
     if (!n || n.kind !== 'condition') return { x: 0, y: 0 };
-    
+
     const off = this.dragOffsets[nodeId] || { x: 0, y: 0 };
-    const conditions = (n.data as ConditionNodeData).conditions || [];
-    
-    // Calcular posição para a condição específica ao longo do lado direito do losango
-    const s = 120;
-    const margin = (s * Math.SQRT2 - s) / 2;
-    
-    // Para a condição específica, calcular um ponto ao longo do lado direito
-    const t = conditions.length === 1 ? 0.5 : conditionIndex / (conditions.length - 1);
-    const x = n.position.x + off.x + s + margin;
-    const y = n.position.y + off.y + margin + t * s;
-    
+
+    // largura do wrapper do nó de condição (bounding box do losango)
+    const w = this.nodeSize('condition').w;
+
+    // posição da bolinha: 20px de margem superior + 30px por condição
+    const x = n.position.x + off.x + w + 6; // 6 = raio do handle
+    const y = n.position.y + off.y + 20 + conditionIndex * 30 + 6;
+
     return { x, y };
   }
   
