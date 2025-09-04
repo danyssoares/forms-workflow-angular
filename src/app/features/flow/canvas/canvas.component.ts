@@ -45,6 +45,8 @@ export class CanvasComponent {
 
   // conexão entre nós
   connectingFrom: string | null = null;
+  // id da condição de origem quando conectando a partir de um nó de condição
+  connectingConditionId: string | null = null;
   tempConnection: Point = { x: 0, y: 0 };
 
   hoveredEdgeId: string | null = null;
@@ -85,19 +87,16 @@ export class CanvasComponent {
   private conditionOutPoint(nodeId: string, conditionIndex: number): Point {
     const n = this.graph().nodes.find(nn => nn.id === nodeId);
     if (!n || n.kind !== 'condition') return { x: 0, y: 0 };
-    
+
     const off = this.dragOffsets[nodeId] || { x: 0, y: 0 };
-    const conditions = (n.data as ConditionNodeData).conditions || [];
-    
-    // Calcular posição para a condição específica ao longo do lado direito do losango
-    const s = 120;
-    const margin = (s * Math.SQRT2 - s) / 2;
-    
-    // Para a condição específica, calcular um ponto ao longo do lado direito
-    const t = conditions.length === 1 ? 0.5 : conditionIndex / (conditions.length - 1);
-    const x = n.position.x + off.x + s + margin;
-    const y = n.position.y + off.y + margin + t * s;
-    
+
+    // largura do wrapper do nó de condição (bounding box do losango)
+    const w = this.nodeSize('condition').w;
+
+    // posição da bolinha: 20px de margem superior + 30px por condição
+    const x = n.position.x + off.x + w + 6; // 6 = raio do handle
+    const y = n.position.y + off.y + 20 + conditionIndex * 30 + 6;
+
     return { x, y };
   }
   
@@ -137,35 +136,22 @@ export class CanvasComponent {
     return `M ${p1.x} ${p1.y} C ${mx} ${p1.y}, ${mx} ${p2.y}, ${p2.x} ${p2.y}`;
   }
 
-  pathBetween(fromId: string, toId: string) {
-    const fromNode = this.graph().nodes.find(n => n.id === fromId);
-    
-    // Se o nó de origem for um nó de condição, usar o ponto de saída específico da condição
-    if (fromNode && fromNode.kind === 'condition') {
-      // Encontrar a edge correspondente
-      const edge = this.graph().edges.find(e => e.from === fromId && e.to === toId);
-      if (edge) {
-        const outPoint = this.getOutPointForEdge(edge);
-        return this.path(outPoint, this.inPoint(toId));
-      }
-    }
-    
-    return this.path(this.outPoint(fromId), this.inPoint(toId));
+  pathBetween(edge: GraphEdge) {
+    const out = this.getOutPointForEdge(edge);
+    return this.path(out, this.inPoint(edge.to));
   }
 
   pathToPoint(fromId: string, to: Point) {
     const fromNode = this.graph().nodes.find(n => n.id === fromId);
-    
-    // Se o nó de origem for um nó de condição e estivermos conectando de uma condição específica
-    if (fromNode && fromNode.kind === 'condition' && this.connectingFrom) {
-      // Encontrar a edge correspondente (se existir)
-      const edge = this.graph().edges.find(e => e.from === fromId);
-      if (edge) {
-        const outPoint = this.getOutPointForEdge(edge);
-        return this.path(outPoint, to);
-      }
+
+    // Se estamos conectando a partir de um nó de condição, usar o handle correto
+    if (fromNode && fromNode.kind === 'condition' && this.connectingConditionId) {
+      const conditions = (fromNode.data as ConditionNodeData).conditions || [];
+      const index = conditions.findIndex(c => c.id === this.connectingConditionId);
+      const outPoint = index !== -1 ? this.conditionOutPoint(fromId, index) : this.outPoint(fromId);
+      return this.path(outPoint, to);
     }
-    
+
     return this.path(this.outPoint(fromId), to);
   }
 
@@ -216,10 +202,11 @@ export class CanvasComponent {
   }
   endPan() { this.panning = false; }
 
-  startConnection(fromId: string, ev: MouseEvent) {
+  startConnection(fromId: string, ev: MouseEvent, conditionId?: string) {
     ev.stopPropagation();
     ev.preventDefault();
     this.connectingFrom = fromId;
+    this.connectingConditionId = conditionId || null;
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
     this.tempConnection = {
       x: (ev.clientX - rect.left - this.offset.x * this.zoom) / this.zoom,
@@ -231,14 +218,11 @@ export class CanvasComponent {
     ev?.stopPropagation();
     ev?.preventDefault();
     if (this.connectingFrom && toId && this.connectingFrom !== toId) {
-      // Verificar se estamos conectando de um handle específico de condição
-      const target = ev?.target as HTMLElement;
-      const conditionHandle = target?.closest('.condition-handle');
-      const conditionId = conditionHandle?.getAttribute('data-condition-id') || undefined;
-      
+      const conditionId = this.connectingConditionId || undefined;
       this.state.connect(this.connectingFrom, toId, undefined, conditionId);
     }
     this.connectingFrom = null;
+    this.connectingConditionId = null;
   }
 
   onWheel(event: WheelEvent) {
