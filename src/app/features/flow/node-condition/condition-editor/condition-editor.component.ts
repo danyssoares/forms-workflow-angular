@@ -44,15 +44,16 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
           <mat-radio-group formControlName="valueType" aria-label="Valor ou Pergunta">
             <mat-radio-button value="fixed">Valor Fixo</mat-radio-button>
             <mat-radio-button value="question">Pergunta</mat-radio-button>
+            <mat-radio-button value="score">Score da Pergunta</mat-radio-button>
           </mat-radio-group>
         </div>
-        
+
         <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
           <mat-label>Valor</mat-label>
           <input matInput formControlName="value">
         </mat-form-field>
-        
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'question'">
+
+        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'question' || conditionForm.get('valueType')?.value === 'score'">
           <mat-label>Pergunta</mat-label>
           <mat-select formControlName="questionId">
             <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
@@ -77,15 +78,16 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
           <mat-radio-group formControlName="compareValueType" aria-label="Valor ou Pergunta">
             <mat-radio-button value="fixed">Valor Fixo</mat-radio-button>
             <mat-radio-button value="question">Pergunta</mat-radio-button>
+            <mat-radio-button value="score">Score da Pergunta</mat-radio-button>
           </mat-radio-group>
         </div>
-        
+
         <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
           <mat-label>Valor</mat-label>
           <input matInput formControlName="compareValue">
         </mat-form-field>
-        
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
+
+        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'question' || conditionForm.get('compareValueType')?.value === 'score'">
           <mat-label>Pergunta</mat-label>
           <mat-select formControlName="compareQuestionId">
             <mat-option *ngFor="let question of availableQuestionsForComparison" [value]="question.data.id">
@@ -129,7 +131,8 @@ export class ConditionEditorComponent implements OnInit {
     'checkbox': ['==', '!=', 'in', 'contains'],
     'date': ['==', '!=', '>', '>=', '<', '<='],
     'datetime': ['==', '!=', '>', '>=', '<', '<='],
-    'image': ['==', '!=']
+    'image': ['==', '!='],
+    'score': ['==', '!=', '>', '>=', '<', '<=']
   };
   
   constructor() {
@@ -167,9 +170,12 @@ export class ConditionEditorComponent implements OnInit {
   }
 
   get selectedQuestionType(): string | undefined {
+    const valueType = this.conditionForm.get('valueType')?.value;
+    if (valueType === 'score') return 'score';
+
     const selectedQuestionId = this.conditionForm.get('questionId')?.value;
     if (!selectedQuestionId) return undefined;
-    
+
     const question = this.availableQuestions.find(q => q.data.id === selectedQuestionId);
     return question ? question.data.type : undefined;
   }

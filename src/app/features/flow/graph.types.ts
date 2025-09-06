@@ -9,11 +9,11 @@ export interface QuestionNodeData { id:string; label:string; type:'text'|'intege
 export interface SingleCondition {
   id: string;
   name: string;
-  valueType: 'fixed' | 'question'; // Toggle para o primeiro valor
+  valueType: 'fixed' | 'question' | 'score'; // Toggle para o primeiro valor
   value?: any;
   questionId?: string;
   operator?: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'contains';
-  compareValueType: 'fixed' | 'question'; // Toggle para o segundo valor
+  compareValueType: 'fixed' | 'question' | 'score'; // Toggle para o segundo valor
   compareValue?: any;
   compareQuestionId?: string;
 }
