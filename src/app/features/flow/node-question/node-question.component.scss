@@ -2,6 +2,11 @@
   display: block;
 }
 
+.content {
+  position: relative;
+  padding-bottom: 16px;
+}
+
 .title {
   font-weight: bold;
   margin-bottom: 8px;
@@ -22,4 +27,14 @@
   margin-top: 8px;
   padding-top: 4px;
   border-top: 1px dashed #e5e7eb;
+}
+
+.score {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }

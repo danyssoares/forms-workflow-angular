@@ -2,4 +2,8 @@
   <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ node.data.seq }}</div>
   <div style="font-size:18px">{{ node.data.label || 'Pergunta' }}</div>
   <div class="sub">{{ node.data.type | titlecase }}</div>
+  <div class="score" *ngIf="(node.data.score || 0) > 0">
+    <fa-icon [icon]="faStar"></fa-icon>
+    {{ node.data.score }}
+  </div>
 </div>
