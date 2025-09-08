@@ -41,7 +41,11 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
       <div class="value-section">
         <h5>Primeiro Valor</h5>
         <div class="value-toggle">
-          <mat-button-toggle-group formControlName="valueType" aria-label="Valor ou Pergunta">
+          <mat-button-toggle-group
+            color="primary"
+            formControlName="valueType"
+            aria-label="Valor ou Pergunta"
+          >
             <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
             <mat-button-toggle value="question">Pergunta</mat-button-toggle>
             <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
@@ -75,7 +79,11 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
       <div class="compare-value-section">
         <h5>Segundo Valor</h5>
         <div class="value-toggle">
-          <mat-button-toggle-group formControlName="compareValueType" aria-label="Valor ou Pergunta">
+          <mat-button-toggle-group
+            color="primary"
+            formControlName="compareValueType"
+            aria-label="Valor ou Pergunta"
+          >
             <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
             <mat-button-toggle value="question">Pergunta</mat-button-toggle>
             <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
@@ -185,8 +193,8 @@ export class ConditionEditorComponent implements OnInit {
     if (!questionType || !this.questionTypeOperators[questionType]) {
       return this.operators;
     }
-    
-    return this.operators.filter(op => 
+
+    return this.operators.filter(op =>
       this.questionTypeOperators[questionType].includes(op.value)
     );
   }
