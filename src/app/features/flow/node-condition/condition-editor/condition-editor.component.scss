@@ -29,9 +29,20 @@
 
 .value-toggle {
   margin-bottom: 16px;
-}
 
-.value-toggle mat-button-toggle-group {
-  display: flex;
-  gap: 16px;
+  ::ng-deep .mat-mdc-button-toggle-group {
+    --mat-toggle-button-group-border-width: 1px;
+    --mat-toggle-button-group-border-color: var(--mat-primary);
+
+    display: flex;
+    overflow: hidden;
+  }
+
+  ::ng-deep .mat-mdc-button-toggle {
+    --mat-toggle-button-label-text-size: 12px;
+    --mat-toggle-button-label-text-transform: uppercase;
+
+    flex: 1;
+    overflow: hidden;
+  }
 }
