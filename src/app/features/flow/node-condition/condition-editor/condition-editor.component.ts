@@ -166,7 +166,9 @@ export class ConditionEditorComponent implements OnInit {
   get availableQuestionsForComparison() {
     // Filter out the question selected in questionId for comparison
     const selectedQuestionId = this.conditionForm.get('questionId')?.value;
-    return this.availableQuestions.filter(q => q.data.id !== selectedQuestionId);
+    return this.availableQuestions.filter(
+      q => q.data.id !== selectedQuestionId && q.id !== selectedQuestionId
+    );
   }
 
   get selectedQuestionType(): string | undefined {
