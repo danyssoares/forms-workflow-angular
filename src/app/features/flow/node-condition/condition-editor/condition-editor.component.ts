@@ -122,13 +122,13 @@ export class ConditionEditorComponent implements OnInit {
   ];
 
   questionTypeOperators: Record<string, string[]> = {
-    'text': ['==', '!=', 'in', 'contains'],
+    'text': ['==', '!=', 'contains'],
     'integer': ['==', '!=', '>', '>=', '<', '<='],
     'double': ['==', '!=', '>', '>=', '<', '<='],
     'boolean': ['==', '!='],
-    'select': ['==', '!=', 'in'],
+    'select': ['==', '!=', 'contains'],
     'radio': ['==', '!='],
-    'checkbox': ['==', '!=', 'in', 'contains'],
+    'checkbox': ['==', '!=', 'contains'],
     'date': ['==', '!=', '>', '>=', '<', '<='],
     'datetime': ['==', '!=', '>', '>=', '<', '<='],
     'image': ['==', '!='],
