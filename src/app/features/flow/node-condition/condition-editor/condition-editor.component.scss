@@ -31,7 +31,19 @@
   margin-bottom: 16px;
 }
 
-.value-toggle mat-radio-group {
-  display: flex;
-  gap: 16px;
+.value-toggle mat-button-toggle-group {
+  display: inline-flex;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.value-toggle mat-button-toggle {
+  flex: 1;
+  font-size: 0.8rem;
+  text-transform: none;
+}
+
+.value-toggle mat-button-toggle:not(:first-child) {
+  border-left: 1px solid currentColor;
 }

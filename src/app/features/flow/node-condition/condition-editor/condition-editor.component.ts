@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatRadioModule } from '@angular/material/radio';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types';
@@ -21,7 +21,7 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatRadioModule,
+    MatButtonToggleModule,
     FontAwesomeModule
   ],
   template: `
@@ -41,11 +41,15 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
       <div class="value-section">
         <h5>Primeiro Valor</h5>
         <div class="value-toggle">
-          <mat-radio-group formControlName="valueType" aria-label="Valor ou Pergunta">
-            <mat-radio-button value="fixed">Valor Fixo</mat-radio-button>
-            <mat-radio-button value="question">Pergunta</mat-radio-button>
-            <mat-radio-button value="score">Score da Pergunta</mat-radio-button>
-          </mat-radio-group>
+          <mat-button-toggle-group
+            color="primary"
+            formControlName="valueType"
+            aria-label="Valor ou Pergunta"
+          >
+            <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
+            <mat-button-toggle value="question">Pergunta</mat-button-toggle>
+            <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
+          </mat-button-toggle-group>
         </div>
 
         <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
@@ -75,11 +79,15 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
       <div class="compare-value-section">
         <h5>Segundo Valor</h5>
         <div class="value-toggle">
-          <mat-radio-group formControlName="compareValueType" aria-label="Valor ou Pergunta">
-            <mat-radio-button value="fixed">Valor Fixo</mat-radio-button>
-            <mat-radio-button value="question">Pergunta</mat-radio-button>
-            <mat-radio-button value="score">Score da Pergunta</mat-radio-button>
-          </mat-radio-group>
+          <mat-button-toggle-group
+            color="primary"
+            formControlName="compareValueType"
+            aria-label="Valor ou Pergunta"
+          >
+            <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
+            <mat-button-toggle value="question">Pergunta</mat-button-toggle>
+            <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
+          </mat-button-toggle-group>
         </div>
 
         <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
@@ -185,8 +193,8 @@ export class ConditionEditorComponent implements OnInit {
     if (!questionType || !this.questionTypeOperators[questionType]) {
       return this.operators;
     }
-    
-    return this.operators.filter(op => 
+
+    return this.operators.filter(op =>
       this.questionTypeOperators[questionType].includes(op.value)
     );
   }
