@@ -122,13 +122,13 @@ export class ConditionEditorComponent implements OnInit {
   ];
 
   questionTypeOperators: Record<string, string[]> = {
-    'text': ['==', '!=', 'in', 'contains'],
+    'text': ['==', '!=', 'contains'],
     'integer': ['==', '!=', '>', '>=', '<', '<='],
     'double': ['==', '!=', '>', '>=', '<', '<='],
     'boolean': ['==', '!='],
-    'select': ['==', '!=', 'in'],
+    'select': ['==', '!=', 'contains'],
     'radio': ['==', '!='],
-    'checkbox': ['==', '!=', 'in', 'contains'],
+    'checkbox': ['==', '!=', 'contains'],
     'date': ['==', '!=', '>', '>=', '<', '<='],
     'datetime': ['==', '!=', '>', '>=', '<', '<='],
     'image': ['==', '!='],
@@ -164,9 +164,11 @@ export class ConditionEditorComponent implements OnInit {
   }
   
   get availableQuestionsForComparison() {
-    // Filter out the question selected in questionId for comparison
-    const selectedQuestionId = this.conditionForm.get('questionId')?.value;
-    return this.availableQuestions.filter(q => q.data.id !== selectedQuestionId);
+    const selectedId = this.conditionForm.get('questionId')?.value;
+    const selected = this.availableQuestions.find(
+      q => q.data.id === selectedId || q.id === selectedId
+    );
+    return this.availableQuestions.filter(q => q !== selected);
   }
 
   get selectedQuestionType(): string | undefined {

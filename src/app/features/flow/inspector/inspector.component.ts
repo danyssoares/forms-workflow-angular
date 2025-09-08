@@ -134,11 +134,28 @@ export class InspectorComponent {
   graph: Signal<GraphModel>;
   selectedId: Signal<string | null>;
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
-  availableQuestions = computed(() => 
-    this.graph().nodes
-      .filter(n => n.kind === 'question')
-      .sort((a, b) => (a.data.seq || 0) - (b.data.seq || 0)) as GraphNode<QuestionNodeData>[]
-  );
+  availableQuestions = computed(() => {
+    const g = this.graph();
+    let questions = g.nodes
+      .filter(n => n.kind === 'question' && n.data.type !== 'image') as GraphNode<QuestionNodeData>[];
+
+    const selectedNode = g.nodes.find(n => n.id === this.selectedId());
+    if (selectedNode && selectedNode.kind === 'condition') {
+      const reachable = new Set<string>();
+      const visit = (id: string) => {
+        g.edges.filter(e => e.to === id).forEach(e => {
+          if (!reachable.has(e.from)) {
+            reachable.add(e.from);
+            visit(e.from);
+          }
+        });
+      };
+      visit(selectedNode.id);
+      questions = questions.filter(q => reachable.has(q.id));
+    }
+
+    return questions.sort((a, b) => (a.data.seq || 0) - (b.data.seq || 0));
+  });
 
   fgQ: FormGroup;
   fgA: FormGroup;
