@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faComment } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faStar } from '@fortawesome/free-solid-svg-icons';
 import { GraphNode } from '../graph.types';
 
 @Component({
@@ -15,4 +15,5 @@ export class NodeQuestionComponent {
   @Input() node!: GraphNode;
 
   faComment = faComment;
+  faStar = faStar;
 }
