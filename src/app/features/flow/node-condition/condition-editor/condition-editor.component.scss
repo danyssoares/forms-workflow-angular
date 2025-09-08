@@ -27,22 +27,27 @@
   margin-bottom: 8px;
 }
 
-.value-toggle {
-  margin-bottom: 16px;
+:host ::ng-deep .mat-button-toggle-group-appearance-standard {
+  border-radius: 5px !important;
+  border: solid 1px var(--mat-sys-primary) !important;
+  margin-bottom: 16px !important;  
+}
 
-  ::ng-deep .mat-mdc-button-toggle-group {
-    --mat-toggle-button-group-border-width: 1px;
-    --mat-toggle-button-group-border-color: var(--mat-primary);
+:host ::ng-deep .mat-button-toggle-checked .mat-button-toggle-button:has(.mat-button-toggle-checkbox-wrapper) {
+  padding-left: 0px !important;
+}
 
-    display: flex;
-    overflow: hidden;
-  }
+:host ::ng-deep .mat-button-toggle-checked .mat-button-toggle-checkbox-wrapper {
+  display: none !important;
+}
 
-  ::ng-deep .mat-mdc-button-toggle {
-    --mat-toggle-button-label-text-size: 12px;
-    --mat-toggle-button-label-text-transform: uppercase;
+:host ::ng-deep .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+  padding: 0 10px !important;
+  line-height: 32px !important;
+  font-size: 14px !important;
+}
 
-    flex: 1;
-    overflow: hidden;
-  }
+:host ::ng-deep .mat-button-toggle-appearance-standard.mat-button-toggle-checked {
+  color: var(--mat-sys-on-primary) !important;
+  background-color: var(--mat-sys-primary) !important;
 }
