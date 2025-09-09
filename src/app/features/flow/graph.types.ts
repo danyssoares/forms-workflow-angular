@@ -15,7 +15,7 @@ export interface ComparisonCondition {
   questionId?: string;
   questionValueType?: 'value' | 'score';
   conditionId?: string;
-  operator?: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'contains';
+  operator?: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'contains' | '&&' | '||';
   compareValueType: 'fixed' | 'question' | 'condition';
   compareValue?: any;
   compareQuestionId?: string;

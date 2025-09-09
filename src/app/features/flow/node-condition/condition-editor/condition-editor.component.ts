@@ -153,7 +153,9 @@ export class ConditionEditorComponent implements OnInit {
     { value: '<', label: 'Menor que (<)' },
     { value: '<=', label: 'Menor ou igual (<=)' },
     { value: 'in', label: 'Contido em (in)' },
-    { value: 'contains', label: 'Contém (contains)' }
+    { value: 'contains', label: 'Contém (contains)' },
+    { value: '&&', label: 'E (&&)' },
+    { value: '||', label: 'Ou (||)' }
   ];
 
   questionTypeOperators: Record<string, string[]> = {
@@ -169,6 +171,8 @@ export class ConditionEditorComponent implements OnInit {
     'image': ['==', '!='],
     'score': ['==', '!=', '>', '>=', '<', '<=']
   };
+
+  filteredOperators = this.operators.filter(op => !['&&', '||'].includes(op.value));
   
   constructor() {
     this.conditionForm = new FormGroup({
@@ -191,13 +195,74 @@ export class ConditionEditorComponent implements OnInit {
   ngOnInit() {
     this.conditionForm.patchValue(this.condition);
 
-    this.conditionForm.get('valueType')?.valueChanges.subscribe(v => {
-      if (v === 'condition') {
-        this.conditionForm.get('compareValueType')?.setValue('condition');
-      } else if (this.conditionForm.get('compareValueType')?.value === 'condition') {
-        this.conditionForm.get('compareValueType')?.setValue('fixed');
+    const valueTypeCtrl = this.conditionForm.get('valueType');
+    const compareValueTypeCtrl = this.conditionForm.get('compareValueType');
+    const operatorCtrl = this.conditionForm.get('operator');
+
+    const isConditionComparison = () =>
+      this.conditionForm.get('valueType')?.value === 'condition' ||
+      this.conditionForm.get('compareValueType')?.value === 'condition';
+
+    const updateOperator = () => {
+      if (isConditionComparison()) {
+        if (!['&&', '||'].includes(operatorCtrl?.value)) {
+          operatorCtrl?.setValue('&&');
+        }
+      } else if (['&&', '||'].includes(operatorCtrl?.value)) {
+        operatorCtrl?.setValue('==');
       }
+    };
+
+    const updateOperatorList = () => {
+      if (isConditionComparison()) {
+        this.filteredOperators = this.operators.filter(op =>
+          ['&&', '||'].includes(op.value)
+        );
+        return;
+      }
+
+      const questionType = this.selectedQuestionType;
+      const base = this.operators.filter(op => !['&&', '||'].includes(op.value));
+      if (!questionType || !this.questionTypeOperators[questionType]) {
+        this.filteredOperators = base;
+        return;
+      }
+
+      this.filteredOperators = base.filter(op =>
+        this.questionTypeOperators[questionType].includes(op.value)
+      );
+    };
+
+    valueTypeCtrl?.valueChanges.subscribe(v => {
+      if (v === 'condition') {
+        compareValueTypeCtrl?.setValue('condition');
+      } else if (compareValueTypeCtrl?.value === 'condition') {
+        compareValueTypeCtrl?.setValue('fixed');
+      }
+      updateOperator();
+      updateOperatorList();
     });
+
+    compareValueTypeCtrl?.valueChanges.subscribe(() => {
+      updateOperator();
+      updateOperatorList();
+    });
+
+    this.conditionForm.get('questionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('questionValueType')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm
+      .get('compareQuestionValueType')
+      ?.valueChanges.subscribe(() => updateOperatorList());
+
+    updateOperator();
+    updateOperatorList();
 
     // Update parent condition when form changes
     this.conditionForm.valueChanges.subscribe(value => {
@@ -231,14 +296,4 @@ export class ConditionEditorComponent implements OnInit {
     return question ? question.data.type : undefined;
   }
 
-  get filteredOperators() {
-    const questionType = this.selectedQuestionType;
-    if (!questionType || !this.questionTypeOperators[questionType]) {
-      return this.operators;
-    }
-    
-    return this.operators.filter(op => 
-      this.questionTypeOperators[questionType].includes(op.value)
-    );
-  }
 }
