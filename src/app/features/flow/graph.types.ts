@@ -6,7 +6,8 @@ export interface GraphModel { nodes:GraphNode[]; edges:GraphEdge[]; }
 
 export interface QuestionNodeData { id:string; label:string; type:'text'|'integer'|'double'|'boolean'|'select'|'radio'|'checkbox'|'date'|'datetime'|'image'; score?:number; trueLabel?:string; falseLabel?:string; options?:any[]; helpText?:string; seq?:number; }
 
-export interface SingleCondition {
+export interface ComparisonCondition {
+  type: 'comparison';
   id: string;
   name: string;
   valueType: 'fixed' | 'question' | 'score'; // Toggle para o primeiro valor
@@ -18,9 +19,17 @@ export interface SingleCondition {
   compareQuestionId?: string;
 }
 
-export interface ConditionNodeData { 
-  conditions: SingleCondition[]; 
-  seq?: number; 
+export interface ExpressionCondition {
+  type: 'expression';
+  id: string;
+  expression: string;
+}
+
+export type Condition = ComparisonCondition | ExpressionCondition;
+
+export interface ConditionNodeData {
+  conditions: Condition[];
+  seq?: number;
 }
 
 export interface ActionNodeData { type:'openForm'|'emitAlert'|'webhook'|'setTag'|'setField'; params?:Record<string,any>; seq?:number; }

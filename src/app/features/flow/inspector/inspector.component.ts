@@ -5,20 +5,22 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { GraphModel, QuestionNodeData, GraphNode } from '../graph.types';
+import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
+import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 
 @Component({
   selector: 'app-inspector',
   standalone: true,
   imports: [
-    NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule, 
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
-    FontAwesomeModule, ConditionEditorComponent
+    NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatMenuModule,
+    FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent
   ],
   template: `
   <div class="sidebar" *ngIf="node() as n">
@@ -87,18 +89,30 @@ import { ConditionEditorComponent } from '../node-condition/condition-editor/con
         <!-- CONDITION -->
         <div *ngSwitchCase="'condition'">
           <div>
-            <app-condition-editor
-              *ngFor="let condition of conditionData; let i = index"
-              [condition]="condition"
-              [index]="i"
-              [availableQuestions]="availableQuestions()"
-              (remove)="removeCondition(i)">
-            </app-condition-editor>
+            <ng-container *ngFor="let condition of conditionData; let i = index">
+              <app-condition-editor
+                *ngIf="condition.type === 'comparison'"
+                [condition]="condition"
+                [index]="i"
+                [availableQuestions]="availableQuestions()"
+                (remove)="removeCondition(i)">
+              </app-condition-editor>
+              <app-expression-condition-editor
+                *ngIf="condition.type === 'expression'"
+                [condition]="condition"
+                [index]="i"
+                (remove)="removeCondition(i)">
+              </app-expression-condition-editor>
+            </ng-container>
           </div>
-          
-          <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
+
+          <button mat-stroked-button type="button" [matMenuTriggerFor]="conditionMenu" class="add-condition-btn">
             <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
           </button>
+          <mat-menu #conditionMenu="matMenu">
+            <button mat-menu-item (click)="addComparisonCondition()">Comparação</button>
+            <button mat-menu-item (click)="addExpressionCondition()">Expressão</button>
+          </mat-menu>
         </div>
 
         <!-- ACTION -->
@@ -159,7 +173,7 @@ export class InspectorComponent {
 
   fgQ: FormGroup;
   fgA: FormGroup;
-  conditionData: any[] = [];
+  conditionData: Condition[] = [];
 
   faTimes = faTimes;
   faSave = faSave;
@@ -199,7 +213,10 @@ export class InspectorComponent {
         });
       }
       if (n.kind === 'condition') {
-        this.conditionData = [...(n.data.conditions || [])];
+        this.conditionData = (n.data.conditions || []).map((c: any) => ({
+          type: c.type || 'comparison',
+          ...c
+        }));
       }
       if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type });
     });
@@ -209,8 +226,9 @@ export class InspectorComponent {
   addOption() { this.options.push(this.fb.group({ label: [''], value: [''] })); }
   removeOption(i: number) { this.options.removeAt(i); }
 
-  addCondition() {
-    const newCondition = {
+  addComparisonCondition() {
+    const newCondition: ComparisonCondition = {
+      type: 'comparison',
       id: crypto.randomUUID(),
       name: '',
       valueType: 'fixed',
@@ -220,6 +238,15 @@ export class InspectorComponent {
       compareValueType: 'fixed',
       compareValue: '',
       compareQuestionId: ''
+    };
+    this.conditionData.push(newCondition);
+  }
+
+  addExpressionCondition() {
+    const newCondition: ExpressionCondition = {
+      type: 'expression',
+      id: crypto.randomUUID(),
+      expression: ''
     };
     this.conditionData.push(newCondition);
   }
