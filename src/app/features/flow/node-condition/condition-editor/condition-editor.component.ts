@@ -244,6 +244,61 @@ export class ConditionEditorComponent implements OnInit {
       );
     };
 
+    valueTypeCtrl?.valueChanges.subscribe(v => {
+      if (v === 'condition') {
+        compareValueTypeCtrl?.setValue('condition');
+        this.conditionForm.patchValue({
+          value: '',
+          questionId: '',
+          questionValueType: 'value'
+        });
+      } else {
+        if (compareValueTypeCtrl?.value === 'condition') {
+          compareValueTypeCtrl?.setValue('fixed');
+        }
+        this.conditionForm.patchValue({
+          conditionId: ''
+        });
+      }
+    });
+
+    compareValueTypeCtrl?.valueChanges.subscribe(v => {
+      if (v === 'condition') {
+        this.conditionForm.patchValue({
+          compareValue: '',
+          compareQuestionId: '',
+          compareQuestionValueType: 'value'
+        });
+      } else {
+        this.conditionForm.patchValue({
+          compareConditionId: ''
+        });
+      }
+    });
+
+    combineLatest([
+      valueTypeCtrl!.valueChanges.pipe(startWith(valueTypeCtrl!.value)),
+      compareValueTypeCtrl!.valueChanges.pipe(
+        startWith(compareValueTypeCtrl!.value)
+      ),
+    ]).subscribe(() => {
+      updateOperator();
+      updateOperatorList();
+    });
+
+    this.conditionForm.get('questionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('questionValueType')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm
+      .get('compareQuestionValueType')
+      ?.valueChanges.subscribe(() => updateOperatorList());
+
     // Trigger initial operator setup
     updateOperator();
     updateOperatorList();
