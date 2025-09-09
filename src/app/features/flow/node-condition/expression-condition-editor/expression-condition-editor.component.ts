@@ -6,11 +6,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExpressionCondition } from '../../graph.types';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-expression-condition-editor',
   standalone: true,
   imports: [
+    NgIf,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,

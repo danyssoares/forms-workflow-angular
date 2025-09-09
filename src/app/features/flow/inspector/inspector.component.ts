@@ -20,7 +20,8 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
   imports: [
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
-    FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent
+    FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent,
+    
   ],
   template: `
   <div class="sidebar" *ngIf="node() as n">
@@ -108,11 +109,7 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
 
           <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
             <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
-          </button>
-          <mat-menu #conditionMenu="matMenu">
-            <button mat-menu-item (click)="addComparisonCondition()">Comparação</button>
-            <button mat-menu-item (click)="addExpressionCondition()">Expressão</button>
-          </mat-menu>
+          </button>          
         </div>
 
         <!-- ACTION -->
