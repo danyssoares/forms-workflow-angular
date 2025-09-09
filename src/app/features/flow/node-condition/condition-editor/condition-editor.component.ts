@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { combineLatest, startWith } from 'rxjs';
 import {
   ComparisonCondition,
   QuestionNodeData,
@@ -198,7 +197,7 @@ export class ConditionEditorComponent implements OnInit {
     });
   }
   
-  ngOnInit() {
+  ngOnInit(): void {
     this.conditionForm.patchValue(this.condition);
 
     const valueTypeCtrl = this.conditionForm.get('valueType');
@@ -210,12 +209,18 @@ export class ConditionEditorComponent implements OnInit {
       compareValueTypeCtrl?.value === 'condition';
 
     const updateOperator = () => {
-      if (isConditionComparison()) {
-        if (!['&&', '||'].includes(operatorCtrl?.value)) {
-          operatorCtrl?.setValue('&&');
+      if (valueTypeCtrl?.value === 'condition') {
+        if (compareValueTypeCtrl?.value !== 'condition') {
+          compareValueTypeCtrl?.setValue('condition', { emitEvent: false });
         }
-      } else if (['&&', '||'].includes(operatorCtrl?.value)) {
-        operatorCtrl?.setValue('==');
+      } else if (compareValueTypeCtrl?.value === 'condition') {
+        compareValueTypeCtrl?.setValue('fixed', { emitEvent: false });
+      }
+
+      if (!this.filteredOperators.find(op => op.value === operatorCtrl?.value)) {
+        operatorCtrl?.setValue(this.filteredOperators[0].value, {
+          emitEvent: false,
+        });
       }
     };
 
@@ -297,13 +302,18 @@ export class ConditionEditorComponent implements OnInit {
     // Trigger initial operator setup
     updateOperator();
     updateOperatorList();
+    updateOperator();
 
     // Update parent condition when form changes
-    this.conditionForm.valueChanges.subscribe(value => {
-      // Update only the specific fields that have changed
+    this.conditionForm.valueChanges.subscribe(() => {
+      updateOperator();
+      updateOperatorList();
+      updateOperator();
+
+      const value = this.conditionForm.value;
       Object.keys(value).forEach(key => {
         if (this.condition.hasOwnProperty(key)) {
-          (this.condition as any)[key] = value[key];
+          (this.condition as any)[key] = (value as any)[key];
         }
       });
     });
