@@ -28,6 +28,7 @@ export interface ExpressionCondition {
 export type Condition = ComparisonCondition | ExpressionCondition;
 
 export interface ConditionNodeData {
+  conditionType: 'comparison' | 'expression';
   conditions: Condition[];
   seq?: number;
 }

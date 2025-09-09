@@ -24,7 +24,11 @@ interface QuestionTypeOption {
       </div>
     </mat-menu>
 
-    <button mat-raised-button color="accent" (click)="add.emit({kind:'condition'})">Condição +</button>
+    <button mat-raised-button color="accent" [matMenuTriggerFor]="c">Condição +</button>
+    <mat-menu #c="matMenu">
+      <button mat-menu-item (click)="add.emit({kind:'condition', conditionType: 'comparison'})">Comparação</button>
+      <button mat-menu-item (click)="add.emit({kind:'condition', conditionType: 'expression'})">Expressão</button>
+    </mat-menu>
     <button mat-raised-button color="tertiary" (click)="add.emit({kind:'action'})">Ação +</button>
     <button mat-raised-button color="warn" (click)="add.emit({kind:'end'})">Final +</button>
   </div>

@@ -19,7 +19,7 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
   standalone: true,
   imports: [
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatMenuModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
     FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent
   ],
   template: `
@@ -91,22 +91,22 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
           <div>
             <ng-container *ngFor="let condition of conditionData; let i = index">
               <app-condition-editor
-                *ngIf="condition.type === 'comparison'"
-                [condition]="condition"
+                *ngIf="conditionType === 'comparison'"
+                [condition]="$any(condition)"
                 [index]="i"
                 [availableQuestions]="availableQuestions()"
                 (remove)="removeCondition(i)">
               </app-condition-editor>
               <app-expression-condition-editor
-                *ngIf="condition.type === 'expression'"
-                [condition]="condition"
+                *ngIf="conditionType === 'expression'"
+                [condition]="$any(condition)"
                 [index]="i"
                 (remove)="removeCondition(i)">
               </app-expression-condition-editor>
             </ng-container>
           </div>
 
-          <button mat-stroked-button type="button" [matMenuTriggerFor]="conditionMenu" class="add-condition-btn">
+          <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
             <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
           </button>
           <mat-menu #conditionMenu="matMenu">
@@ -174,6 +174,7 @@ export class InspectorComponent {
   fgQ: FormGroup;
   fgA: FormGroup;
   conditionData: Condition[] = [];
+  conditionType: 'comparison' | 'expression' = 'comparison';
 
   faTimes = faTimes;
   faSave = faSave;
@@ -213,8 +214,9 @@ export class InspectorComponent {
         });
       }
       if (n.kind === 'condition') {
+        this.conditionType = n.data.conditionType || 'comparison';
         this.conditionData = (n.data.conditions || []).map((c: any) => ({
-          type: c.type || 'comparison',
+          type: c.type || this.conditionType,
           ...c
         }));
       }
@@ -226,20 +228,29 @@ export class InspectorComponent {
   addOption() { this.options.push(this.fb.group({ label: [''], value: [''] })); }
   removeOption(i: number) { this.options.removeAt(i); }
 
-  addComparisonCondition() {
-    const newCondition: ComparisonCondition = {
-      type: 'comparison',
-      id: crypto.randomUUID(),
-      name: '',
-      valueType: 'fixed',
-      value: '',
-      questionId: '',
-      operator: '==',
-      compareValueType: 'fixed',
-      compareValue: '',
-      compareQuestionId: ''
-    };
-    this.conditionData.push(newCondition);
+  addCondition() {
+    if (this.conditionType === 'comparison') {
+      const newCondition: ComparisonCondition = {
+        type: 'comparison',
+        id: crypto.randomUUID(),
+        name: '',
+        valueType: 'fixed',
+        value: '',
+        questionId: '',
+        operator: '==',
+        compareValueType: 'fixed',
+        compareValue: '',
+        compareQuestionId: ''
+      };
+      this.conditionData.push(newCondition);
+    } else {
+      const newCondition: ExpressionCondition = {
+        type: 'expression',
+        id: crypto.randomUUID(),
+        expression: ''
+      };
+      this.conditionData.push(newCondition);
+    }
   }
 
   addExpressionCondition() {
@@ -294,8 +305,9 @@ export class InspectorComponent {
     }
     
     if (n.kind === 'condition') {
-      this.state.updateNode(n.id, { 
-        ...n.data, 
+      this.state.updateNode(n.id, {
+        ...n.data,
+        conditionType: this.conditionType,
         conditions: this.conditionData
       });
     }
