@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
@@ -108,6 +109,10 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
           <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
             <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
           </button>
+          <mat-menu #conditionMenu="matMenu">
+            <button mat-menu-item (click)="addComparisonCondition()">Comparação</button>
+            <button mat-menu-item (click)="addExpressionCondition()">Expressão</button>
+          </mat-menu>
         </div>
 
         <!-- ACTION -->
@@ -246,6 +251,15 @@ export class InspectorComponent {
       };
       this.conditionData.push(newCondition);
     }
+  }
+
+  addExpressionCondition() {
+    const newCondition: ExpressionCondition = {
+      type: 'expression',
+      id: crypto.randomUUID(),
+      expression: ''
+    };
+    this.conditionData.push(newCondition);
   }
 
   removeCondition(index: number) {
