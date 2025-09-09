@@ -10,7 +10,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition } from '../graph.types';
+import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition, ConditionNodeData } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 
@@ -96,6 +96,7 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
                 [condition]="$any(condition)"
                 [index]="i"
                 [availableQuestions]="availableQuestions()"
+                [availableConditions]="availableConditions()"
                 (remove)="removeCondition(i)">
               </app-condition-editor>
               <app-expression-condition-editor
@@ -168,6 +169,30 @@ export class InspectorComponent {
     return questions.sort((a, b) => (a.data.seq || 0) - (b.data.seq || 0));
   });
 
+  availableConditions = computed(() => {
+    const g = this.graph();
+    const selectedNode = g.nodes.find(n => n.id === this.selectedId());
+    if (!selectedNode || selectedNode.kind !== 'condition') return [] as Condition[];
+
+    const reachable = new Set<string>();
+    const visit = (id: string) => {
+      g.edges.filter(e => e.to === id).forEach(e => {
+        if (!reachable.has(e.from)) {
+          reachable.add(e.from);
+          visit(e.from);
+        }
+      });
+    };
+    visit(selectedNode.id);
+
+    const nodes = g.nodes.filter(n => n.kind === 'condition' && n.id !== selectedNode.id && reachable.has(n.id)) as GraphNode<ConditionNodeData>[];
+    const conditions: Condition[] = [];
+    nodes.forEach(n => {
+      (n.data.conditions || []).forEach(c => conditions.push(c));
+    });
+    return conditions;
+  });
+
   fgQ: FormGroup;
   fgA: FormGroup;
   conditionData: Condition[] = [];
@@ -234,10 +259,14 @@ export class InspectorComponent {
         valueType: 'fixed',
         value: '',
         questionId: '',
+        questionValueType: 'value',
+        conditionId: '',
         operator: '==',
         compareValueType: 'fixed',
         compareValue: '',
-        compareQuestionId: ''
+        compareQuestionId: '',
+        compareQuestionValueType: 'value',
+        compareConditionId: ''
       };
       this.conditionData.push(newCondition);
     } else {

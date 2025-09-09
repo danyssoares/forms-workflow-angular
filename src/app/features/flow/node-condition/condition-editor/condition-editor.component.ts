@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.types';
+import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../../graph.types';
 
 @Component({
   selector: 'app-condition-editor',
@@ -41,10 +41,10 @@ import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.ty
       <div class="value-section">
         <h5>Primeiro Valor</h5>
         <div class="value-toggle">
-          <mat-button-toggle-group formControlName="valueType" aria-label="Valor ou Pergunta">
-            <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
+          <mat-button-toggle-group formControlName="valueType" aria-label="Tipo do primeiro valor">
+            <mat-button-toggle value="fixed">Constante</mat-button-toggle>
             <mat-button-toggle value="question">Pergunta</mat-button-toggle>
-            <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
+            <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
 
@@ -53,11 +53,28 @@ import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.ty
           <input matInput formControlName="value">
         </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'question' || conditionForm.get('valueType')?.value === 'score'">
-          <mat-label>Pergunta</mat-label>
-          <mat-select formControlName="questionId">
-            <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
-              {{ question.data.label }}
+        <ng-container *ngIf="conditionForm.get('valueType')?.value === 'question'">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Pergunta</mat-label>
+            <mat-select formControlName="questionId">
+              <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
+                {{ question.data.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="value-toggle">
+            <mat-button-toggle-group formControlName="questionValueType" aria-label="Valor ou Score">
+              <mat-button-toggle value="value">Valor</mat-button-toggle>
+              <mat-button-toggle value="score">Score</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        </ng-container>
+
+        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'condition'">
+          <mat-label>Condição</mat-label>
+          <mat-select formControlName="conditionId">
+            <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
+              {{ cond.name || 'Condição' }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -75,10 +92,10 @@ import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.ty
       <div class="compare-value-section">
         <h5>Segundo Valor</h5>
         <div class="value-toggle">
-          <mat-button-toggle-group formControlName="compareValueType" aria-label="Valor ou Pergunta">
-            <mat-button-toggle value="fixed">Valor Fixo</mat-button-toggle>
-            <mat-button-toggle value="question">Pergunta</mat-button-toggle>
-            <mat-button-toggle value="score">Score da Pergunta</mat-button-toggle>
+          <mat-button-toggle-group formControlName="compareValueType" aria-label="Tipo do segundo valor">
+            <mat-button-toggle value="fixed" *ngIf="conditionForm.get('valueType')?.value !== 'condition'">Constante</mat-button-toggle>
+            <mat-button-toggle value="question" *ngIf="conditionForm.get('valueType')?.value !== 'condition'">Pergunta</mat-button-toggle>
+            <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
 
@@ -87,11 +104,28 @@ import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.ty
           <input matInput formControlName="compareValue">
         </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'question' || conditionForm.get('compareValueType')?.value === 'score'">
-          <mat-label>Pergunta</mat-label>
-          <mat-select formControlName="compareQuestionId">
-            <mat-option *ngFor="let question of availableQuestionsForComparison" [value]="question.data.id">
-              {{ question.data.label }}
+        <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Pergunta</mat-label>
+            <mat-select formControlName="compareQuestionId">
+              <mat-option *ngFor="let question of availableQuestionsForComparison" [value]="question.data.id">
+                {{ question.data.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="value-toggle">
+            <mat-button-toggle-group formControlName="compareQuestionValueType" aria-label="Valor ou Score">
+              <mat-button-toggle value="value">Valor</mat-button-toggle>
+              <mat-button-toggle value="score">Score</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        </ng-container>
+
+        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'condition'">
+          <mat-label>Condição</mat-label>
+          <mat-select formControlName="compareConditionId">
+            <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
+              {{ cond.name || 'Condição' }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -104,6 +138,7 @@ export class ConditionEditorComponent implements OnInit {
   @Input() condition!: ComparisonCondition;
   @Input() index!: number;
   @Input() availableQuestions: GraphNode<QuestionNodeData>[] = [];
+  @Input() availableConditions: Condition[] = [];
   @Output() remove = new EventEmitter<void>();
   
   faTrash = faTrash;
@@ -118,7 +153,9 @@ export class ConditionEditorComponent implements OnInit {
     { value: '<', label: 'Menor que (<)' },
     { value: '<=', label: 'Menor ou igual (<=)' },
     { value: 'in', label: 'Contido em (in)' },
-    { value: 'contains', label: 'Contém (contains)' }
+    { value: 'contains', label: 'Contém (contains)' },
+    { value: '&&', label: 'E (&&)' },
+    { value: '||', label: 'Ou (||)' }
   ];
 
   questionTypeOperators: Record<string, string[]> = {
@@ -134,6 +171,8 @@ export class ConditionEditorComponent implements OnInit {
     'image': ['==', '!='],
     'score': ['==', '!=', '>', '>=', '<', '<=']
   };
+
+  filteredOperators = this.operators.filter(op => !['&&', '||'].includes(op.value));
   
   constructor() {
     this.conditionForm = new FormGroup({
@@ -142,16 +181,89 @@ export class ConditionEditorComponent implements OnInit {
       valueType: new FormControl('fixed'),
       value: new FormControl(''),
       questionId: new FormControl(''),
+      questionValueType: new FormControl('value'),
+      conditionId: new FormControl(''),
       operator: new FormControl('=='),
       compareValueType: new FormControl('fixed'),
       compareValue: new FormControl(''),
-      compareQuestionId: new FormControl('')
+      compareQuestionId: new FormControl(''),
+      compareQuestionValueType: new FormControl('value'),
+      compareConditionId: new FormControl('')
     });
   }
   
   ngOnInit() {
     this.conditionForm.patchValue(this.condition);
-    
+
+    const valueTypeCtrl = this.conditionForm.get('valueType');
+    const compareValueTypeCtrl = this.conditionForm.get('compareValueType');
+    const operatorCtrl = this.conditionForm.get('operator');
+
+    const isConditionComparison = () =>
+      this.conditionForm.get('valueType')?.value === 'condition' ||
+      this.conditionForm.get('compareValueType')?.value === 'condition';
+
+    const updateOperator = () => {
+      if (isConditionComparison()) {
+        if (!['&&', '||'].includes(operatorCtrl?.value)) {
+          operatorCtrl?.setValue('&&');
+        }
+      } else if (['&&', '||'].includes(operatorCtrl?.value)) {
+        operatorCtrl?.setValue('==');
+      }
+    };
+
+    const updateOperatorList = () => {
+      if (isConditionComparison()) {
+        this.filteredOperators = this.operators.filter(op =>
+          ['&&', '||'].includes(op.value)
+        );
+        return;
+      }
+
+      const questionType = this.selectedQuestionType;
+      const base = this.operators.filter(op => !['&&', '||'].includes(op.value));
+      if (!questionType || !this.questionTypeOperators[questionType]) {
+        this.filteredOperators = base;
+        return;
+      }
+
+      this.filteredOperators = base.filter(op =>
+        this.questionTypeOperators[questionType].includes(op.value)
+      );
+    };
+
+    valueTypeCtrl?.valueChanges.subscribe(v => {
+      if (v === 'condition') {
+        compareValueTypeCtrl?.setValue('condition');
+      } else if (compareValueTypeCtrl?.value === 'condition') {
+        compareValueTypeCtrl?.setValue('fixed');
+      }
+      updateOperator();
+      updateOperatorList();
+    });
+
+    compareValueTypeCtrl?.valueChanges.subscribe(() => {
+      updateOperator();
+      updateOperatorList();
+    });
+
+    this.conditionForm.get('questionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('questionValueType')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() =>
+      updateOperatorList()
+    );
+    this.conditionForm
+      .get('compareQuestionValueType')
+      ?.valueChanges.subscribe(() => updateOperatorList());
+
+    updateOperator();
+    updateOperatorList();
+
     // Update parent condition when form changes
     this.conditionForm.valueChanges.subscribe(value => {
       // Update only the specific fields that have changed
@@ -173,7 +285,9 @@ export class ConditionEditorComponent implements OnInit {
 
   get selectedQuestionType(): string | undefined {
     const valueType = this.conditionForm.get('valueType')?.value;
-    if (valueType === 'score') return 'score';
+    if (valueType !== 'question') return undefined;
+
+    if (this.conditionForm.get('questionValueType')?.value === 'score') return 'score';
 
     const selectedQuestionId = this.conditionForm.get('questionId')?.value;
     if (!selectedQuestionId) return undefined;
@@ -182,14 +296,4 @@ export class ConditionEditorComponent implements OnInit {
     return question ? question.data.type : undefined;
   }
 
-  get filteredOperators() {
-    const questionType = this.selectedQuestionType;
-    if (!questionType || !this.questionTypeOperators[questionType]) {
-      return this.operators;
-    }
-    
-    return this.operators.filter(op => 
-      this.questionTypeOperators[questionType].includes(op.value)
-    );
-  }
 }
