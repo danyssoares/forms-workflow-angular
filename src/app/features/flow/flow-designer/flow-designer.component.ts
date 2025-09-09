@@ -52,10 +52,14 @@ export class FlowDesignerComponent {
             valueType: 'fixed',
             value: '',
             questionId: '',
+            questionValueType: 'value',
+            conditionId: '',
             operator: '==',
             compareValueType: 'fixed',
             compareValue: '',
-            compareQuestionId: ''
+            compareQuestionId: '',
+            compareQuestionValueType: 'value',
+            compareConditionId: ''
           }]
         }, pos);
       }

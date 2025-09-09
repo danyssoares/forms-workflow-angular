@@ -10,13 +10,17 @@ export interface ComparisonCondition {
   type: 'comparison';
   id: string;
   name: string;
-  valueType: 'fixed' | 'question' | 'score'; // Toggle para o primeiro valor
+  valueType: 'fixed' | 'question' | 'condition';
   value?: any;
   questionId?: string;
+  questionValueType?: 'value' | 'score';
+  conditionId?: string;
   operator?: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'contains';
-  compareValueType: 'fixed' | 'question' | 'score'; // Toggle para o segundo valor
+  compareValueType: 'fixed' | 'question' | 'condition';
   compareValue?: any;
   compareQuestionId?: string;
+  compareQuestionValueType?: 'value' | 'score';
+  compareConditionId?: string;
 }
 
 export interface ExpressionCondition {
