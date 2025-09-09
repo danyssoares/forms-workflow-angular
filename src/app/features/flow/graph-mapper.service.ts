@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GraphModel, GraphNode } from './graph.types';
+import { GraphModel, GraphNode, ConditionNodeData, ComparisonCondition, ExpressionCondition, Condition } from './graph.types';
 import { FormDefinition, Question, Rule, RuleAction, RuleTrigger } from '../../shared/models/form-models';
 
 @Injectable({ providedIn: 'root' })
@@ -21,15 +21,26 @@ export class GraphMapperService {
     const rules: Rule[] = [];
     // Regras por resposta: Pergunta -> Condição -> Ação
     graph.nodes.filter(n=>n.kind==='condition').forEach(cond => {
+      const nodeData = cond.data as ConditionNodeData;
+      const firstCondition = nodeData.conditions[0] as Condition | undefined;
+      if (!firstCondition) return;
       const incoming = graph.edges.filter(e=>e.to===cond.id).map(e=>graph.nodes.find(n=>n.id===e.from)!).filter(Boolean);
       const q = incoming.find(n=>n.kind==='question');
-      if (!q) return;
       const actions = graph.edges.filter(e=>e.from===cond.id).map(e=>graph.nodes.find(n=>n.id===e.to)!).filter(n=>n?.kind==='action');
-      if (!actions.length) return;
-      const trigger: RuleTrigger = {
-        kind: 'onAnswer', questionId: q.data.id,
-        operator: cond.data.operator || '==', value: cond.data.value
-      } as any;
+      if (!q || !actions.length) return;
+
+      let trigger: RuleTrigger;
+      if (nodeData.conditionType === 'expression') {
+        trigger = { kind: 'onExpression', expression: (firstCondition as ExpressionCondition).expression } as any;
+      } else {
+        const comp = firstCondition as ComparisonCondition;
+        trigger = {
+          kind: 'onAnswer',
+          questionId: q.data.id,
+          operator: comp.operator || '==',
+          value: comp.value
+        } as any;
+      }
       const ruleActions: RuleAction[] = actions.map(a=>{
         const t = a.data.type as RuleAction['type'];
         switch (t) {

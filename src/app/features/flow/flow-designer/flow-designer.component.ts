@@ -29,22 +29,37 @@ import { NgIf } from '@angular/common';
 export class FlowDesignerComponent {
   constructor(public state: GraphStateService, private mapper: GraphMapperService) {}
 
-  onAdd(e:{kind:string,type?:string}){
+  onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
     if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text', score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
-    if(e.kind==='condition') this.state.addNode('condition', { 
-      conditions: [{
-        id: crypto.randomUUID(),
-        name: 'Condição 1',
-        valueType: 'fixed',
-        value: '',
-        questionId: '',
-        operator: '==',
-        compareValueType: 'fixed',
-        compareValue: '',
-        compareQuestionId: ''
-      }]
-    }, pos);
+    if(e.kind==='condition') {
+      if(e.conditionType === 'expression') {
+        this.state.addNode('condition', {
+          conditionType: 'expression',
+          conditions: [{
+            type: 'expression',
+            id: crypto.randomUUID(),
+            expression: ''
+          }]
+        }, pos);
+      } else {
+        this.state.addNode('condition', {
+          conditionType: 'comparison',
+          conditions: [{
+            type: 'comparison',
+            id: crypto.randomUUID(),
+            name: '',
+            valueType: 'fixed',
+            value: '',
+            questionId: '',
+            operator: '==',
+            compareValueType: 'fixed',
+            compareValue: '',
+            compareQuestionId: ''
+          }]
+        }, pos);
+      }
+    }
     if(e.kind==='action') this.state.addNode('action', { type:'emitAlert', params:{ alertCode:'ALERTA' } }, pos);
     if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário' }, pos);
   }

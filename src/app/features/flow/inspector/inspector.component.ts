@@ -9,16 +9,17 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { GraphModel, QuestionNodeData, GraphNode } from '../graph.types';
+import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
+import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 
 @Component({
   selector: 'app-inspector',
   standalone: true,
   imports: [
-    NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule, 
+    NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
-    FontAwesomeModule, ConditionEditorComponent
+    FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent
   ],
   template: `
   <div class="sidebar" *ngIf="node() as n">
@@ -87,15 +88,23 @@ import { ConditionEditorComponent } from '../node-condition/condition-editor/con
         <!-- CONDITION -->
         <div *ngSwitchCase="'condition'">
           <div>
-            <app-condition-editor
-              *ngFor="let condition of conditionData; let i = index"
-              [condition]="condition"
-              [index]="i"
-              [availableQuestions]="availableQuestions()"
-              (remove)="removeCondition(i)">
-            </app-condition-editor>
+            <ng-container *ngFor="let condition of conditionData; let i = index">
+              <app-condition-editor
+                *ngIf="conditionType === 'comparison'"
+                [condition]="$any(condition)"
+                [index]="i"
+                [availableQuestions]="availableQuestions()"
+                (remove)="removeCondition(i)">
+              </app-condition-editor>
+              <app-expression-condition-editor
+                *ngIf="conditionType === 'expression'"
+                [condition]="$any(condition)"
+                [index]="i"
+                (remove)="removeCondition(i)">
+              </app-expression-condition-editor>
+            </ng-container>
           </div>
-          
+
           <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
             <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
           </button>
@@ -159,7 +168,8 @@ export class InspectorComponent {
 
   fgQ: FormGroup;
   fgA: FormGroup;
-  conditionData: any[] = [];
+  conditionData: Condition[] = [];
+  conditionType: 'comparison' | 'expression' = 'comparison';
 
   faTimes = faTimes;
   faSave = faSave;
@@ -199,7 +209,11 @@ export class InspectorComponent {
         });
       }
       if (n.kind === 'condition') {
-        this.conditionData = [...(n.data.conditions || [])];
+        this.conditionType = n.data.conditionType || 'comparison';
+        this.conditionData = (n.data.conditions || []).map((c: any) => ({
+          type: c.type || this.conditionType,
+          ...c
+        }));
       }
       if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type });
     });
@@ -210,18 +224,28 @@ export class InspectorComponent {
   removeOption(i: number) { this.options.removeAt(i); }
 
   addCondition() {
-    const newCondition = {
-      id: crypto.randomUUID(),
-      name: '',
-      valueType: 'fixed',
-      value: '',
-      questionId: '',
-      operator: '==',
-      compareValueType: 'fixed',
-      compareValue: '',
-      compareQuestionId: ''
-    };
-    this.conditionData.push(newCondition);
+    if (this.conditionType === 'comparison') {
+      const newCondition: ComparisonCondition = {
+        type: 'comparison',
+        id: crypto.randomUUID(),
+        name: '',
+        valueType: 'fixed',
+        value: '',
+        questionId: '',
+        operator: '==',
+        compareValueType: 'fixed',
+        compareValue: '',
+        compareQuestionId: ''
+      };
+      this.conditionData.push(newCondition);
+    } else {
+      const newCondition: ExpressionCondition = {
+        type: 'expression',
+        id: crypto.randomUUID(),
+        expression: ''
+      };
+      this.conditionData.push(newCondition);
+    }
   }
 
   removeCondition(index: number) {
@@ -267,8 +291,9 @@ export class InspectorComponent {
     }
     
     if (n.kind === 'condition') {
-      this.state.updateNode(n.id, { 
-        ...n.data, 
+      this.state.updateNode(n.id, {
+        ...n.data,
+        conditionType: this.conditionType,
         conditions: this.conditionData
       });
     }

@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types';
+import { ComparisonCondition, QuestionNodeData, GraphNode } from '../../graph.types';
 
 @Component({
   selector: 'app-condition-editor',
@@ -101,7 +101,7 @@ import { SingleCondition, QuestionNodeData, GraphNode } from '../../graph.types'
   styleUrl: './condition-editor.component.scss'
 })
 export class ConditionEditorComponent implements OnInit {
-  @Input() condition!: SingleCondition;
+  @Input() condition!: ComparisonCondition;
   @Input() index!: number;
   @Input() availableQuestions: GraphNode<QuestionNodeData>[] = [];
   @Output() remove = new EventEmitter<void>();
