@@ -8,7 +8,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../../graph.types';
+import { combineLatest, startWith } from 'rxjs';
+import {
+  ComparisonCondition,
+  QuestionNodeData,
+  GraphNode,
+  Condition,
+} from '../../graph.types';
 
 @Component({
   selector: 'app-condition-editor',
@@ -200,8 +206,8 @@ export class ConditionEditorComponent implements OnInit {
     const operatorCtrl = this.conditionForm.get('operator');
 
     const isConditionComparison = () =>
-      this.conditionForm.get('valueType')?.value === 'condition' ||
-      this.conditionForm.get('compareValueType')?.value === 'condition';
+      valueTypeCtrl?.value === 'condition' ||
+      compareValueTypeCtrl?.value === 'condition';
 
     const updateOperator = () => {
       if (isConditionComparison()) {
@@ -239,11 +245,14 @@ export class ConditionEditorComponent implements OnInit {
       } else if (compareValueTypeCtrl?.value === 'condition') {
         compareValueTypeCtrl?.setValue('fixed');
       }
-      updateOperator();
-      updateOperatorList();
     });
 
-    compareValueTypeCtrl?.valueChanges.subscribe(() => {
+    combineLatest([
+      valueTypeCtrl!.valueChanges.pipe(startWith(valueTypeCtrl!.value)),
+      compareValueTypeCtrl!.valueChanges.pipe(
+        startWith(compareValueTypeCtrl!.value)
+      ),
+    ]).subscribe(() => {
       updateOperator();
       updateOperatorList();
     });
@@ -261,6 +270,7 @@ export class ConditionEditorComponent implements OnInit {
       .get('compareQuestionValueType')
       ?.valueChanges.subscribe(() => updateOperatorList());
 
+    // Trigger initial operator setup
     updateOperator();
     updateOperatorList();
 
