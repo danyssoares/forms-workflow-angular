@@ -242,8 +242,32 @@ export class ConditionEditorComponent implements OnInit {
     valueTypeCtrl?.valueChanges.subscribe(v => {
       if (v === 'condition') {
         compareValueTypeCtrl?.setValue('condition');
-      } else if (compareValueTypeCtrl?.value === 'condition') {
-        compareValueTypeCtrl?.setValue('fixed');
+        this.conditionForm.patchValue({
+          value: '',
+          questionId: '',
+          questionValueType: 'value'
+        });
+      } else {
+        if (compareValueTypeCtrl?.value === 'condition') {
+          compareValueTypeCtrl?.setValue('fixed');
+        }
+        this.conditionForm.patchValue({
+          conditionId: ''
+        });
+      }
+    });
+
+    compareValueTypeCtrl?.valueChanges.subscribe(v => {
+      if (v === 'condition') {
+        this.conditionForm.patchValue({
+          compareValue: '',
+          compareQuestionId: '',
+          compareQuestionValueType: 'value'
+        });
+      } else {
+        this.conditionForm.patchValue({
+          compareConditionId: ''
+        });
       }
     });
 
