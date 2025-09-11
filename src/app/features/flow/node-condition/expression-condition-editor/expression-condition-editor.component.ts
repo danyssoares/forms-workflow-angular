@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExpressionCondition } from '../../graph.types';
 import { NgIf } from '@angular/common';
@@ -40,6 +40,8 @@ export class ExpressionConditionEditorComponent implements OnInit {
   @Input() index!: number;
   @Output() remove = new EventEmitter<void>();
 
+  library = inject(FaIconLibrary);
+
   faTrash = faTrash;
   expressionControl = new FormControl('');
 
@@ -48,5 +50,9 @@ export class ExpressionConditionEditorComponent implements OnInit {
     this.expressionControl.valueChanges.subscribe(value => {
       this.condition.expression = value || '';
     });
+  }
+
+  constructor() {
+    this.library.addIcons(faTrash);
   }
 }

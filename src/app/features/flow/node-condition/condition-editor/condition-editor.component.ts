@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,9 +6,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../../graph.types';
+import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
 
 @Component({
   selector: 'app-condition-editor',
@@ -22,116 +23,11 @@ import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../
     MatSelectModule,
     MatButtonModule,
     MatButtonToggleModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    ControlMaterialComponent,
+    //ControlMaterialSelectComponent
   ],
-  template: `
-    <div class="condition-editor" [formGroup]="conditionForm">
-      <div class="condition-header">
-        <h4>Condição {{ index + 1 }}</h4>
-        <button mat-icon-button type="button" (click)="remove.emit()" *ngIf="index > 0">
-          <fa-icon [icon]="faTrash"></fa-icon>
-        </button>
-      </div>
-      
-      <mat-form-field appearance="outline" style="width:100%">
-        <mat-label>Nome</mat-label>
-        <input matInput formControlName="name">
-      </mat-form-field>
-      
-      <div class="value-section">
-        <h5>Primeiro Valor</h5>
-        <div class="value-toggle">
-          <mat-button-toggle-group formControlName="valueType" aria-label="Tipo do primeiro valor">
-            <mat-button-toggle value="fixed">Constante</mat-button-toggle>
-            <mat-button-toggle value="question">Pergunta</mat-button-toggle>
-            <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
-          <mat-label>Valor</mat-label>
-          <input matInput formControlName="value">
-        </mat-form-field>
-
-        <ng-container *ngIf="conditionForm.get('valueType')?.value === 'question'">
-          <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Pergunta</mat-label>
-            <mat-select formControlName="questionId">
-              <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
-                {{ question.data.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <div class="value-toggle">
-            <mat-button-toggle-group formControlName="questionValueType" aria-label="Valor ou Score">
-              <mat-button-toggle value="value">Valor</mat-button-toggle>
-              <mat-button-toggle value="score">Score</mat-button-toggle>
-            </mat-button-toggle-group>
-          </div>
-        </ng-container>
-
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'condition'">
-          <mat-label>Condição</mat-label>
-          <mat-select formControlName="conditionId">
-            <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
-              {{ cond.name || 'Condição' }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-      
-      <mat-form-field appearance="outline" style="width:100%">
-        <mat-label>Operador</mat-label>
-        <mat-select formControlName="operator">
-          <mat-option *ngFor="let op of filteredOperators" [value]="op.value">
-            {{ op.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      
-      <div class="compare-value-section">
-        <h5>Segundo Valor</h5>
-        <div class="value-toggle">
-          <mat-button-toggle-group formControlName="compareValueType" aria-label="Tipo do segundo valor">
-            <mat-button-toggle value="fixed" *ngIf="conditionForm.get('valueType')?.value !== 'condition'">Constante</mat-button-toggle>
-            <mat-button-toggle value="question" *ngIf="conditionForm.get('valueType')?.value !== 'condition'">Pergunta</mat-button-toggle>
-            <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
-          <mat-label>Valor</mat-label>
-          <input matInput formControlName="compareValue">
-        </mat-form-field>
-
-        <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
-          <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Pergunta</mat-label>
-            <mat-select formControlName="compareQuestionId">
-              <mat-option *ngFor="let question of availableQuestionsForComparison" [value]="question.data.id">
-                {{ question.data.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <div class="value-toggle">
-            <mat-button-toggle-group formControlName="compareQuestionValueType" aria-label="Valor ou Score">
-              <mat-button-toggle value="value">Valor</mat-button-toggle>
-              <mat-button-toggle value="score">Score</mat-button-toggle>
-            </mat-button-toggle-group>
-          </div>
-        </ng-container>
-
-        <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'condition'">
-          <mat-label>Condição</mat-label>
-          <mat-select formControlName="compareConditionId">
-            <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
-              {{ cond.name || 'Condição' }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-  `,
+  templateUrl: './condition-editor.component.html',
   styleUrl: './condition-editor.component.scss'
 })
 export class ConditionEditorComponent implements OnInit {
@@ -140,6 +36,8 @@ export class ConditionEditorComponent implements OnInit {
   @Input() availableQuestions: GraphNode<QuestionNodeData>[] = [];
   @Input() availableConditions: Condition[] = [];
   @Output() remove = new EventEmitter<void>();
+
+  library = inject(FaIconLibrary);
   
   faTrash = faTrash;
   
@@ -153,11 +51,13 @@ export class ConditionEditorComponent implements OnInit {
     { value: '<', label: 'Menor que (<)' },
     { value: '<=', label: 'Menor ou igual (<=)' },
     { value: 'in', label: 'Contido em (in)' },
-    { value: 'contains', label: 'Contém (contains)' }
+    { value: 'contains', label: 'Contém (contains)' },
+    { value: '&&', label: 'E (&&)' },
+    { value: '||', label: 'Ou (||)' }
   ];
 
   questionTypeOperators: Record<string, string[]> = {
-    'text': ['==', '!=', 'contains'],
+    'text': ['==', '!=', '>', '>=', '<', '<=', 'contains'],
     'integer': ['==', '!=', '>', '>=', '<', '<='],
     'double': ['==', '!=', '>', '>=', '<', '<='],
     'boolean': ['==', '!='],
@@ -169,8 +69,14 @@ export class ConditionEditorComponent implements OnInit {
     'image': ['==', '!='],
     'score': ['==', '!=', '>', '>=', '<', '<=']
   };
+
+  fixedTypeOperators: string[] = ['==', '!=', '>', '>=', '<', '<=', 'contains'];
+
+  conditionTypeOperators: string[] = ['&&', '||'];    
   
   constructor() {
+    this.library.addIcons(faTrash);
+    
     this.conditionForm = new FormGroup({
       id: new FormControl(''),
       name: new FormControl(''),
@@ -232,13 +138,27 @@ export class ConditionEditorComponent implements OnInit {
   }
 
   get filteredOperators() {
-    const questionType = this.selectedQuestionType;
-    if (!questionType || !this.questionTypeOperators[questionType]) {
-      return this.operators;
+    const valueType = this.conditionForm.get('valueType')?.value;
+
+    if (valueType === 'fixed') {
+      return this.operators.filter(op => 
+        this.fixedTypeOperators.includes(op.value)
+      );
+    } else if (valueType === 'question') {
+      const questionType = this.selectedQuestionType;
+      console.log(questionType);
+      if (!questionType || !this.questionTypeOperators[questionType]) {
+        return this.operators;
+      }
+      
+      return this.operators.filter(op => 
+        this.questionTypeOperators[questionType].includes(op.value)
+      );
+    } else if (valueType === 'condition') {
+      return this.operators.filter(op => 
+        this.conditionTypeOperators.includes(op.value)
+      );
     }
-    
-    return this.operators.filter(op => 
-      this.questionTypeOperators[questionType].includes(op.value)
-    );
+    return [];
   }
 }

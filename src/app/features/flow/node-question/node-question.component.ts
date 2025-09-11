@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { NgIf, TitleCasePipe } from '@angular/common';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faComment, faStar } from '@fortawesome/free-solid-svg-icons';
 import { GraphNode } from '../graph.types';
 
@@ -14,6 +14,12 @@ import { GraphNode } from '../graph.types';
 export class NodeQuestionComponent {
   @Input() node!: GraphNode;
 
+  library = inject(FaIconLibrary);
+
   faComment = faComment;
   faStar = faStar;
+
+  constructor() {
+    this.library.addIcons(faComment, faStar);
+  }
 }

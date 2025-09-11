@@ -1,4 +1,4 @@
-import { Component, computed, effect, Signal } from '@angular/core';
+import { Component, computed, effect, inject, Signal } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,7 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -143,6 +143,7 @@ import { ExpressionConditionEditorComponent } from '../node-condition/expression
   styleUrl: './inspector.component.scss'
 })
 export class InspectorComponent {
+  library = inject(FaIconLibrary);
   graph: Signal<GraphModel>;
   selectedId: Signal<string | null>;
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
@@ -204,6 +205,7 @@ export class InspectorComponent {
   faPlus = faPlus;
 
   constructor(private state: GraphStateService, private fb: FormBuilder) {
+    this.library.addIcons(faTimes, faSave, faTrash, faPlus);
     this.fgQ = this.fb.group({
       label: [''],
       type: ['text'],

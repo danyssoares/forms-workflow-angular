@@ -1,9 +1,9 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
 import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { GraphModel, GraphNode, Point, GraphEdge, ConditionNodeData } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
@@ -23,6 +23,8 @@ import { NodeConditionComponent } from '../node-condition/node-condition.compone
 })
 export class CanvasComponent {
   @ViewChild('canvasEl') canvasRef!: ElementRef<HTMLDivElement>;
+
+  library = inject(FaIconLibrary);
 
   // Font Awesome icons
   faEdit = faEdit;
@@ -55,12 +57,12 @@ export class CanvasComponent {
   private dragOffsets: Record<string, Point> = {};
 
   constructor(private state: GraphStateService) {
+    this.library.addIcons(faEdit, faTrash, faGear, faCodeBranch);
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
     this.selectedId = toSignal(this.state.selectedId$, { initialValue: null as string | null });
 
   }
-
 
   private nodeSize(kind: string) {
     const cond = 120 * Math.SQRT2; // bounding box of rotated square (diamond)

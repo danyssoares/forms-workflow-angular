@@ -160,27 +160,6 @@ html, body {
 .palette { padding:8px; border-bottom:1px solid #eef0f6; background:#fff; display:flex; gap:8px; align-items:center; }
 .flow-shell { height: calc(100vh - 64px); }
 
-/* Controles de zoom e minimapa */
-/*.zoom-controls {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #eef0f6;
-  border-radius: 4px;
-}
-.zoom-controls button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 18px;
-}
-.zoom-controls button + button { border-top: 1px solid #eef0f6; }*/
-
 .mini-map {
   position: absolute;
   bottom: 8px;
