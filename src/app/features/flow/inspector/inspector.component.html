@@ -1,0 +1,111 @@
+<div class="sidebar" *ngIf="node() as n">
+    <h3>Inspector</h3>
+    <div class="scrollable-content">
+      <div [ngSwitch]="n.kind">
+        <!-- QUESTION -->
+        <form *ngSwitchCase="'question'" [formGroup]="fgQ">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Texto</mat-label>
+            <input matInput formControlName="label">
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Ordem</mat-label>
+            <input matInput type="number" formControlName="seq" min="1">
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Tipo</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="text">Texto</mat-option>
+              <mat-option value="boolean">Boolean</mat-option>
+              <mat-option value="integer">Inteiro</mat-option>
+              <mat-option value="double">Double</mat-option>
+              <mat-option value="select">Lista</mat-option>
+              <mat-option value="radio">Radio</mat-option>
+              <mat-option value="checkbox">Checkbox</mat-option>
+              <mat-option value="date">Data</mat-option>
+              <mat-option value="datetime">Data e Hora</mat-option>
+              <mat-option value="image">Imagem</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Score</mat-label>
+            <input matInput type="number" formControlName="score">
+          </mat-form-field>
+          <div *ngIf="fgQ.get('type')?.value === 'boolean'">
+            <mat-form-field appearance="outline" style="width:100%">
+              <mat-label>Label Verdadeiro</mat-label>
+              <input matInput formControlName="trueLabel">
+            </mat-form-field>
+            <mat-form-field appearance="outline" style="width:100%">
+              <mat-label>Label Falso</mat-label>
+              <input matInput formControlName="falseLabel">
+            </mat-form-field>
+          </div>
+          <div *ngIf="['select','radio','checkbox'].includes(fgQ.get('type')?.value)">
+            <div formArrayName="options">
+              <div *ngFor="let opt of options.controls; let i=index" [formGroupName]="i" class="option-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Label</mat-label>
+                  <input matInput formControlName="label">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Valor</mat-label>
+                  <input matInput formControlName="value">
+                </mat-form-field>
+                <button mat-icon-button type="button" (click)="removeOption(i)">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </div>
+              <button mat-stroked-button type="button" (click)="addOption()">Adicionar Opção</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- CONDITION -->
+        <div *ngSwitchCase="'condition'">
+          <div>
+            <ng-container *ngFor="let condition of conditionData; let i = index">
+              <app-condition-editor
+                *ngIf="conditionType === 'comparison'"
+                [condition]="$any(condition)"
+                [index]="i"
+                [availableQuestions]="availableQuestions()"
+                [availableConditions]="availableConditions()"
+                (remove)="removeCondition(i)">
+              </app-condition-editor>
+              <app-expression-condition-editor
+                *ngIf="conditionType === 'expression'"
+                [condition]="$any(condition)"
+                [index]="i"
+                (remove)="removeCondition(i)">
+              </app-expression-condition-editor>
+            </ng-container>
+          </div>
+
+          <button mat-stroked-button type="button" (click)="addCondition()" class="add-condition-btn">
+            <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
+          </button>          
+        </div>
+
+        <!-- ACTION -->
+        <form *ngSwitchCase="'action'" [formGroup]="fgA">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Tipo de Ação</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="sendNotification">Enviar Notificação</mat-option>              
+            </mat-select>
+          </mat-form-field>
+        </form>
+      </div>
+    </div>
+    <div class="actions">
+      <button mat-raised-button color="primary" type="button" (click)="save()">
+        <fa-icon [icon]="faSave"></fa-icon>
+        Salvar
+      </button>
+      <button mat-button type="button" (click)="cancel()">
+        <fa-icon [icon]="faTimes"></fa-icon>
+        Cancelar
+      </button>
+    </div>
+  </div>

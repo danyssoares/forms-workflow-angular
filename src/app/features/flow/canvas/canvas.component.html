@@ -22,6 +22,9 @@
               stroke-width="2"
               [attr.stroke]="hoveredEdgeId === e.id ? '#ff4d4f' : '#b9bed1'"
               [attr.marker-end]="hoveredEdgeId === e.id ? 'url(#arrow-red)' : 'url(#arrow)'" />
+            <foreignObject *ngIf="e.label" [attr.x]="edgeMidpoint(e).x - 40" [attr.y]="edgeMidpoint(e).y - 12" width="80" height="24">
+              <div xmlns="http://www.w3.org/1999/xhtml" class="edge-label">{{ e.label }}</div>
+            </foreignObject>
             <foreignObject *ngIf="hoveredEdgeId === e.id" [attr.x]="edgeMidpoint(e).x - 12" [attr.y]="edgeMidpoint(e).y - 12" width="24" height="24">
               <div xmlns="http://www.w3.org/1999/xhtml">
                 <button class="edge-delete" (click)="removeEdge(e.id, $event)">

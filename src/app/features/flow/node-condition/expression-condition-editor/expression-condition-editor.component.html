@@ -1,0 +1,20 @@
+<div class="condition-editor" [formGroup]="formGroup">
+    <div class="condition-header">
+      <h4>Condição {{ index + 1 }}</h4>
+      <button mat-icon-button type="button" (click)="remove.emit()" *ngIf="index > 0">
+        <fa-icon [icon]="faTrash"></fa-icon>
+      </button>
+    </div>
+    <mat-form-field appearance="outline" style="width:100%">
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="name">
+    </mat-form-field>
+    <mat-form-field appearance="outline" style="width:100%">
+      <mat-label>Expressão</mat-label>
+      <textarea
+        matInput
+        rows="2"
+        placeholder="$pergunta1.value == 'Teste' || $pergunta1.score > 5"
+        formControlName="expressionControl"></textarea>
+    </mat-form-field>
+  </div>
