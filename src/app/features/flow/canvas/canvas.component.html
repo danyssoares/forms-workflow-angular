@@ -117,8 +117,15 @@
             class="handle out condition-handle"
             [attr.data-condition-id]="condition.id"
             (mousedown)="startConnection(n.id, $event, condition.id)"
-            [ngStyle]="{ top: conditionHandleTop(n.data.conditions.length, i) + 'px' }">
+            [ngStyle]="{ top: conditionHandleTop(totalConditionHandles(n.id), i) + 'px' }">
             <span class="handle-label">{{ condition.name || 'Condição ' + (i + 1) }}</span>
+          </div>
+          <div
+            *ngIf="hasAllConditionsEdge(n.id)"
+            class="handle out condition-handle all-conditions-handle"
+            (mousedown)="$event.stopPropagation()"
+            [ngStyle]="{ top: conditionHandleTop(totalConditionHandles(n.id), n.data.conditions.length) + 'px' }">
+            <span class="handle-label">Todas as condições</span>
           </div>
         </ng-container>
         

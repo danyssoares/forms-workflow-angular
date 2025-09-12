@@ -160,6 +160,15 @@
   pointer-events: none;
 }
 
+.condition-handle.all-conditions-handle {
+  background: #ff9800;
+  border-color: #ff9800;
+}
+
+.condition-handle.all-conditions-handle .handle-label {
+  color: #ff9800;
+}
+
 /* Zoom controls - positioned at the bottom left corner, stacked vertically */
 .zoom-controls {
   position: absolute;

@@ -92,38 +92,60 @@ export class CanvasComponent {
   }
 
   // Método para calcular pontos de saída para cada condição específica
-  private conditionOutPoint(nodeId: string, conditionIndex: number): Point {
+  private conditionOutPoint(nodeId: string, conditionIndex: number, total?: number): Point {
     const n = this.graph().nodes.find(nn => nn.id === nodeId);
     if (!n || n.kind !== 'condition') return { x: 0, y: 0 };
 
     const off = this.dragOffsets[nodeId] || { x: 0, y: 0 };
 
     const { w, h } = this.nodeSize('condition');
-    const total = (n.data as ConditionNodeData).conditions.length;
+    const totalHandles = total ?? (n.data as ConditionNodeData).conditions.length;
     const spacing = 30;
     const center = h / 2;
     const x = n.position.x + off.x + w + 6; // 6 = raio do handle
-    const y = n.position.y + off.y + center + (conditionIndex - (total - 1) / 2) * spacing + 6;
+    const y = n.position.y + off.y + center + (conditionIndex - (totalHandles - 1) / 2) * spacing + 6;
 
     return { x, y };
   }
-  
+
+  private isAllConditionsEdge(edge: GraphEdge): boolean {
+    const fromNode = this.graph().nodes.find(n => n.id === edge.from);
+    const toNode = this.graph().nodes.find(n => n.id === edge.to);
+    return !!fromNode && !!toNode && fromNode.kind === 'condition' && toNode.kind === 'condition' && !edge.conditionId;
+  }
+
+  hasAllConditionsEdge(nodeId: string): boolean {
+    return this.graph().edges.some(e => e.from === nodeId && this.isAllConditionsEdge(e));
+  }
+
+  totalConditionHandles(nodeId: string): number {
+    const n = this.graph().nodes.find(nn => nn.id === nodeId);
+    if (!n || n.kind !== 'condition') return 0;
+    const base = (n.data as ConditionNodeData).conditions.length;
+    return base + (this.hasAllConditionsEdge(nodeId) ? 1 : 0);
+  }
+
   // Método para obter o ponto de saída correto com base na edge
   private getOutPointForEdge(edge: GraphEdge): Point {
     const fromNode = this.graph().nodes.find(n => n.id === edge.from);
-    if (!fromNode || fromNode.kind !== 'condition' || !edge.conditionId) {
+    if (!fromNode || fromNode.kind !== 'condition') {
       return this.outPoint(edge.from);
     }
-    
-    // Encontrar o índice da condição com base no conditionId
+
     const conditions = (fromNode.data as ConditionNodeData).conditions || [];
-    const conditionIndex = conditions.findIndex(c => c.id === edge.conditionId);
-    
-    if (conditionIndex === -1) {
-      return this.outPoint(edge.from);
+    const total = this.totalConditionHandles(edge.from);
+
+    if (edge.conditionId) {
+      const conditionIndex = conditions.findIndex(c => c.id === edge.conditionId);
+      if (conditionIndex === -1) return this.outPoint(edge.from);
+      return this.conditionOutPoint(edge.from, conditionIndex, total);
     }
-    
-    return this.conditionOutPoint(edge.from, conditionIndex);
+
+    if (this.isAllConditionsEdge(edge)) {
+      return this.conditionOutPoint(edge.from, conditions.length, total);
+    }
+
+    return this.outPoint(edge.from);
   }
   
   private inPoint(id: string): Point {
@@ -156,7 +178,7 @@ export class CanvasComponent {
     if (fromNode && fromNode.kind === 'condition' && this.connectingConditionId) {
       const conditions = (fromNode.data as ConditionNodeData).conditions || [];
       const index = conditions.findIndex(c => c.id === this.connectingConditionId);
-      const outPoint = index !== -1 ? this.conditionOutPoint(fromId, index) : this.outPoint(fromId);
+      const outPoint = index !== -1 ? this.conditionOutPoint(fromId, index, this.totalConditionHandles(fromId)) : this.outPoint(fromId);
       return this.path(outPoint, to);
     }
 
@@ -228,13 +250,11 @@ export class CanvasComponent {
     if (this.connectingFrom && toId && this.connectingFrom !== toId) {
       const fromNode = this.graph().nodes.find(n => n.id === this.connectingFrom);
       const toNode = this.graph().nodes.find(n => n.id === toId);
-      let label: string | undefined;
       let conditionId = this.connectingConditionId || undefined;
       if (fromNode?.kind === 'condition' && toNode?.kind === 'condition') {
-        label = 'Todas as condições';
         conditionId = undefined;
       }
-      this.state.connect(this.connectingFrom, toId, label, conditionId);
+      this.state.connect(this.connectingFrom, toId, undefined, conditionId);
     }
     this.connectingFrom = null;
     this.connectingConditionId = null;
