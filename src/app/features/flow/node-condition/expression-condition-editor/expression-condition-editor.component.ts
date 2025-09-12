@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,24 +19,7 @@ import { NgIf } from '@angular/common';
     MatButtonModule,
     FontAwesomeModule
   ],
-  template: `
-    <div class="condition-editor">
-      <div class="condition-header">
-        <h4>Condição {{ index + 1 }}</h4>
-        <button mat-icon-button type="button" (click)="remove.emit()" *ngIf="index > 0">
-          <fa-icon [icon]="faTrash"></fa-icon>
-        </button>
-      </div>
-      <mat-form-field appearance="outline" style="width:100%">
-        <mat-label>Expressão</mat-label>
-        <textarea
-          matInput
-          rows="2"
-          placeholder="$pergunta1.value == 'Teste' || $pergunta1.score > 5"
-          [formControl]="expressionControl"></textarea>
-      </mat-form-field>
-    </div>
-  `,
+  templateUrl: './expression-condition-editor.component.html',
   styleUrl: '../condition-editor/condition-editor.component.scss'
 })
 export class ExpressionConditionEditorComponent implements OnInit {
@@ -47,16 +30,20 @@ export class ExpressionConditionEditorComponent implements OnInit {
   library = inject(FaIconLibrary);
 
   faTrash = faTrash;
-  expressionControl = new FormControl('');
+  formGroup: FormGroup;
 
   ngOnInit() {
-    this.expressionControl.setValue(this.condition.expression);
-    this.expressionControl.valueChanges.subscribe(value => {
+    this.formGroup.get('expressionControl')?.setValue(this.condition.expression);
+    this.formGroup.get('expressionControl')?.valueChanges.subscribe(value => {
       this.condition.expression = value || '';
     });
   }
 
-  constructor() {
+  constructor(private formBuilder: FormBuilder) {
+    this.formGroup = this.formBuilder.group({
+      name: [''],
+      expressionControl: ['']
+    });
     this.library.addIcons(faTrash);
   }
 }

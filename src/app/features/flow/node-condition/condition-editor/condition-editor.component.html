@@ -6,7 +6,7 @@
       </button>
     </div>
 
-    <lib-control-material label="Nome" [smaller]="true" style="width:100%">
+    <lib-control-material label="Nome" [smaller]="true" style="width:100%; display: grid;">
       <input formControlName="name" />
     </lib-control-material>
 
@@ -25,7 +25,7 @@
         </mat-button-toggle-group>
       </div>
 
-      <lib-control-material label="Valor" [smaller]="true" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
+      <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
         <input formControlName="value" />
       </lib-control-material>
 
@@ -83,7 +83,7 @@
         </mat-button-toggle-group>
       </div>
 
-      <lib-control-material label="Valor" [smaller]="true" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
+      <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
         <input formControlName="compareValue" />
       </lib-control-material>
       <!--<mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
