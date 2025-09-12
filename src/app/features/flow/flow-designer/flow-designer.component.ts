@@ -64,7 +64,7 @@ export class FlowDesignerComponent {
         }, pos);
       }
     }
-    if(e.kind==='action') this.state.addNode('action', { type:'emitAlert', params:{ alertCode:'ALERTA' } }, pos);
+    if(e.kind==='action') this.state.addNode('action', { type:'sendNotification', params:{ alertCode:'ALERTA' } }, pos);
     if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário' }, pos);
   }
 

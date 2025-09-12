@@ -110,7 +110,7 @@ export class InspectorComponent {
       options: this.fb.array([]),
       seq: [1]
     });
-    this.fgA = this.fb.group({ type: ['emitAlert'] });
+    this.fgA = this.fb.group({ type: ['Enviar Notificação'] });
 
     this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
     this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});
