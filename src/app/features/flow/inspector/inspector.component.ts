@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Signal } from '@angular/core';
+import { Component, computed, effect, inject, Signal, ViewChildren, QueryList } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -99,6 +99,8 @@ export class InspectorComponent {
   faTrash = faTrash;
   faPlus = faPlus;
 
+  @ViewChildren(ExpressionConditionEditorComponent) expressionEditors!: QueryList<ExpressionConditionEditorComponent>;
+
   constructor(private state: GraphStateService, private fb: FormBuilder) {
     this.library.addIcons(faTimes, faSave, faTrash, faPlus);
     this.fgQ = this.fb.group({
@@ -191,10 +193,30 @@ export class InspectorComponent {
     this.conditionData.splice(index, 1);
   }
 
+  private buildExpressionContext(): Record<string, any> {
+    const ctx: Record<string, any> = {};
+    this.availableQuestions().forEach(q => {
+      ctx[q.data.id] = { valor: '', score: q.data.score || 0 };
+    });
+    this.availableConditions().forEach(c => {
+      ctx[c.id] = false;
+    });
+    return ctx;
+  }
+
   save() {
     const n = this.node();
     if (!n) return;
-    
+
+    if (n.kind === 'condition' && this.conditionType === 'expression') {
+      const ctx = this.buildExpressionContext();
+      let allValid = true;
+      this.expressionEditors.forEach(ed => {
+        if (!ed.validate(ctx)) allValid = false;
+      });
+      if (!allValid) return;
+    }
+
     if (n.kind === 'question') {
       const formValue = this.fgQ.value as any;
       
