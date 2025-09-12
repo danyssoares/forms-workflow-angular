@@ -33,9 +33,14 @@ export class ExpressionConditionEditorComponent implements OnInit {
   formGroup: FormGroup;
 
   ngOnInit() {
-    this.formGroup.get('expressionControl')?.setValue(this.condition.expression);
-    this.formGroup.get('expressionControl')?.valueChanges.subscribe(value => {
-      this.condition.expression = value || '';
+    this.formGroup.patchValue({
+      name: this.condition.name || '',
+      expressionControl: this.condition.expression || ''
+    });
+
+    this.formGroup.valueChanges.subscribe(value => {
+      this.condition.name = value.name || '';
+      this.condition.expression = value.expressionControl || '';
     });
   }
 
