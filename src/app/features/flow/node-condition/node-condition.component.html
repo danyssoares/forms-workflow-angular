@@ -1,7 +1,7 @@
 <div class="diamond">
   <div class="content">
     <div class="title">
-      <fa-icon [icon]="faCodeBranch"></fa-icon>
+      <fa-icon [icon]="node.data.conditionType === 'comparison' ? faDiamond : faCodeBranch"></fa-icon>
       Condição #{{ node.data.seq }}
     </div>
     <div class="condition-count">
