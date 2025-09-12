@@ -28,8 +28,16 @@ import { NgIf } from '@angular/common';
         </button>
       </div>
       <mat-form-field appearance="outline" style="width:100%">
+        <mat-label>Nome</mat-label>
+        <input matInput [formControl]="nameControl" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="width:100%">
         <mat-label>Expressão</mat-label>
-        <input matInput [formControl]="expressionControl">
+        <textarea
+          matInput
+          rows="2"
+          placeholder="$pergunta1.value == 'Teste' || $pergunta1.score > 5"
+          [formControl]="expressionControl"></textarea>
       </mat-form-field>
     </div>
   `,
@@ -43,9 +51,15 @@ export class ExpressionConditionEditorComponent implements OnInit {
   library = inject(FaIconLibrary);
 
   faTrash = faTrash;
+  nameControl = new FormControl('');
   expressionControl = new FormControl('');
 
   ngOnInit() {
+    this.nameControl.setValue(this.condition.name || '');
+    this.nameControl.valueChanges.subscribe(value => {
+      this.condition.name = value || '';
+    });
+
     this.expressionControl.setValue(this.condition.expression);
     this.expressionControl.valueChanges.subscribe(value => {
       this.condition.expression = value || '';

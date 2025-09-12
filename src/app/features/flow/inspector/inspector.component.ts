@@ -175,21 +175,25 @@ export class InspectorComponent {
     const selectedNode = g.nodes.find(n => n.id === this.selectedId());
     if (!selectedNode || selectedNode.kind !== 'condition') return [] as Condition[];
 
-    const reachable = new Set<string>();
+    const reachableConditionIds = new Set<string>();
+    const visited = new Set<string>();
+
     const visit = (id: string) => {
+      if (visited.has(id)) return;
+      visited.add(id);
       g.edges.filter(e => e.to === id).forEach(e => {
-        if (!reachable.has(e.from)) {
-          reachable.add(e.from);
-          visit(e.from);
-        }
+        if (e.conditionId) reachableConditionIds.add(e.conditionId);
+        visit(e.from);
       });
     };
     visit(selectedNode.id);
 
-    const nodes = g.nodes.filter(n => n.kind === 'condition' && n.id !== selectedNode.id && reachable.has(n.id)) as GraphNode<ConditionNodeData>[];
     const conditions: Condition[] = [];
-    nodes.forEach(n => {
-      (n.data.conditions || []).forEach(c => conditions.push(c));
+    g.nodes.forEach(n => {
+      if (n.kind !== 'condition') return;
+      (n.data.conditions || []).forEach(c => {
+        if (reachableConditionIds.has(c.id)) conditions.push(c);
+      });
     });
     return conditions;
   });
@@ -275,6 +279,7 @@ export class InspectorComponent {
       const newCondition: ExpressionCondition = {
         type: 'expression',
         id: crypto.randomUUID(),
+        name: '',
         expression: ''
       };
       this.conditionData.push(newCondition);
@@ -285,6 +290,7 @@ export class InspectorComponent {
     const newCondition: ExpressionCondition = {
       type: 'expression',
       id: crypto.randomUUID(),
+      name: '',
       expression: ''
     };
     this.conditionData.push(newCondition);
