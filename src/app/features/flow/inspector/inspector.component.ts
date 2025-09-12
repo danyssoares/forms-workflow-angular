@@ -279,6 +279,7 @@ export class InspectorComponent {
       const newCondition: ExpressionCondition = {
         type: 'expression',
         id: crypto.randomUUID(),
+        name: '',
         expression: ''
       };
       this.conditionData.push(newCondition);
@@ -289,6 +290,7 @@ export class InspectorComponent {
     const newCondition: ExpressionCondition = {
       type: 'expression',
       id: crypto.randomUUID(),
+      name: '',
       expression: ''
     };
     this.conditionData.push(newCondition);
