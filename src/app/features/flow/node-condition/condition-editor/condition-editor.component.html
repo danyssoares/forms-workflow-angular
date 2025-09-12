@@ -6,14 +6,14 @@
       </button>
     </div>
 
-    <!--<lib-control-material label="Nome" [smaller]="true">
+    <lib-control-material label="Nome" [smaller]="true" style="width:100%">
       <input formControlName="name" />
-    </lib-control-material>-->
+    </lib-control-material>
 
-    <mat-form-field appearance="outline" style="width:100%">
+    <!--<mat-form-field appearance="outline" style="width:100%">
       <mat-label>Nome</mat-label>
       <input matInput formControlName="name">
-    </mat-form-field>
+    </mat-form-field>-->
     
     <div class="value-section">
       <h5>Primeiro Valor</h5>
@@ -25,12 +25,19 @@
         </mat-button-toggle-group>
       </div>
 
-      <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
+      <lib-control-material label="Valor" [smaller]="true" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
+        <input formControlName="value" />
+      </lib-control-material>
+
+      <!--<mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
         <mat-label>Valor</mat-label>
         <input matInput formControlName="value">
-      </mat-form-field>
+      </mat-form-field>-->
 
       <ng-container *ngIf="conditionForm.get('valueType')?.value === 'question'">
+        <!--<lib-control-material-select bindLabel="data.label" [selectList]="availableQuestions" label="Pergunta" [smaller]="true" style="width:100%">
+          <input formControlName="questionId" />
+        </lib-control-material-select>-->
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Pergunta</mat-label>
           <mat-select formControlName="questionId">
@@ -76,10 +83,13 @@
         </mat-button-toggle-group>
       </div>
 
-      <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
+      <lib-control-material label="Valor" [smaller]="true" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
+        <input formControlName="compareValue" />
+      </lib-control-material>
+      <!--<mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
         <mat-label>Valor</mat-label>
         <input matInput formControlName="compareValue">
-      </mat-form-field>
+      </mat-form-field>-->
 
       <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
         <mat-form-field appearance="outline" style="width:100%">

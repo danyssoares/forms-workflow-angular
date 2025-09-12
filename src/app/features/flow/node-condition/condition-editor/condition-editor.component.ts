@@ -9,7 +9,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../../graph.types';
-import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
+import { ControlMaterialComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
 
 @Component({
   selector: 'app-condition-editor',
@@ -25,7 +25,7 @@ import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
     MatButtonToggleModule,
     FontAwesomeModule,
     ControlMaterialComponent,
-    //ControlMaterialSelectComponent
+    ControlMaterialSelectComponent
   ],
   templateUrl: './condition-editor.component.html',
   styleUrl: './condition-editor.component.scss'
@@ -146,7 +146,7 @@ export class ConditionEditorComponent implements OnInit {
       );
     } else if (valueType === 'question') {
       const questionType = this.selectedQuestionType;
-      console.log(questionType);
+      
       if (!questionType || !this.questionTypeOperators[questionType]) {
         return this.operators;
       }
