@@ -1,7 +1,7 @@
 import { Component, inject, Input } from '@angular/core';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
-import { GraphNode } from '../graph.types';
+import { faCodeBranch, faDiamond } from '@fortawesome/free-solid-svg-icons';
+import { GraphNode, ConditionNodeData } from '../graph.types';
 
 @Component({
   selector: 'app-node-condition',
@@ -11,12 +11,13 @@ import { GraphNode } from '../graph.types';
   styleUrl: './node-condition.component.scss'
 })
 export class NodeConditionComponent {
-  @Input() node!: GraphNode;
+  @Input() node!: GraphNode<ConditionNodeData>;
   library = inject(FaIconLibrary);
   
   faCodeBranch = faCodeBranch;
+  faDiamond = faDiamond;
 
   constructor() {
-    this.library.addIcons(faCodeBranch);
+    this.library.addIcons(faCodeBranch, faDiamond);
   }
 }

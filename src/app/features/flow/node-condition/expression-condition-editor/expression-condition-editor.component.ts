@@ -29,7 +29,11 @@ import { NgIf } from '@angular/common';
       </div>
       <mat-form-field appearance="outline" style="width:100%">
         <mat-label>Expressão</mat-label>
-        <input matInput [formControl]="expressionControl">
+        <textarea
+          matInput
+          rows="2"
+          placeholder="$pergunta1.value == 'Teste' || $pergunta1.score > 5"
+          [formControl]="expressionControl"></textarea>
       </mat-form-field>
     </div>
   `,
