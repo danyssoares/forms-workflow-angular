@@ -66,7 +66,14 @@ export class InspectorComponent {
       if (visited.has(id)) return;
       visited.add(id);
       g.edges.filter(e => e.to === id).forEach(e => {
-        if (e.conditionId) reachableConditionIds.add(e.conditionId);
+        if (e.conditionId) {
+          reachableConditionIds.add(e.conditionId);
+        } else {
+          const fromNode = g.nodes.find(n => n.id === e.from);
+          if (fromNode && fromNode.kind === 'condition') {
+            (fromNode.data as ConditionNodeData).conditions.forEach(c => reachableConditionIds.add(c.id));
+          }
+        }
         visit(e.from);
       });
     };
@@ -163,6 +170,7 @@ export class InspectorComponent {
       const newCondition: ExpressionCondition = {
         type: 'expression',
         id: crypto.randomUUID(),
+        name: '',
         expression: ''
       };
       this.conditionData.push(newCondition);
@@ -173,6 +181,7 @@ export class InspectorComponent {
     const newCondition: ExpressionCondition = {
       type: 'expression',
       id: crypto.randomUUID(),
+      name: '',
       expression: ''
     };
     this.conditionData.push(newCondition);

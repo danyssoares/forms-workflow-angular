@@ -226,8 +226,15 @@ export class CanvasComponent {
     ev?.stopPropagation();
     ev?.preventDefault();
     if (this.connectingFrom && toId && this.connectingFrom !== toId) {
-      const conditionId = this.connectingConditionId || undefined;
-      this.state.connect(this.connectingFrom, toId, undefined, conditionId);
+      const fromNode = this.graph().nodes.find(n => n.id === this.connectingFrom);
+      const toNode = this.graph().nodes.find(n => n.id === toId);
+      let label: string | undefined;
+      let conditionId = this.connectingConditionId || undefined;
+      if (fromNode?.kind === 'condition' && toNode?.kind === 'condition') {
+        label = 'Todas as condições';
+        conditionId = undefined;
+      }
+      this.state.connect(this.connectingFrom, toId, label, conditionId);
     }
     this.connectingFrom = null;
     this.connectingConditionId = null;
