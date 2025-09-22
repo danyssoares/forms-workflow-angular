@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PaletteComponent } from '../palette/palette.component';
@@ -8,26 +8,79 @@ import { GraphStateService } from '../graph-state.service';
 import { GraphMapperService } from '../graph-mapper.service';
 import { AsyncPipe } from '@angular/common';
 import { NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [NgIf, AsyncPipe, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [NgIf, AsyncPipe, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
     <span class="spacer"></span>
-    <button mat-stroked-button color="primary" (click)="exportForm()"><mat-icon>play_circle</mat-icon> Exportar para FormDefinition</button>
+    <mat-form-field appearance="outline" class="form-name-field">
+      <mat-label>Nome do Formulário</mat-label>
+      <input matInput [(ngModel)]="formName" placeholder="Informe o nome..." />
+    </mat-form-field>
   </div>
-  <div class="flow-shell">
-    <app-inspector *ngIf="(state.sidebarOpen$ | async)"></app-inspector>
+  <div class="flow-shell" [class.resizing]="resizing">
+    <app-inspector
+      *ngIf="(state.sidebarOpen$ | async)"
+      [style.width.px]="inspectorWidth"
+      style="min-width: 342px;">
+    </app-inspector>
+    <div
+      *ngIf="(state.sidebarOpen$ | async)"
+      class="resizer"
+      (mousedown)="startResizing($event)"
+      title="Arraste para redimensionar">
+    </div>
     <app-canvas></app-canvas>
   </div>
   `,
   styleUrl: './flow-designer.component.scss'
 })
 export class FlowDesignerComponent {
-  constructor(public state: GraphStateService, private mapper: GraphMapperService) {}
+  inspectorWidth = 320;
+  private minWidth = 240;
+  private maxWidthRatio = 0.6; // 60% da largura disponível
+  resizing = false;
+  private startX = 0;
+  private startWidth = 320;
+  formName = '';
+
+  constructor(public state: GraphStateService, private mapper: GraphMapperService) {
+    const saved = Number(localStorage.getItem('inspectorWidth'));
+    if (!Number.isNaN(saved) && saved >= this.minWidth) {
+      this.inspectorWidth = saved;
+    }
+  }
+
+  startResizing(event: MouseEvent) {
+    this.resizing = true;
+    this.startX = event.clientX;
+    this.startWidth = this.inspectorWidth;
+    event.preventDefault();
+  }
+
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    if (!this.resizing) return;
+    const delta = event.clientX - this.startX; // inspector está à esquerda do resizer
+    const shell = document.querySelector('.flow-shell') as HTMLElement | null;
+    const containerWidth = shell ? shell.clientWidth : window.innerWidth;
+    const maxWidth = Math.max(this.minWidth, Math.floor(containerWidth * this.maxWidthRatio));
+    this.inspectorWidth = Math.min(maxWidth, Math.max(this.minWidth, this.startWidth + delta));
+  }
+
+  @HostListener('window:mouseup')
+  stopResizing() {
+    if (!this.resizing) return;
+    this.resizing = false;
+    try { localStorage.setItem('inspectorWidth', String(this.inspectorWidth)); } catch {}
+  }
 
   onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };

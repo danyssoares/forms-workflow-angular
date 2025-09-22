@@ -145,10 +145,10 @@ export class ConditionEditorComponent implements OnInit {
         this.fixedTypeOperators.includes(op.value)
       );
     } else if (valueType === 'question') {
-      const questionType = this.selectedQuestionType;
+      const questionType = this.selectedQuestionType;      
       
       if (!questionType || !this.questionTypeOperators[questionType]) {
-        return this.operators;
+        return [];
       }
       
       return this.operators.filter(op => 

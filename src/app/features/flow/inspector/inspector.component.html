@@ -4,14 +4,15 @@
       <div [ngSwitch]="n.kind">
         <!-- QUESTION -->
         <form *ngSwitchCase="'question'" [formGroup]="fgQ">
-          <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Texto</mat-label>
-            <input matInput formControlName="label">
-          </mat-form-field>
-          <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Ordem</mat-label>
-            <input matInput type="number" formControlName="seq" min="1">
-          </mat-form-field>
+          <lib-control-material label="Texto" [smaller]="true" style="width:100%; display: grid;">
+            <input formControlName="label" />
+          </lib-control-material>
+
+          <lib-control-material-number label="Ordem" [smaller]="true" style="width:100%; display: grid;">
+            <input formControlName="seq" />
+          </lib-control-material-number>
+          
+          
           <mat-form-field appearance="outline" style="width:100%">
             <mat-label>Tipo</mat-label>
             <mat-select formControlName="type">
@@ -27,31 +28,29 @@
               <mat-option value="image">Imagem</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Score</mat-label>
-            <input matInput type="number" formControlName="score">
-          </mat-form-field>
+          <lib-control-material-number label="Score" [smaller]="true" style="width:100%; display: grid;">
+            <input formControlName="score" />
+          </lib-control-material-number>
+          
           <div *ngIf="fgQ.get('type')?.value === 'boolean'">
-            <mat-form-field appearance="outline" style="width:100%">
-              <mat-label>Label Verdadeiro</mat-label>
-              <input matInput formControlName="trueLabel">
-            </mat-form-field>
-            <mat-form-field appearance="outline" style="width:100%">
-              <mat-label>Label Falso</mat-label>
-              <input matInput formControlName="falseLabel">
-            </mat-form-field>
+            <lib-control-material label="Label Verdadeiro" [smaller]="true" style="width:100%; display: grid;">
+              <input formControlName="trueLabel" />
+            </lib-control-material>
+            <lib-control-material label="Label Falso" [smaller]="true" style="width:100%; display: grid;">
+              <input formControlName="falseLabel" />
+            </lib-control-material>
           </div>
           <div *ngIf="['select','radio','checkbox'].includes(fgQ.get('type')?.value)">
             <div formArrayName="options">
+              <div style="font-weight: bold;">Opções</div>
               <div *ngFor="let opt of options.controls; let i=index" [formGroupName]="i" class="option-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>Label</mat-label>
-                  <input matInput formControlName="label">
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Valor</mat-label>
-                  <input matInput formControlName="value">
-                </mat-form-field>
+                <lib-control-material label="Label" [smaller]="true" style="width:50%; display: grid;">
+                  <input formControlName="label">
+                </lib-control-material>
+                <lib-control-material label="Valor" [smaller]="true" style="width:50%; display: grid;">
+                  <input formControlName="value">
+                </lib-control-material>               
+                
                 <button mat-icon-button type="button" (click)="removeOption(i)">
                   <fa-icon [icon]="faTrash"></fa-icon>
                 </button>
@@ -99,13 +98,13 @@
       </div>
     </div>
     <div class="actions">
-      <button mat-raised-button color="primary" type="button" (click)="save()">
-        <fa-icon [icon]="faSave"></fa-icon>
-        Salvar
-      </button>
       <button mat-button type="button" (click)="cancel()">
         <fa-icon [icon]="faTimes"></fa-icon>
         Cancelar
+      </button>
+      <button mat-raised-button color="primary" type="button" (click)="save()">
+        <fa-icon [icon]="faCheck"></fa-icon>
+        Salvar
       </button>
     </div>
   </div>

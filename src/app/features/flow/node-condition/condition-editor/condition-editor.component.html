@@ -23,7 +23,14 @@
           <mat-button-toggle value="question">Pergunta</mat-button-toggle>
           <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
         </mat-button-toggle-group>
+        <ng-container *ngIf="conditionForm.get('valueType')?.value === 'question'">
+          <mat-button-toggle-group formControlName="questionValueType" aria-label="Valor ou Score">
+            <mat-button-toggle value="value">Valor</mat-button-toggle>
+            <mat-button-toggle value="score">Score</mat-button-toggle>
+          </mat-button-toggle-group>
+        </ng-container>
       </div>
+
 
       <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;" *ngIf="conditionForm.get('valueType')?.value === 'fixed'">
         <input formControlName="value" />
@@ -46,12 +53,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <div class="value-toggle">
-          <mat-button-toggle-group formControlName="questionValueType" aria-label="Valor ou Score">
-            <mat-button-toggle value="value">Valor</mat-button-toggle>
-            <mat-button-toggle value="score">Score</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
+        
       </ng-container>
 
       <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'condition'">
@@ -64,14 +66,16 @@
       </mat-form-field>
     </div>
     
-    <mat-form-field appearance="outline" style="width:100%">
-      <mat-label>Operador</mat-label>
-      <mat-select formControlName="operator">
-        <mat-option *ngFor="let op of filteredOperators" [value]="op.value">
-          {{ op.label }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <div class="value-section" style="margin-top: 10px; margin-bottom: 10px;">
+      <h5 style="margin-bottom: 5px;">Operador</h5>
+      <mat-form-field appearance="outline" style="width:100%;">        
+        <mat-select formControlName="operator">
+          <mat-option *ngFor="let op of filteredOperators" [value]="op.value">
+            {{ op.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
     
     <div class="compare-value-section">
       <h5>Segundo Valor</h5>
@@ -81,6 +85,14 @@
           <mat-button-toggle value="question" *ngIf="conditionForm.get('valueType')?.value !== 'condition'">Pergunta</mat-button-toggle>
           <mat-button-toggle value="condition" *ngIf="availableConditions.length">Condição</mat-button-toggle>
         </mat-button-toggle-group>
+        <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
+          <div class="value-toggle">
+            <mat-button-toggle-group formControlName="compareQuestionValueType" aria-label="Valor ou Score">
+              <mat-button-toggle value="value">Valor</mat-button-toggle>
+              <mat-button-toggle value="score">Score</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        </ng-container>
       </div>
 
       <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
@@ -100,12 +112,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <div class="value-toggle">
-          <mat-button-toggle-group formControlName="compareQuestionValueType" aria-label="Valor ou Score">
-            <mat-button-toggle value="value">Valor</mat-button-toggle>
-            <mat-button-toggle value="score">Score</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
+        
       </ng-container>
 
       <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'condition'">

@@ -7,17 +7,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSave, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition, ConditionNodeData } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
+import { ControlMaterialComponent, ControlMaterialNumberComponent } from '@angulartoolsdr/control-material';
 
 @Component({
   selector: 'app-inspector',
   standalone: true,
-  imports: [
+  imports: [ControlMaterialNumberComponent, ControlMaterialComponent,
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
     FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent,
@@ -95,12 +96,12 @@ export class InspectorComponent {
   conditionType: 'comparison' | 'expression' = 'comparison';
 
   faTimes = faTimes;
-  faSave = faSave;
+  faCheck = faCheck;
   faTrash = faTrash;
   faPlus = faPlus;
 
   constructor(private state: GraphStateService, private fb: FormBuilder) {
-    this.library.addIcons(faTimes, faSave, faTrash, faPlus);
+    this.library.addIcons(faTimes, faCheck, faTrash, faPlus);
     this.fgQ = this.fb.group({
       label: [''],
       type: ['text'],
@@ -110,7 +111,7 @@ export class InspectorComponent {
       options: this.fb.array([]),
       seq: [1]
     });
-    this.fgA = this.fb.group({ type: ['Enviar Notificação'] });
+    this.fgA = this.fb.group({ type: ['sendNotification'] });
 
     this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
     this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});

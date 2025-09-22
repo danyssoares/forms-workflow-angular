@@ -11,9 +11,18 @@
   flex: 1;
 }
 
+.palette .form-name-field {
+  width: 320px;
+}
+
 .flow-shell {
   display: flex;
   height: calc(100vh - 64px);
+}
+
+.flow-shell.resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .flow-shell app-canvas {
@@ -22,13 +31,35 @@
 }
 
 .flow-shell app-inspector {
-  width: 320px;
+  /* width control via component binding */
   border-left: 1px solid #e0e0e0;
   background: #fafafa;
-  padding: 0px 12px 12px 0px;
+  padding: 0px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+}
+
+.flow-shell .resizer {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+}
+
+.flow-shell .resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: #e0e0e0;
+}
+
+.flow-shell .resizer:hover::after,
+.flow-shell.resizing .resizer::after {
+  background: #bdbdbd;
 }
 
 .flow-shell app-inspector ::ng-deep .sidebar {

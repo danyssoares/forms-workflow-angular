@@ -1,9 +1,9 @@
 .condition-editor {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #ddd;
   border-radius: 4px;
   padding: 16px;
   margin-bottom: 16px;
-  background-color: #fafafa;
+  background-color: transparent;
 }
 
 .condition-header {
@@ -17,11 +17,17 @@
   margin: 0;
 }
 
-.value-section,
-.compare-value-section {
-  margin-top: 16px;
+.value-toggle {
+  display: flex;
+  justify-content: space-between;
 }
 
+.value-section,
+.compare-value-section {
+  margin-top: 0px;
+}
+
+.value-section h5,
 .compare-value-section h5 {
   margin-top: 0;
   margin-bottom: 8px;
