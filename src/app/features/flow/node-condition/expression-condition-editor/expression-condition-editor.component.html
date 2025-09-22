@@ -14,7 +14,10 @@
       <textarea
         matInput
         rows="2"
-        placeholder="$pergunta1.value == 'Teste' || $pergunta1.score > 5"
+        placeholder="$pergunta1.valor == 'Teste' || $pergunta1.score > 5"
         formControlName="expressionControl"></textarea>
+      <mat-error *ngIf="expressionControl.hasError('expression')">
+        {{ expressionControl.getError('expression') }}
+      </mat-error>
     </mat-form-field>
   </div>

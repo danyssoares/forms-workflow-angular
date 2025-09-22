@@ -32,6 +32,10 @@ export class ExpressionConditionEditorComponent implements OnInit {
   faTrash = faTrash;
   formGroup: FormGroup;
 
+  get expressionControl(): FormControl {
+    return this.formGroup.get('expressionControl') as FormControl;
+  }
+
   ngOnInit() {
     this.formGroup.patchValue({
       name: this.condition.name || '',
@@ -50,5 +54,57 @@ export class ExpressionConditionEditorComponent implements OnInit {
       expressionControl: ['']
     });
     this.library.addIcons(faTrash);
+  }
+
+  validate(context: Record<string, any>): boolean {
+    const ctrl = this.expressionControl;
+    const expr: string = (ctrl.value || '').trim();
+    if (!expr) {
+      ctrl.setErrors({ expression: 'Expressão vazia' });
+      ctrl.markAsTouched();
+      return false;
+    }
+
+    const varRegex = /\$([a-zA-Z_][\w]*)(\.[a-zA-Z_][\w]*)*/g;
+    let match: RegExpExecArray | null;
+    while ((match = varRegex.exec(expr)) !== null) {
+      const varName = match[1];
+      const path = match[2] ? match[2].slice(1).split('.') : [];
+      if (!(varName in context)) {
+        ctrl.setErrors({ expression: `Variável ${varName} não disponível` });
+        ctrl.markAsTouched();
+        return false;
+      }
+      let ref: any = context[varName];
+      for (const segment of path) {
+        if (ref && typeof ref === 'object' && segment in ref) {
+          ref = ref[segment];
+        } else {
+          ctrl.setErrors({ expression: `Propriedade ${segment} não existe em ${varName}` });
+          ctrl.markAsTouched();
+          return false;
+        }
+      }
+    }
+    try {
+      const processed = expr.replace(varRegex, (_: string, v: string, prop: string) => {
+        let res = `context['${v}']`;
+        if (prop) res += prop;
+        return res;
+      });
+      // eslint-disable-next-line no-new-func
+      const result = new Function('context', `return (${processed});`)(context);
+      if (typeof result !== 'boolean') {
+        ctrl.setErrors({ expression: 'Expressão deve retornar booleano' });
+        ctrl.markAsTouched();
+        return false;
+      }
+      ctrl.setErrors(null);
+      return true;
+    } catch (err: any) {
+      ctrl.setErrors({ expression: err.message || 'Expressão inválida' });
+      ctrl.markAsTouched();
+      return false;
+    }
   }
 }
