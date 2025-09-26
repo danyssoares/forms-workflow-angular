@@ -106,7 +106,7 @@
 
 /* Estilo para o nó final (terminador em forma de cápsula) */
 .node.end {
-  width: 120px;
+  width: 150px;
   height: 50px;
   border-radius: 25px;
   background-color: #ffffff; /* Fundo branco igual aos demais nós */
@@ -168,6 +168,11 @@
 .condition-handle.all-conditions-handle .handle-label {
   color: #ff9800;
 }
+
+/* End node (Final) condition handles in black */
+/* End node handles must be black, but condition node handles remain purple */
+.node-wrapper.end .condition-handle { background: #000; border-color: #000; }
+.node-wrapper.end .condition-handle .handle-label { color: #000; }
 
 /* Zoom controls - positioned at the bottom left corner, stacked vertically */
 .zoom-controls {

@@ -55,7 +55,8 @@
         (cdkDragEnded)="dragEnd(n, $event)"
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
         class="node-wrapper"
-        [class.condition]="n.kind === 'condition'">
+        [class.condition]="n.kind === 'condition'"
+        [class.end]="n.kind === 'end'">
 
         <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
 
@@ -72,6 +73,9 @@
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
             <ng-container *ngIf="n.kind === 'end'; else defaultButtons">
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+                <fa-icon [icon]="faEdit"></fa-icon>
+              </button>
               <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
                 <fa-icon [icon]="faTrash"></fa-icon>
               </button>
@@ -130,7 +134,19 @@
         </ng-container>
         
         <!-- Handle de saída padrão para outros nós -->
-        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition'" (mousedown)="startConnection(n.id, $event)"></div>
+        <!-- Handles de saída para o nó final (condições por score) -->
+        <ng-container *ngIf="n.kind === 'end' && (isSelected(n.id) || n.data.conditions?.length > 0)">
+          <div
+            *ngFor="let c of n.data.conditions; let i = index"
+            class="handle out condition-handle"
+            [attr.data-condition-id]="c.id"
+            (mousedown)="startConnection(n.id, $event, c.id)"
+            [ngStyle]="{ top: endConditionHandleTop(n.data.conditions.length, i) + 'px' }">
+            <span class="handle-label">{{ c.name || 'Condição ' + (i + 1) }}</span>
+          </div>
+        </ng-container>
+        
+        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition' && !(n.kind==='end' && n.data.conditions?.length)" (mousedown)="startConnection(n.id, $event)"></div>
       </div>
     </div>
 

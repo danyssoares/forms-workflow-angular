@@ -73,6 +73,42 @@
   width: 100%;
 }
 
+/* Smaller trash icon buttons for rows (end conditions, conditions, and options) */
+/* Target Angular Material MDC icon buttons within the inspector rows */
+:host ::ng-deep .sidebar .option-row .mat-mdc-icon-button,
+:host ::ng-deep .sidebar .condition-editor .condition-header .mat-mdc-icon-button {
+  /* Reduce component box */
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  padding: 0 !important;
+  /* Reduce MDC variables (icon and state layer) */
+  --mdc-icon-button-icon-size: 18px;
+}
+
+/* Reduce actual touch target box */
+:host ::ng-deep .sidebar .option-row .mat-mdc-icon-button .mat-mdc-button-touch-target,
+:host ::ng-deep .sidebar .condition-editor .condition-header .mat-mdc-icon-button .mat-mdc-button-touch-target {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* FontAwesome icon sizing inside the smaller buttons */
+:host ::ng-deep .sidebar .option-row .mat-mdc-icon-button fa-icon,
+:host ::ng-deep .sidebar .condition-editor .condition-header .mat-mdc-icon-button fa-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+/* Also force inner SVG size for FontAwesome */
+:host ::ng-deep .sidebar .option-row .mat-mdc-icon-button fa-icon svg,
+:host ::ng-deep .sidebar .condition-editor .condition-header .mat-mdc-icon-button fa-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
 /* ---- Options list styling ---- */
 div[formArrayName="options"] {
   margin-top: 8px;

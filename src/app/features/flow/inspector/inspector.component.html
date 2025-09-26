@@ -44,12 +44,15 @@
             <div formArrayName="options">
               <div style="font-weight: bold;">Opções</div>
               <div *ngFor="let opt of options.controls; let i=index" [formGroupName]="i" class="option-row">
-                <lib-control-material label="Label" [smaller]="true" style="width:50%; display: grid;">
+                <lib-control-material label="Label" [smaller]="true" style="width:40%; display: grid;">
                   <input formControlName="label">
                 </lib-control-material>
-                <lib-control-material label="Valor" [smaller]="true" style="width:50%; display: grid;">
+                <lib-control-material label="Valor" [smaller]="true" style="width:40%; display: grid;">
                   <input formControlName="value">
                 </lib-control-material>               
+                <lib-control-material-number label="Score" [smaller]="true" style="width:20%; display: grid;">
+                  <input formControlName="score" />
+                </lib-control-material-number>
                 
                 <button mat-icon-button type="button" (click)="removeOption(i)">
                   <fa-icon [icon]="faTrash"></fa-icon>
@@ -59,6 +62,46 @@
             </div>
           </div>
         </form>
+
+        <!-- END (Final) -->
+        <div *ngSwitchCase="'end'" [formGroup]="fgEnd">
+          <div style="font-weight: 600; margin-bottom: 8px;">Condições por Score Final</div>
+          <div formArrayName="conditions">
+            <div *ngFor="let g of endConditionsArray.controls; let i = index" [formGroupName]="i" class="option-row" style="align-items:flex-start; gap:8px; flex-direction: column;">
+              <lib-control-material label="Nome" [smaller]="true" style="width:100%; display:grid;">
+                <input formControlName="name" />
+              </lib-control-material>
+
+              <div style="display:flex; align-items:center; gap:8px; width:100%;">
+                <div style="width:auto; font-size:12px; color:#6b7280;">Score Final</div>
+
+                <mat-form-field appearance="outline" style="width:120px">
+                  <mat-label>Operador</mat-label>
+                  <mat-select formControlName="operator">
+                    <mat-option value="==">==</mat-option>
+                    <mat-option value="!=">!=</mat-option>
+                    <mat-option value=">=">>=</mat-option>
+                    <mat-option value=">">></mat-option>
+                    <mat-option value="<="><=</mat-option>
+                    <mat-option value="<"><</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <lib-control-material-number label="Valor" [smaller]="true" style="width:160px; display:grid;">
+                  <input formControlName="value" />
+                </lib-control-material-number>
+
+                <button mat-icon-button type="button" (click)="removeEndCondition(i)">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button mat-stroked-button type="button" (click)="addEndCondition()" class="add-condition-btn">
+            <fa-icon [icon]="faPlus"></fa-icon> Adicionar Condição
+          </button>
+          <div style="color:#6b7280; font-size:12px; margin-top:6px;">Cada saída só conecta a nós de Ação.</div>
+        </div>
 
         <!-- CONDITION -->
         <div *ngSwitchCase="'condition'">
@@ -108,3 +151,6 @@
       </button>
     </div>
   </div>
+
+
+

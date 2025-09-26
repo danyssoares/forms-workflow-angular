@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, Signal, ViewChildren, QueryList } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -10,7 +10,7 @@ import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontaweso
 import { faCheck, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition, ConditionNodeData } from '../graph.types';
+import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition, ConditionNodeData, EndNodeData, EndScoreCondition } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 import { ControlMaterialComponent, ControlMaterialNumberComponent } from '@angulartoolsdr/control-material';
@@ -22,6 +22,7 @@ import { ControlMaterialComponent, ControlMaterialNumberComponent } from '@angul
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
     FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent,
+    FormsModule,
     
   ],
   templateUrl: './inspector.component.html',
@@ -94,6 +95,8 @@ export class InspectorComponent {
   fgA: FormGroup;
   conditionData: Condition[] = [];
   conditionType: 'comparison' | 'expression' = 'comparison';
+  fgEnd: FormGroup;
+  trackEndCondition = (_: number, c: EndScoreCondition) => c.id;
 
   faTimes = faTimes;
   faCheck = faCheck;
@@ -114,6 +117,7 @@ export class InspectorComponent {
       seq: [1]
     });
     this.fgA = this.fb.group({ type: ['sendNotification'] });
+    this.fgEnd = this.fb.group({ conditions: this.fb.array([]) });
 
     this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
     this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});
@@ -125,7 +129,9 @@ export class InspectorComponent {
         const opts = n.data.options || [];
         const arr = this.options;
         arr.clear();
-        opts.forEach((o: { label: any; value: any; }) => arr.push(this.fb.group({ label: [o.label], value: [o.value] })));
+        opts.forEach((o: { label: any; value: any; score?: number; }) => 
+          arr.push(this.fb.group({ label: [o.label], value: [o.value], score: [o.score ?? 0] }))
+        );
         this.fgQ.patchValue({ 
           label: n.data.label, 
           type: n.data.type, 
@@ -142,12 +148,25 @@ export class InspectorComponent {
           ...c
         }));
       }
+      if (n.kind === 'end') {
+        const data = n.data as EndNodeData;
+        const arr = this.fgEnd.get('conditions') as FormArray;
+        arr.clear();
+        (data.conditions || []).forEach(c => {
+          arr.push(this.fb.group({
+            id: [c.id],
+            name: [c.name || ''],
+            operator: [c.operator || '>='],
+            value: [c.value ?? null]
+          }));
+        });
+      }
       if (n.kind === 'action') this.fgA.patchValue({ type: n.data.type });
     });
   }
 
   get options() { return this.fgQ.get('options') as FormArray; }
-  addOption() { this.options.push(this.fb.group({ label: [''], value: [''] })); }
+  addOption() { this.options.push(this.fb.group({ label: [''], value: [''], score: [0] })); }
   removeOption(i: number) { this.options.removeAt(i); }
 
   addCondition() {
@@ -194,6 +213,20 @@ export class InspectorComponent {
     this.conditionData.splice(index, 1);
   }
 
+  get endConditionsArray() { return this.fgEnd.get('conditions') as FormArray; }
+  addEndCondition() {
+    this.endConditionsArray.push(this.fb.group({ id:[crypto.randomUUID()], name:[''], operator:['>='], value:[null] }));
+  }
+  removeEndCondition(index: number) {
+    this.endConditionsArray.removeAt(index);
+  }
+
+  setRange(c: EndScoreCondition, idx: 0 | 1, value: any) {
+    if (!c.range) c.range = [0, 0];
+    const num = Number(value);
+    c.range[idx] = Number.isNaN(num) ? 0 : num;
+  }
+
   private buildExpressionContext(): Record<string, any> {
     const ctx: Record<string, any> = {};
     this.availableQuestions().forEach(q => {
@@ -204,6 +237,8 @@ export class InspectorComponent {
     });
     return ctx;
   }
+
+  // Removido o update imediato; a persistência para nó Fim acontece em save()
 
   save() {
     const n = this.node();
@@ -258,6 +293,18 @@ export class InspectorComponent {
         conditionType: this.conditionType,
         conditions: this.conditionData
       });
+    }
+    
+    if (n.kind === 'end') {
+      const raw = (this.endConditionsArray.value || []) as any[];
+      const normalized: EndScoreCondition[] = raw.map((c:any) => ({
+        id: c.id || crypto.randomUUID(),
+        name: c.name || '',
+        operator: (c.operator || '>=') as EndScoreCondition['operator'],
+        value: c.value === null || c.value === undefined || c.value === '' ? 0 : Number(c.value),
+      }));
+      const data: EndNodeData = { ...(n.data as EndNodeData), conditions: normalized };
+      this.state.updateNode(n.id, data);
     }
     
     if (n.kind === 'action') {

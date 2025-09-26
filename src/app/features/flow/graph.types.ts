@@ -41,4 +41,15 @@ export interface ConditionNodeData {
 
 export interface ActionNodeData { type:'openForm'|'emitAlert'|'webhook'|'setTag'|'setField'; params?:Record<string,any>; seq?:number; }
 export interface ScoreGateData { operator?:'>='|'<='|'>'|'<'; value?:number; seq?:number; }
-export interface EndNodeData { label?: string; seq?: number; }
+
+export type EndScoreOperator = 'between'|'>='|'<='|'>'|'<'|'=='|'!=';
+export interface EndScoreCondition {
+  id: string;
+  name?: string;
+  operator: EndScoreOperator;
+  /** For 'between', use range; for others, use value */
+  value?: number;
+  range?: [number, number];
+}
+
+export interface EndNodeData { label?: string; seq?: number; conditions?: EndScoreCondition[]; }

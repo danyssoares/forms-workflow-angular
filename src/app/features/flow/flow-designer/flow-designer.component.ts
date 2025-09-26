@@ -118,7 +118,7 @@ export class FlowDesignerComponent {
       }
     }
     if(e.kind==='action') this.state.addNode('action', { type:'sendNotification', params:{ alertCode:'ALERTA' } }, pos);
-    if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário' }, pos);
+    if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário', conditions: [] }, pos);
   }
 
   exportForm(){
@@ -128,3 +128,6 @@ export class FlowDesignerComponent {
     alert('FormDefinition gerado! Veja no console do navegador.');
   }
 }
+
+
+

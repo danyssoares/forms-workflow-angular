@@ -7,16 +7,32 @@ export class GraphMapperService {
   toFormDefinition(graph: GraphModel, base: Partial<FormDefinition>): FormDefinition {
     const questions: Question[] = graph.nodes
       .filter(n => n.kind === 'question')
-      .map(n => ({
-        id: n.data.id,
-        type: n.data.type,
-        label: n.data.label,
-        helpText: n.data.helpText,
-        weight: n.data.score,
-        trueLabel: n.data.trueLabel,
-        falseLabel: n.data.falseLabel,
-        options: n.data.options,
-      } as Question));
+      .map(n => {
+        const q: Question = {
+          id: n.data.id,
+          type: n.data.type,
+          label: n.data.label,
+          helpText: n.data.helpText,
+          weight: n.data.score,
+          trueLabel: n.data.trueLabel,
+          falseLabel: n.data.falseLabel,
+          options: n.data.options,
+        } as Question;
+
+        // If options include per-option score, build scoreMap for scoring service
+        if (['select', 'radio', 'checkbox'].includes(n.data.type) && Array.isArray(n.data.options)) {
+          const map: Record<string, number> = {};
+          (n.data.options || []).forEach((opt: any) => {
+            const key = String(opt?.value);
+            const score = Number(opt?.score);
+            if (!Number.isNaN(score)) map[key] = score;
+          });
+          // Only assign if there is at least one key
+          if (Object.keys(map).length) (q as any).scoreMap = map;
+        }
+
+        return q;
+      });
 
     const rules: Rule[] = [];
     // Regras por resposta: Pergunta -> Condição -> Ação
@@ -63,6 +79,34 @@ export class GraphMapperService {
       const trigger: RuleTrigger = { kind:'onFinalScore', operator: gate.data.operator||'>=', value: Number(gate.data.value)||0 } as any;
       const ruleActions: RuleAction[] = actions.map(a=>({ type:'emitAlert', alertCode: a.data.params?.alertCode || 'SCORE_TRIGGER' } as RuleAction));
       finalScoreRules.push({ id: crypto.randomUUID(), name:'ScoreGate '+gate.id, triggers:[trigger], actions:ruleActions });
+    });
+
+    // Regras por score no nó final (End -> Condições -> Ação)
+    graph.nodes.filter(n=>n.kind==='end').forEach(end => {
+      const conds = (end.data?.conditions || []) as any[];
+      conds.forEach((c, idx) => {
+        const actions = graph.edges
+          .filter(e=>e.from===end.id && e.conditionId === c.id)
+          .map(e=>graph.nodes.find(n=>n.id===e.to)!)
+          .filter(n=>n?.kind==='action');
+        if (!actions.length) return;
+        const trigger: RuleTrigger = (c.operator === 'between')
+          ? ({ kind: 'onFinalScore', operator: 'between', range: c.range } as any)
+          : ({ kind: 'onFinalScore', operator: (c.operator || '>=') as any, value: Number(c.value)||0 } as any);
+        const ruleActions: RuleAction[] = actions.map(a=>{
+          const t = a.data.type as RuleAction['type'];
+          switch (t) {
+            case 'openForm': return { type:'openForm', formId: a.data.params?.formId||'' } as RuleAction;
+            case 'emitAlert': return { type:'emitAlert', alertCode: a.data.params?.alertCode||'ALERTA' } as RuleAction;
+            case 'webhook': return { type:'webhook', url: a.data.params?.url||'', method: 'POST' } as RuleAction;
+            case 'setTag': return { type:'setTag', tag: a.data.params?.tag||'' } as RuleAction;
+            case 'setField': return { type:'setField', fieldPath: a.data.params?.fieldPath||'', value: a.data.params?.value } as RuleAction;
+            default: return { type:'emitAlert', alertCode:'UNSPEC' } as RuleAction;
+          }
+        });
+        const ruleName = `EndScore ${end.id} #${idx+1}`;
+        finalScoreRules.push({ id: crypto.randomUUID(), name: ruleName, triggers:[trigger], actions:ruleActions });
+      });
     });
 
     const now = new Date().toISOString();

@@ -1,0 +1,25 @@
+            [attr.data-condition-id]="c.id"
+            (mousedown)="startConnection(n.id, $event, c.id)"
+            [ngStyle]="{ top: endConditionHandleTop(n.data.conditions.length, i) + 'px' }">
+            <span class="handle-label">{{ c.name || 'Condição ' + (i + 1) }}</span>
+          </div>
+        </ng-container>
+        
+        <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition' && !(n.kind==='end' && n.data.conditions?.length)" (mousedown)="startConnection(n.id, $event)"></div>
+      </div>
+    </div>
+
+    <div class="zoom-controls">
+      <button (click)="zoomIn()">+</button>
+      <button (click)="zoomOut()">-</button>
+    </div>
+
+    <div class="mini-map">
+      <div class="view" [ngStyle]="{
+          left: viewBox.left + 'px',
+          top: viewBox.top + 'px',
+          width: viewBox.width + 'px',
+          height: viewBox.height + 'px'
+        }"></div>
+    </div>
+  </div>

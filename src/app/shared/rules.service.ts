@@ -32,6 +32,8 @@ export class RulesService {
         case 'between': return !!t.range && score >= t.range[0] && score <= t.range[1];
         case '>=': return score >= (t.value ?? 0); case '<=': return score <= (t.value ?? 0);
         case '>': return score > (t.value ?? 0); case '<': return score < (t.value ?? 0);
+        case '==': return score == (t.value ?? 0);
+        case '!=': return score != (t.value ?? 0);
       }
     }
     return false;

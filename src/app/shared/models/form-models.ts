@@ -13,7 +13,7 @@ export interface Question {
 
 export type RuleTrigger =
   | { kind:'onAnswer'; questionId:string; operator:'=='|'!='|'>'|'>='|'<'|'<='|'in'|'contains'; value:any }
-  | { kind:'onFinalScore'; operator:'between'|'>='|'<='|'>'|'<'; range?: [number,number]; value?: number };
+  | { kind:'onFinalScore'; operator:'between'|'>='|'<='|'>'|'<'|'=='|'!='; range?: [number,number]; value?: number };
 
 export type RuleAction =
   | { type:'openForm'; formId:string }

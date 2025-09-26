@@ -66,8 +66,8 @@ export class CanvasComponent {
 
   private nodeSize(kind: string) {
     const cond = 120 * Math.SQRT2; // bounding box of rotated square (diamond)
-    const w = kind === 'condition' ? cond : kind === 'action' ? 180 : kind === 'end' ? 80 : 200;
-    const h = kind === 'condition' ? cond : kind === 'action' ? 80 : kind === 'end' ? 80 : 90;
+    const w = kind === 'condition' ? cond : kind === 'action' ? 180 : kind === 'end' ? 150 : 200;
+    const h = kind === 'condition' ? cond : kind === 'action' ? 80 : kind === 'end' ? 50 : 90;
     return { w, h };
   }
 
@@ -91,6 +91,12 @@ export class CanvasComponent {
     return center + (index - (total - 1) / 2) * spacing;
   }
 
+  endConditionHandleTop(total: number, index: number): number {
+    const spacing = 30;
+    const center = this.nodeSize('end').h / 2;
+    return center + (index - (total - 1) / 2) * spacing;
+  }
+
   // Método para calcular pontos de saída para cada condição específica
   private conditionOutPoint(nodeId: string, conditionIndex: number, total?: number): Point {
     const n = this.graph().nodes.find(nn => nn.id === nodeId);
@@ -105,6 +111,21 @@ export class CanvasComponent {
     const x = n.position.x + off.x + w + 6; // 6 = raio do handle
     const y = n.position.y + off.y + center + (conditionIndex - (totalHandles - 1) / 2) * spacing + 6;
 
+    return { x, y };
+  }
+
+  // Ponto de saída para cada condição do nó final
+  private endOutPoint(nodeId: string, conditionIndex: number, total?: number): Point {
+    const n = this.graph().nodes.find(nn => nn.id === nodeId);
+    if (!n || n.kind !== 'end') return { x: 0, y: 0 };
+
+    const off = this.dragOffsets[nodeId] || { x: 0, y: 0 };
+    const { w, h } = this.nodeSize('end');
+    const totalHandles = total ?? ((n.data as any).conditions?.length || 0);
+    const spacing = 30;
+    const center = h / 2;
+    const x = n.position.x + off.x + w + 6;
+    const y = n.position.y + off.y + center + (conditionIndex - (totalHandles - 1) / 2) * spacing + 6;
     return { x, y };
   }
 
@@ -128,20 +149,24 @@ export class CanvasComponent {
   // Método para obter o ponto de saída correto com base na edge
   private getOutPointForEdge(edge: GraphEdge): Point {
     const fromNode = this.graph().nodes.find(n => n.id === edge.from);
-    if (!fromNode || fromNode.kind !== 'condition') {
+    if (!fromNode || (fromNode.kind !== 'condition' && fromNode.kind !== 'end')) {
       return this.outPoint(edge.from);
     }
 
-    const conditions = (fromNode.data as ConditionNodeData).conditions || [];
-    const total = this.totalConditionHandles(edge.from);
+    const conditions = (fromNode.kind === 'condition'
+      ? (fromNode.data as ConditionNodeData).conditions || []
+      : ((fromNode.data as any).conditions || []));
+    const total = fromNode.kind === 'condition' ? this.totalConditionHandles(edge.from) : conditions.length;
 
     if (edge.conditionId) {
-      const conditionIndex = conditions.findIndex(c => c.id === edge.conditionId);
+      const conditionIndex = conditions.findIndex((c: any) => c.id === edge.conditionId);
       if (conditionIndex === -1) return this.outPoint(edge.from);
-      return this.conditionOutPoint(edge.from, conditionIndex, total);
+      return fromNode.kind === 'condition'
+        ? this.conditionOutPoint(edge.from, conditionIndex, total)
+        : this.endOutPoint(edge.from, conditionIndex, total);
     }
 
-    if (this.isAllConditionsEdge(edge)) {
+    if (fromNode.kind === 'condition' && this.isAllConditionsEdge(edge)) {
       return this.conditionOutPoint(edge.from, conditions.length, total);
     }
 
@@ -161,14 +186,224 @@ export class CanvasComponent {
     return { x: n.position.x + off.x, y: n.position.y + off.y + h / 2 };
   }
 
-  private path(p1: Point, p2: Point) {
+  // Roteamento ortogonal com desvio dos nós (estilo n8n)
+  private readonly ROUTE_GAP = 24;   // afastamento inicial/final do nó
+  private readonly ROUTE_PAD = 16;   // margem ao redor dos nós para não encostar
+  private readonly ROUTE_STEP = 20;  // passo de busca por corredores livres
+
+  private getNodeBBox(n: GraphNode): { x1: number, y1: number, x2: number, y2: number } {
+    const off = this.dragOffsets[n.id] || { x: 0, y: 0 };
+    const { w, h } = this.nodeSize(n.kind);
+    const x1 = n.position.x + off.x;
+    const y1 = n.position.y + off.y;
+    return { x1, y1, x2: x1 + w, y2: y1 + h };
+  }
+
+  private expanded(rect: { x1: number, y1: number, x2: number, y2: number }, pad = this.ROUTE_PAD) {
+    return { x1: rect.x1 - pad, y1: rect.y1 - pad, x2: rect.x2 + pad, y2: rect.y2 + pad };
+  }
+
+  private rects(excludeIds: string[] = []) {
+    const set = new Set(excludeIds);
+    return this.graph().nodes
+      .filter(n => !set.has(n.id))
+      .map(n => this.expanded(this.getNodeBBox(n)));
+  }
+
+  private intersectsHorizontal(y: number, x1: number, x2: number, rect: { x1: number, y1: number, x2: number, y2: number }) {
+    if (x1 > x2) [x1, x2] = [x2, x1];
+    if (y < rect.y1 || y > rect.y2) return false;
+    return !(x2 < rect.x1 || x1 > rect.x2);
+  }
+
+  private intersectsVertical(x: number, y1: number, y2: number, rect: { x1: number, y1: number, x2: number, y2: number }) {
+    if (y1 > y2) [y1, y2] = [y2, y1];
+    if (x < rect.x1 || x > rect.x2) return false;
+    return !(y2 < rect.y1 || y1 > rect.y2);
+  }
+
+  private horizontalClear(y: number, x1: number, x2: number, rects: Array<{x1:number,y1:number,x2:number,y2:number}>) {
+    return !rects.some(r => this.intersectsHorizontal(y, x1, x2, r));
+  }
+
+  private verticalClear(x: number, y1: number, y2: number, rects: Array<{x1:number,y1:number,x2:number,y2:number}>) {
+    return !rects.some(r => this.intersectsVertical(x, y1, y2, r));
+  }
+
+  private findClearY(base: number, xA: number, xB: number, rects: Array<{x1:number,y1:number,x2:number,y2:number}>) {
+    // Tenta em y base, depois busca acima/abaixo em passos
+    const tryYs = [base];
+    for (let step = this.ROUTE_STEP; step < 600; step += this.ROUTE_STEP) {
+      tryYs.push(base - step, base + step);
+    }
+    for (const y of tryYs) {
+      if (this.horizontalClear(y, xA, xB, rects)) return y;
+    }
+    return base; // fallback
+  }
+
+  private findClearX(base: number, y1: number, y2: number, direction: 1 | -1, rects: Array<{x1:number,y1:number,x2:number,y2:number}>) {
+    // Busca para direita (1) ou esquerda (-1) a partir de base
+    if (this.verticalClear(base, y1, y2, rects)) return base;
+    let x = base;
+    for (let step = this.ROUTE_STEP; step < 800; step += this.ROUTE_STEP) {
+      const cand = base + direction * step;
+      if (this.verticalClear(cand, y1, y2, rects)) return cand;
+      // também tenta no sentido oposto para robustez
+      const candOpp = base - direction * step;
+      if (this.verticalClear(candOpp, y1, y2, rects)) return candOpp;
+      x = cand;
+    }
+    return x; // fallback
+  }
+
+  private toPathString(points: Point[]) {
+    if (!points.length) return '';
+    const cmds = [`M ${points[0].x} ${points[0].y}`];
+    for (let i = 1; i < points.length; i++) cmds.push(`L ${points[i].x} ${points[i].y}`);
+    return cmds.join(' ');
+  }
+
+  private cubicPath(p1: Point, p2: Point) {
     const mx = (p1.x + p2.x) / 2;
     return `M ${p1.x} ${p1.y} C ${mx} ${p1.y}, ${mx} ${p2.y}, ${p2.x} ${p2.y}`;
   }
 
+  private verticalContourPath(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}) {
+    // Contorna ambos nós: sai pela direita do origem e entra pela esquerda do destino
+    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
+    const toCenterY = (toRect.y1 + toRect.y2) / 2;
+    const goBelow = toCenterY >= fromCenterY;
+    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
+    const xRightFrom = fromRect.x2 + this.ROUTE_PAD;    // totalmente fora do nó origem
+    const xLeftTo = toRect.x1 - this.ROUTE_PAD;         // totalmente fora do nó destino
+    return this.toPathString(this.verticalContourPoints(p1, p2, fromRect, toRect));
+  }
+
+  private horizontalContourPath(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}) {
+    // Destino está à esquerda do origem: contornar ambos e entrar pela esquerda do destino
+    const gap = this.ROUTE_GAP;
+    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
+    const toCenterY = (toRect.y1 + toRect.y2) / 2;
+    const goBelow = toCenterY >= fromCenterY;
+    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
+    const xA = p1.x + gap; // coluna fora do nó origem
+    const xLeftDest = toRect.x1 - this.ROUTE_PAD; // coluna à esquerda do nó destino
+    return this.toPathString(this.horizontalContourPoints(p1, p2, fromRect, toRect));
+  }
+
+  private verticalContourPoints(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}): Point[] {
+    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
+    const toCenterY = (toRect.y1 + toRect.y2) / 2;
+    const goBelow = toCenterY >= fromCenterY;
+    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
+    const xRightFrom = fromRect.x2 + this.ROUTE_PAD;
+    const xLeftTo = toRect.x1 - this.ROUTE_PAD;
+    return [
+      { x: p1.x, y: p1.y },
+      { x: xRightFrom, y: p1.y },
+      { x: xRightFrom, y: yPass },
+      { x: xLeftTo,    y: yPass },
+      { x: xLeftTo,    y: p2.y },
+      { x: p2.x,       y: p2.y }
+    ];
+  }
+
+  private horizontalContourPoints(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}): Point[] {
+    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
+    const toCenterY = (toRect.y1 + toRect.y2) / 2;
+    const goBelow = toCenterY >= fromCenterY;
+    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
+    const xA = p1.x + this.ROUTE_GAP;
+    const xLeftDest = toRect.x1 - this.ROUTE_PAD;
+    return [
+      { x: p1.x, y: p1.y },
+      { x: xA,   y: p1.y },
+      { x: xA,   y: yPass },
+      { x: xLeftDest, y: yPass },
+      { x: xLeftDest, y: p2.y },
+      { x: p2.x, y: p2.y }
+    ];
+  }
+
+  private route(p1: Point, p2: Point, excludeIds: string[] = []) {
+    // Roteamento ortogonal com até 5-6 segmentos, evitando retângulos (nós) com margem
+    const rs = this.rects(excludeIds);
+    const gap = this.ROUTE_GAP;
+    const points: Point[] = [];
+
+    const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+
+    // Caso simples: alvo à direita do origem
+    if (x2 >= x1 + gap * 2) {
+      const xA = x1 + gap;
+      const xB = x2 - gap;
+      // Encontrar um Y claro para o segmento horizontal longo
+      const yMid = this.findClearY(y1, Math.min(xA, xB), Math.max(xA, xB), rs);
+      // Garantir verticais claras em xA e xB
+      const xAClear = this.findClearX(xA, y1, yMid, 1, rs);
+      const xBClear = this.findClearX(xB, yMid, y2, -1, rs);
+      points.push(
+        { x: x1, y: y1 },
+        { x: xAClear, y: y1 },
+        { x: xAClear, y: yMid },
+        { x: xBClear, y: yMid },
+        { x: xBClear, y: y2 },
+        { x: x2, y: y2 }
+      );
+      return this.toPathString(points);
+    }
+
+    // Caso alvo à esquerda: desvia por uma coluna lateral (direita preferencial)
+    const goRight = true;
+    const spanY1 = Math.min(y1, y2);
+    const spanY2 = Math.max(y1, y2);
+    let xC = Math.max(x1, x2) + gap; // coluna de desvio
+    xC = this.findClearX(xC, spanY1, spanY2, 1, rs);
+
+    // Se ainda assim estiver congestionado muito à direita, tente à esquerda
+    if (!this.verticalClear(xC, spanY1, spanY2, rs)) {
+      xC = Math.min(x1, x2) - gap;
+      xC = this.findClearX(xC, spanY1, spanY2, -1, rs);
+    }
+
+    const xA2 = Math.min(x1 + gap, xC);
+    const xB2 = Math.max(x2 - gap, xC);
+
+    points.push(
+      { x: x1, y: y1 },
+      { x: xA2, y: y1 },
+      { x: xC,  y: y1 },
+      { x: xC,  y: y2 },
+      { x: xB2, y: y2 },
+      { x: x2,  y: y2 }
+    );
+    return this.toPathString(points);
+  }
+
   pathBetween(edge: GraphEdge) {
     const out = this.getOutPointForEdge(edge);
-    return this.path(out, this.inPoint(edge.to));
+    const to = this.inPoint(edge.to);
+
+    // Decisão: se caixas se sobrepõem no eixo X, tratar como ligação vertical e contornar ambos nós.
+    const fromNode = this.graph().nodes.find(n => n.id === edge.from)!;
+    const toNode = this.graph().nodes.find(n => n.id === edge.to)!;
+    const fromR = this.expanded(this.getNodeBBox(fromNode));
+    const toR = this.expanded(this.getNodeBBox(toNode));
+    const overlapX = !(fromR.x2 < toR.x1 || toR.x2 < fromR.x1);
+    const approxVertical = Math.abs(out.x - to.x) < 80; // tolerância para alinhamento quase vertical
+
+    if (overlapX || approxVertical) {
+      return this.verticalContourPath(out, to, fromR, toR);
+    }
+
+    // Se destino está à esquerda do origem no eixo X, contornar pela direita
+    if (to.x < out.x) {
+      return this.horizontalContourPath(out, to, fromR, toR);
+    }
+
+    // Caso contrário, manter curva Bezier (comportamento flexível original)
+    return this.cubicPath(out, to);
   }
 
   pathToPoint(fromId: string, to: Point) {
@@ -179,10 +414,18 @@ export class CanvasComponent {
       const conditions = (fromNode.data as ConditionNodeData).conditions || [];
       const index = conditions.findIndex(c => c.id === this.connectingConditionId);
       const outPoint = index !== -1 ? this.conditionOutPoint(fromId, index, this.totalConditionHandles(fromId)) : this.outPoint(fromId);
-      return this.path(outPoint, to);
+      return this.cubicPath(outPoint, to);
+    }
+    
+    // Saída específica de condição do nó final (por score)
+    if (fromNode && fromNode.kind === 'end' && this.connectingConditionId) {
+      const conditions = ((fromNode.data as any).conditions || []);
+      const index = conditions.findIndex((c: any) => c.id === this.connectingConditionId);
+      const outPoint = index !== -1 ? this.endOutPoint(fromId, index, conditions.length) : this.outPoint(fromId);
+      return this.cubicPath(outPoint, to);
     }
 
-    return this.path(this.outPoint(fromId), to);
+    return this.cubicPath(this.outPoint(fromId), to);
   }
 
   // seleção
@@ -254,6 +497,12 @@ export class CanvasComponent {
       if (fromNode?.kind === 'condition' && toNode?.kind === 'condition') {
         conditionId = undefined;
       }
+      // Restringir: saídas do nó final só conectam a nós de ação
+      if (fromNode?.kind === 'end' && toNode?.kind !== 'action') {
+        this.connectingFrom = null;
+        this.connectingConditionId = null;
+        return;
+      }
       this.state.connect(this.connectingFrom, toId, undefined, conditionId);
     }
     this.connectingFrom = null;
@@ -290,6 +539,44 @@ export class CanvasComponent {
   edgeMidpoint(e: GraphEdge): Point {
     const p1 = this.getOutPointForEdge(e);
     const p2 = this.inPoint(e.to);
+
+    const fromNode = this.graph().nodes.find(n => n.id === e.from)!;
+    const toNode = this.graph().nodes.find(n => n.id === e.to)!;
+    const fromR = this.expanded(this.getNodeBBox(fromNode));
+    const toR = this.expanded(this.getNodeBBox(toNode));
+    const overlapX = !(fromR.x2 < toR.x1 || toR.x2 < fromR.x1);
+    const approxVertical = Math.abs(p1.x - p2.x) < 80;
+
+    let pts: Point[] | null = null;
+    if (overlapX || approxVertical) {
+      pts = this.verticalContourPoints(p1, p2, fromR, toR);
+    } else if (p2.x < p1.x) {
+      pts = this.horizontalContourPoints(p1, p2, fromR, toR);
+    }
+
+    if (pts && pts.length >= 2) {
+      // encontrar ponto no meio do comprimento total
+      let total = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const dx = pts[i+1].x - pts[i].x;
+        const dy = pts[i+1].y - pts[i].y;
+        total += Math.hypot(dx, dy);
+      }
+      const half = total / 2;
+      let acc = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i+1];
+        const seg = Math.hypot(b.x - a.x, b.y - a.y);
+        if (acc + seg >= half) {
+          const t = (half - acc) / seg;
+          return { x: a.x + t * (b.x - a.x), y: a.y + t * (b.y - a.y) };
+        }
+        acc += seg;
+      }
+      return pts[Math.floor(pts.length / 2)];
+    }
+
+    // fallback: meio entre pontos de saída/entrada (Bezier)
     return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   }
 
@@ -312,3 +599,4 @@ export class CanvasComponent {
     };
   }
 }
+
