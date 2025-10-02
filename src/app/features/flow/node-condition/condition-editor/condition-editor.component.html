@@ -42,17 +42,17 @@
       </mat-form-field>-->
 
       <ng-container *ngIf="conditionForm.get('valueType')?.value === 'question'">
-        <!--<lib-control-material-select bindLabel="data.label" [selectList]="availableQuestions" label="Pergunta" [smaller]="true" style="width:100%">
+        <lib-control-material-select bindId="id" bindLabel="label" [selectList]="questionOptions" label="Pergunta" [smaller]="true" style="width:100%; display: grid;">
           <input formControlName="questionId" />
-        </lib-control-material-select>-->
-        <mat-form-field appearance="outline" style="width:100%">
+        </lib-control-material-select>
+        <!--<mat-form-field appearance="outline" style="width:100%">
           <mat-label>Pergunta</mat-label>
           <mat-select formControlName="questionId">
             <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
               {{ question.data.label }}
             </mat-option>
           </mat-select>
-        </mat-form-field>
+        </mat-form-field>-->
         
       </ng-container>
 

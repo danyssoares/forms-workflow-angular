@@ -13,12 +13,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition, ExpressionCondition, ConditionNodeData, EndNodeData, EndScoreCondition } from '../graph.types';
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
-import { ControlMaterialComponent, ControlMaterialNumberComponent } from '@angulartoolsdr/control-material';
+import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
 
 @Component({
   selector: 'app-inspector',
   standalone: true,
-  imports: [ControlMaterialNumberComponent, ControlMaterialComponent,
+  imports: [ControlMaterialNumberComponent, ControlMaterialComponent, ControlMaterialSelectComponent,
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
     FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent,
@@ -32,11 +32,23 @@ export class InspectorComponent {
   library = inject(FaIconLibrary);
   graph: Signal<GraphModel>;
   selectedId: Signal<string | null>;
+  questionTypes = [
+    {id: 0, label:'Texto'}, 
+    {id: 1, label:'Número'}, 
+    {id: 2, label:'Data'}, 
+    {id: 3, label:'Hora'}, 
+    {id: 4, label:'Data e Hora'}, 
+    {id: 5, label:'Booleano'}, 
+    {id: 6, label:'Imagem'}, 
+    {id: 7, label:'Arquivo'}, 
+    {id: 8, label:'Lista de Opções'},     
+    {id: 9, label:'Seleção Única'}, 
+    {id: 10, label:'Seleção Múltipla'}];
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
   availableQuestions = computed(() => {
     const g = this.graph();
     let questions = g.nodes
-      .filter(n => n.kind === 'question' && n.data.type !== 'image') as GraphNode<QuestionNodeData>[];
+      .filter(n => n.kind === 'question' && n.data.type !== 6) as GraphNode<QuestionNodeData>[];
 
     const selectedNode = g.nodes.find(n => n.id === this.selectedId());
     if (selectedNode && selectedNode.kind === 'condition') {
@@ -109,7 +121,7 @@ export class InspectorComponent {
     this.library.addIcons(faTimes, faCheck, faTrash, faPlus);
     this.fgQ = this.fb.group({
       label: [''],
-      type: ['text'],
+      type: [null],
       score: [0],
       trueLabel: ['Verdadeiro'],
       falseLabel: ['Falso'],
@@ -124,6 +136,7 @@ export class InspectorComponent {
 
     effect(() => {
       const n = this.node();
+      console.log(this.node());
       if (!n) return;
       if (n.kind === 'question') {
         const opts = n.data.options || [];
@@ -134,12 +147,13 @@ export class InspectorComponent {
         );
         this.fgQ.patchValue({ 
           label: n.data.label, 
-          type: n.data.type, 
+          type: this.questionTypes.find(q => q.id === n.data.type?.id), 
           score: n.data.score || 0, 
           trueLabel: n.data.trueLabel || 'Verdadeiro', 
           falseLabel: n.data.falseLabel || 'Falso',
           seq: n.data.seq || 1
         });
+        //this.fgQ.get('type')?.setValue(this.questionTypes.find(q => q.id === n.data.type?.id));
       }
       if (n.kind === 'condition') {
         this.conditionType = n.data.conditionType || 'comparison';

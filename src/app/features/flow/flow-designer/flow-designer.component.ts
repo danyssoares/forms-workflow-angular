@@ -84,7 +84,7 @@ export class FlowDesignerComponent {
 
   onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
-    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||'text', score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
+    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||{id: 0, label:'Texto'}, score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
     if(e.kind==='condition') {
       if(e.conditionType === 'expression') {
         this.state.addNode('condition', {

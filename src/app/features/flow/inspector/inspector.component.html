@@ -11,9 +11,13 @@
           <lib-control-material-number label="Ordem" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="seq" />
           </lib-control-material-number>
+
+          <lib-control-material-select bindId="id" bindLabel="label" [selectList]="questionTypes" label="Tipo" [smaller]="true" style="width:100%; display: grid;">
+            <input formControlName="type" />
+          </lib-control-material-select>
           
           
-          <mat-form-field appearance="outline" style="width:100%">
+          <!--<mat-form-field appearance="outline" style="width:100%">
             <mat-label>Tipo</mat-label>
             <mat-select formControlName="type">
               <mat-option value="text">Texto</mat-option>
@@ -27,7 +31,7 @@
               <mat-option value="datetime">Data e Hora</mat-option>
               <mat-option value="image">Imagem</mat-option>
             </mat-select>
-          </mat-form-field>
+          </mat-form-field>-->
           <lib-control-material-number label="Score" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="score" />
           </lib-control-material-number>

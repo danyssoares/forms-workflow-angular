@@ -4,7 +4,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
 
 interface QuestionTypeOption {
-  value: string;
+  id: number;
   label: string;
 }
 
@@ -18,7 +18,7 @@ interface QuestionTypeOption {
       <div class="options-container">
         <button mat-menu-item 
                 *ngFor="let option of questionOptions" 
-                (click)="add.emit({kind:'question',type:option.value})">
+                (click)="add.emit({kind:'question',type:option})">
           {{option.label}}
         </button>
       </div>
@@ -47,17 +47,17 @@ interface QuestionTypeOption {
 })
 export class PaletteComponent { 
   @Output() add = new EventEmitter<any>();
-  
+
   questionOptions: QuestionTypeOption[] = [
-    { value: 'text', label: 'Texto' },
-    { value: 'boolean', label: 'Booleano' },
-    { value: 'integer', label: 'Inteiro' },
-    { value: 'double', label: 'Decimal' },
-    { value: 'select', label: 'Lista' },
-    { value: 'radio', label: 'Seleção Única' },
-    { value: 'checkbox', label: 'Múltipla Escolha' },
-    { value: 'date', label: 'Data' },
-    { value: 'datetime', label: 'Data e Hora' },
-    { value: 'image', label: 'Imagem' }
-  ];
+    {id: 0, label:'Texto'}, 
+    {id: 1, label:'Número'}, 
+    {id: 2, label:'Data'}, 
+    {id: 3, label:'Hora'}, 
+    {id: 4, label:'Data e Hora'}, 
+    {id: 5, label:'Booleano'}, 
+    {id: 6, label:'Imagem'}, 
+    {id: 7, label:'Arquivo'}, 
+    {id: 8, label:'Lista de Opções'},     
+    {id: 9, label:'Seleção Única'}, 
+    {id: 10, label:'Seleção Múltipla'}];
 }
