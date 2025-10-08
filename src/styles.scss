@@ -112,6 +112,7 @@ html, body {
   border: 2px solid transparent;
   cursor: default;
   color: #111827;
+  box-sizing: border-box; /* garante que width/height incluam padding/borda, alinhando com a geometria */
 }
 .node .title { font-weight: 700; opacity: .9; }
 .node .sub   { color: #6b7280; }
@@ -169,8 +170,8 @@ html, body {
 .node.action {
   border-color: #1fa463;
   color: #107a4a;
-  min-width: 180px;
-  min-height: 80px;
+  width: 180px;   /* largura fixa alinhada ao cálculo do canvas */
+  height: 80px;   /* altura fixa alinhada ao cálculo do canvas */
   border-radius: 12px;
   display:flex; flex-direction:column; justify-content:center;
   padding: 8px 12px;

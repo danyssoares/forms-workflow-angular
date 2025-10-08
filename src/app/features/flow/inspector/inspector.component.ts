@@ -14,6 +14,7 @@ import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
+import { questionTypes } from '../../../shared/models/form-models';
 
 @Component({
   selector: 'app-inspector',
@@ -32,18 +33,7 @@ export class InspectorComponent {
   library = inject(FaIconLibrary);
   graph: Signal<GraphModel>;
   selectedId: Signal<string | null>;
-  questionTypes = [
-    {id: 0, label:'Texto'}, 
-    {id: 1, label:'Número'}, 
-    {id: 2, label:'Data'}, 
-    {id: 3, label:'Hora'}, 
-    {id: 4, label:'Data e Hora'}, 
-    {id: 5, label:'Booleano'}, 
-    {id: 6, label:'Imagem'}, 
-    {id: 7, label:'Arquivo'}, 
-    {id: 8, label:'Lista de Opções'},     
-    {id: 9, label:'Seleção Única'}, 
-    {id: 10, label:'Seleção Múltipla'}];
+  questionTypes = questionTypes;
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
   availableQuestions = computed(() => {
     const g = this.graph();
@@ -153,7 +143,6 @@ export class InspectorComponent {
           falseLabel: n.data.falseLabel || 'Falso',
           seq: n.data.seq || 1
         });
-        //this.fgQ.get('type')?.setValue(this.questionTypes.find(q => q.id === n.data.type?.id));
       }
       if (n.kind === 'condition') {
         this.conditionType = n.data.conditionType || 'comparison';
@@ -291,11 +280,13 @@ export class InspectorComponent {
       };
       
       data.id = n.data.id || `q_${n.id.slice(0,4)}`;
-      if (formValue.type === 'boolean') {
+      if (formValue.type?.id === 5) {
         data.trueLabel = formValue.trueLabel;
         data.falseLabel = formValue.falseLabel;
       }
-      if (['select', 'radio', 'checkbox'].includes(formValue.type)) {
+      // ids from questionTypes of form-models (Lista de Opções, Seleção Única e Seleção Múltipla)
+      console.log(formValue.type);
+      if ([8,9,10].includes(formValue.type?.id)) {
         data.options = formValue.options || [];
       }
       this.state.updateNode(n.id, data);

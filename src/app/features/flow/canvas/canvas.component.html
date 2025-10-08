@@ -1,11 +1,14 @@
 <div
     #canvasEl
     class="canvas"
+    [class.disable-selection]="nodeDragging"
+    [class.pan-ready]="spacePressed"
+    [class.panning]="panning"
     (mousedown)="startPan($event)"
     (mousemove)="onMove($event)"
     (mouseup)="onCanvasMouseUp()"
     (mouseleave)="onCanvasMouseUp()"
-    (click)="deselect()"
+    (click)="onCanvasClick($event)"
     (wheel)="onWheel($event)"
   >
     <div
@@ -13,14 +16,14 @@
       [ngStyle]="{ transform: 'translate(' + offset.x + 'px,' + offset.y + 'px) scale(' + zoom + ')', 'transform-origin': '0 0' }">
 
       <!-- Edges -->
-      <svg class="edge-svg" [attr.width]="worldW" [attr.height]="worldH">
+      <svg class="edge-svg" [attr.width]="worldW" [attr.height]="worldH" [attr.viewBox]="'0 0 ' + worldW + ' ' + worldH" [style.overflow]="'visible'">
         <ng-container *ngFor="let e of graph().edges">
           <g (mouseenter)="hoveredEdgeId = e.id" (mouseleave)="hoveredEdgeId = null">
             <path
               [attr.d]="pathBetween(e)"
               fill="none"
-              stroke-width="2"
-              [attr.stroke]="hoveredEdgeId === e.id ? '#ff4d4f' : '#b9bed1'"
+              [attr.stroke]="edgeStrokeColor(e)"
+              [attr.stroke-width]="edgeStrokeWidth(e)"
               [attr.marker-end]="hoveredEdgeId === e.id ? 'url(#arrow-red)' : 'url(#arrow)'" />
             <foreignObject *ngIf="e.label" [attr.x]="edgeMidpoint(e).x - 40" [attr.y]="edgeMidpoint(e).y - 12" width="80" height="24">
               <div xmlns="http://www.w3.org/1999/xhtml" class="edge-label">{{ e.label }}</div>
@@ -51,6 +54,7 @@
       <div
         *ngFor="let n of graph().nodes"
         cdkDrag
+        (cdkDragStarted)="dragStart($event)"
         (cdkDragMoved)="dragMove(n, $event)"
         (cdkDragEnded)="dragEnd(n, $event)"
         [ngStyle]="{ left: n.position.x + 'px', top: n.position.y + 'px' }"
@@ -58,17 +62,19 @@
         [class.condition]="n.kind === 'condition'"
         [class.end]="n.kind === 'end'">
 
-        <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
+        <div class="selection-offset" [style.transform]="selectionTransform(n.id)">
+          <div class="handle in" *ngIf="connectingFrom && connectingFrom !== n.id" (mouseup)="finishConnection(n.id, $event)"></div>
 
-        <div
-          class="node"
-          cdkDragHandle
-          [class.question]="n.kind === 'question'"
-          [class.condition]="n.kind === 'condition'"
-          [class.action]="n.kind === 'action'"
-          [class.end]="n.kind === 'end'"
-          [class.selected]="isSelected(n.id)"
-          (click)="$event.stopPropagation(); select(n.id)">
+          <div
+            class="node"
+            cdkDragHandle
+            [class.disable-selection]="nodeDragging"
+            [class.question]="n.kind === 'question'"
+            [class.condition]="n.kind === 'condition'"
+            [class.action]="n.kind === 'action'"
+            [class.end]="n.kind === 'end'"
+            [class.selected]="isSelected(n.id)"
+            (click)="$event.stopPropagation(); select(n.id)">
           
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
@@ -147,9 +153,21 @@
         </ng-container>
         
         <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition' && !(n.kind==='end' && n.data.conditions?.length)" (mousedown)="startConnection(n.id, $event)"></div>
+        </div>
       </div>
+    <div *ngIf="selectionBox"
+         class="selection-box"
+         [class.dragging]="draggingSelection"
+         [class.marquee]="marqueeActive"
+         [ngStyle]="{
+           left: selectionBox.x + 'px',
+           top: selectionBox.y + 'px',
+           width: selectionBox.width + 'px',
+           height: selectionBox.height + 'px',
+           cursor: draggingSelection ? 'grabbing' : 'grab',
+           'pointer-events': marqueeActive ? 'none' : 'auto'
+         }"></div>
     </div>
-
     <div class="zoom-controls">
       <button (click)="zoomIn()">+</button>
       <button (click)="zoomOut()">-</button>

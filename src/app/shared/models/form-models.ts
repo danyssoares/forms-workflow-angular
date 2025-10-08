@@ -1,3 +1,29 @@
+export const questionTypes = [
+  {id: 0, label:'Texto'}, 
+  {id: 1, label:'Número'}, 
+  {id: 2, label:'Data'}, 
+  {id: 3, label:'Hora'}, 
+  {id: 4, label:'Data e Hora'}, 
+  {id: 5, label:'Booleano'}, 
+  {id: 6, label:'Imagem'}, 
+  {id: 7, label:'Arquivo'}, 
+  {id: 8, label:'Lista de Opções'},     
+  {id: 9, label:'Seleção Única'}, 
+  {id: 10, label:'Seleção Múltipla'}];
+
+  export const questionTypeOperators: Record<string, string[]> = {
+    0: ['==', '!=', '>', '>=', '<', '<=', 'contains'],
+    1: ['==', '!=', '>', '>=', '<', '<='],
+    2: ['==', '!=', '>', '>=', '<', '<='],
+    3: ['==', '!=', '>', '>=', '<', '<='],
+    4: ['==', '!=', '>', '>=', '<', '<='],
+    5: ['==', '!='],
+    8: ['==', '!=', 'contains'],
+    9: ['==', '!='],
+    10: ['==', '!=', 'contains'],
+    score: ['==', '!=', '>', '>=', '<', '<=']
+  };
+
 export type QuestionType = 'radio'|'checkbox'|'integer'|'double'|'boolean'|'text'|'image'|'select'|'date'|'datetime';
 
 export interface Option { value: string|number|boolean; label: string; score?: number; }

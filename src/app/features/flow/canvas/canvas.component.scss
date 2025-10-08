@@ -22,6 +22,13 @@
   transform-origin: top right;
 }
 
+.canvas.disable-selection,
+.canvas.disable-selection *,
+.node.disable-selection,
+.node.disable-selection * {
+  user-select: none;
+}
+
 :host ::ng-deep .mat-mdc-icon-button svg {
   width: var(--mat-icon-button-icon-size, 18px);
   height: var(--mat-icon-button-icon-size, 18px);
@@ -234,5 +241,60 @@
   text-align: center;
   pointer-events: none;
 }
+
+
+.edge-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  z-index: 1;
+}
+
+.node-wrapper {
+  z-index: 2;
+}
+
+.selection-offset {
+  position: relative;
+}
+
+.canvas {
+  cursor: default;
+}
+
+.canvas.pan-ready {
+  cursor: grab;
+}
+
+.canvas.panning {
+  cursor: grabbing;
+}
+.selection-box {
+  position: absolute;
+  border: 1px dashed #4f46e5;
+  background: rgba(79, 70, 229, 0.12);
+  border-radius: 6px;
+  z-index: 4;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
+}
+
+.selection-box.dragging {
+  cursor: grabbing !important;
+  border-style: solid;
+}
+
+.selection-box.marquee {
+  background: rgba(79, 70, 229, 0.1);
+  border-style: dashed;
+}
+
+
+
+
+
+
+
+
 
 

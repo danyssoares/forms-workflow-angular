@@ -20,7 +20,8 @@ export class GraphMapperService {
         } as Question;
 
         // If options include per-option score, build scoreMap for scoring service
-        if (['select', 'radio', 'checkbox'].includes(n.data.type) && Array.isArray(n.data.options)) {
+        // questionTypes from form-models (Lista de Opções, Seleção Única e Seleção Múltipla)
+        if ([8, 9, 10].includes(n.data.type?.id) && Array.isArray(n.data.options)) {
           const map: Record<string, number> = {};
           (n.data.options || []).forEach((opt: any) => {
             const key = String(opt?.value);

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
+import { questionTypes } from '../../../shared/models/form-models';
 
 interface QuestionTypeOption {
   id: number;
@@ -48,16 +49,5 @@ interface QuestionTypeOption {
 export class PaletteComponent { 
   @Output() add = new EventEmitter<any>();
 
-  questionOptions: QuestionTypeOption[] = [
-    {id: 0, label:'Texto'}, 
-    {id: 1, label:'Número'}, 
-    {id: 2, label:'Data'}, 
-    {id: 3, label:'Hora'}, 
-    {id: 4, label:'Data e Hora'}, 
-    {id: 5, label:'Booleano'}, 
-    {id: 6, label:'Imagem'}, 
-    {id: 7, label:'Arquivo'}, 
-    {id: 8, label:'Lista de Opções'},     
-    {id: 9, label:'Seleção Única'}, 
-    {id: 10, label:'Seleção Múltipla'}];
+  questionOptions: QuestionTypeOption[] = questionTypes;
 }

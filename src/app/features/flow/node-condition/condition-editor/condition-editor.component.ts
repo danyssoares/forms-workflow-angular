@@ -10,6 +10,7 @@ import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontaweso
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ComparisonCondition, QuestionNodeData, GraphNode, Condition } from '../../graph.types';
 import { ControlMaterialComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
+import { questionTypeOperators } from '../../../../shared/models/form-models';
 
 @Component({
   selector: 'app-condition-editor',
@@ -59,19 +60,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     { value: '||', label: 'Ou (||)' }
   ];
 
-  questionTypeOperators: Record<string, string[]> = {
-    text: ['==', '!=', '>', '>=', '<', '<=', 'contains'],
-    integer: ['==', '!=', '>', '>=', '<', '<='],
-    double: ['==', '!=', '>', '>=', '<', '<='],
-    boolean: ['==', '!='],
-    select: ['==', '!=', 'contains'],
-    radio: ['==', '!='],
-    checkbox: ['==', '!=', 'contains'],
-    date: ['==', '!=', '>', '>=', '<', '<='],
-    datetime: ['==', '!=', '>', '>=', '<', '<='],
-    image: ['==', '!='],
-    score: ['==', '!=', '>', '>=', '<', '<=']
-  };
+  questionTypeOperators = questionTypeOperators;
 
   fixedTypeOperators: string[] = ['==', '!=', '>', '>=', '<', '<=', 'contains'];
 
@@ -209,8 +198,9 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     });
   }
 
-  get selectedQuestionType(): string | undefined {
+  get selectedQuestionType(): any | undefined {
     const valueType = this.conditionForm.get('valueType')?.value;
+    console.log('valueType', valueType);
     if (valueType !== 'question') return undefined;
 
     if (this.conditionForm.get('questionValueType')?.value === 'score') return 'score';
@@ -231,10 +221,11 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     if (valueType === 'question') {
       const questionType = this.selectedQuestionType;
-      if (!questionType || !this.questionTypeOperators[questionType]) {
+      //console.log(questionType);
+      if (!questionType || !this.questionTypeOperators[questionType?.id]) {
         return [];
       }
-      return this.operators.filter(op => this.questionTypeOperators[questionType].includes(op.value));
+      return this.operators.filter(op => this.questionTypeOperators[questionType?.id].includes(op.value));
     }
 
     if (valueType === 'condition') {

@@ -4,39 +4,23 @@
       <div [ngSwitch]="n.kind">
         <!-- QUESTION -->
         <form *ngSwitchCase="'question'" [formGroup]="fgQ">
-          <lib-control-material label="Texto" [smaller]="true" style="width:100%; display: grid;">
+          <lib-control-material label="Pergunta do Formulário" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="label" />
           </lib-control-material>
 
-          <lib-control-material-number label="Ordem" [smaller]="true" style="width:100%; display: grid;">
+          <lib-control-material-number label="Ordem no Formulário" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="seq" />
           </lib-control-material-number>
 
-          <lib-control-material-select bindId="id" bindLabel="label" [selectList]="questionTypes" label="Tipo" [smaller]="true" style="width:100%; display: grid;">
+          <lib-control-material-select bindId="id" bindLabel="label" [selectList]="questionTypes" label="Tipo de Resposta" [smaller]="false" style="width:100%; display: grid;">
             <input formControlName="type" />
           </lib-control-material-select>
           
-          
-          <!--<mat-form-field appearance="outline" style="width:100%">
-            <mat-label>Tipo</mat-label>
-            <mat-select formControlName="type">
-              <mat-option value="text">Texto</mat-option>
-              <mat-option value="boolean">Boolean</mat-option>
-              <mat-option value="integer">Inteiro</mat-option>
-              <mat-option value="double">Double</mat-option>
-              <mat-option value="select">Lista</mat-option>
-              <mat-option value="radio">Radio</mat-option>
-              <mat-option value="checkbox">Checkbox</mat-option>
-              <mat-option value="date">Data</mat-option>
-              <mat-option value="datetime">Data e Hora</mat-option>
-              <mat-option value="image">Imagem</mat-option>
-            </mat-select>
-          </mat-form-field>-->
-          <lib-control-material-number label="Score" [smaller]="true" style="width:100%; display: grid;">
+          <lib-control-material-number label="Pontuação da Resposta" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="score" />
           </lib-control-material-number>
           
-          <div *ngIf="fgQ.get('type')?.value === 'boolean'">
+          <div *ngIf="fgQ.get('type')?.value?.id === 5">
             <lib-control-material label="Label Verdadeiro" [smaller]="true" style="width:100%; display: grid;">
               <input formControlName="trueLabel" />
             </lib-control-material>
@@ -44,7 +28,7 @@
               <input formControlName="falseLabel" />
             </lib-control-material>
           </div>
-          <div *ngIf="['select','radio','checkbox'].includes(fgQ.get('type')?.value)">
+          <div *ngIf="[8,9,10].includes(fgQ.get('type')?.value?.id)">
             <div formArrayName="options">
               <div style="font-weight: bold;">Opções</div>
               <div *ngFor="let opt of options.controls; let i=index" [formGroupName]="i" class="option-row">

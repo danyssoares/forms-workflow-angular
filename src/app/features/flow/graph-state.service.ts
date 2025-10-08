@@ -10,6 +10,8 @@ export class GraphStateService {
 
   private _selectedId = new BehaviorSubject<string|null>(null);
   selectedId$ = this._selectedId.asObservable();
+  private _selectedIds = new BehaviorSubject<string[]>([]);
+  selectedIds$ = this._selectedIds.asObservable();
 
   private _sidebarOpen = new BehaviorSubject<boolean>(false);
   sidebarOpen$ = this._sidebarOpen.asObservable();
@@ -23,9 +25,23 @@ export class GraphStateService {
     end: 0
   };
 
+  private nextSeqFor(kind: NodeKind): number {
+    const maxExisting = this.graph.nodes
+      .filter(n => n.kind === kind)
+      .reduce((max, node) => {
+        const seq = Number((node.data as any)?.seq);
+        return Number.isFinite(seq) && seq > max ? seq : max;
+      }, 0);
+
+    const baseline = Math.max(this.counters[kind] ?? 0, maxExisting);
+    const nextSeq = baseline + 1;
+    this.counters[kind] = nextSeq;
+    return nextSeq;
+  }
+
   addNode(kind: NodeKind, data: any, position: Point) {
     const id = crypto.randomUUID();
-    const seq = ++this.counters[kind];
+    const seq = this.nextSeqFor(kind);
     const node: GraphNode = { id, kind, data: { ...data, seq }, position };
     this._graph.next({ ...this.graph, nodes: [...this.graph.nodes, node] });
     this.select(id);
@@ -39,9 +55,22 @@ export class GraphStateService {
     this._graph.next({ ...this.graph, nodes });
   }
   removeNode(id: string) {
-    const nodes = this.graph.nodes.filter(n => n.id !== id);
+    const nodeToRemove = this.graph.nodes.find(n => n.id === id);
+    const remainingNodes = this.graph.nodes.filter(n => n.id !== id);
     const edges = this.graph.edges.filter(e => e.from !== id && e.to !== id);
-    this._graph.next({ nodes, edges });
+
+    let updatedNodes = remainingNodes;
+
+    if (nodeToRemove?.kind === 'question') {
+      let seq = 1;
+      updatedNodes = remainingNodes.map(n => {
+        if (n.kind !== 'question') return n;
+        return { ...n, data: { ...n.data, seq: seq++ } };
+      });
+      this.counters.question = seq - 1;
+    }
+
+    this._graph.next({ nodes: updatedNodes, edges });
     this.select(null);
   }
   connect(fromId: string, toId: string, label?: string, conditionId?: string) {
@@ -52,7 +81,27 @@ export class GraphStateService {
   removeEdge(id: string) {
     this._graph.next({ ...this.graph, edges: this.graph.edges.filter(e => e.id !== id) });
   }
-  select(id: string | null) { this._selectedId.next(id); }
+  select(id: string | null) {
+    if (id) {
+      this._selectedIds.next([id]);
+      this._selectedId.next(id);
+    } else {
+      this.clearSelection();
+    }
+  }
+
+  setSelection(ids: string[], primary?: string | null) {
+    const unique = Array.from(new Set(ids));
+    this._selectedIds.next(unique);
+    if (primary !== undefined) {
+      this._selectedId.next(primary);
+    }
+  }
+
+  clearSelection() {
+    this._selectedIds.next([]);
+    this._selectedId.next(null);
+  }
 
   openSidebar(id: string) {
     this.select(id);
@@ -61,8 +110,9 @@ export class GraphStateService {
 
   closeSidebar() {
     this._sidebarOpen.next(false);
-    this.select(null);
+    this.clearSelection();
   }
 
-  get selectedNode(): GraphNode|undefined { return this.graph.nodes.find(n=>n.id===this._selectedId.value||''); }
+  get selectedNode(): GraphNode|undefined { return this.graph.nodes.find(n=>n.id===(this._selectedId.value||'')); }
 }
+

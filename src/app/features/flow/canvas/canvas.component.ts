@@ -1,6 +1,6 @@
-import { Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, inject, ViewChild, effect } from '@angular/core';
 import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
-import { DragDropModule, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
+import { DragDropModule, CdkDragEnd, CdkDragMove, CdkDragStart } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -21,7 +21,7 @@ import { NodeConditionComponent } from '../node-condition/node-condition.compone
   ],
   templateUrl: './canvas.component.html'
 })
-export class CanvasComponent {
+export class CanvasComponent implements OnDestroy {
   @ViewChild('canvasEl') canvasRef!: ElementRef<HTMLDivElement>;
 
   library = inject(FaIconLibrary);
@@ -35,12 +35,32 @@ export class CanvasComponent {
   // pan/zoom do canvas
   offset = { x: 0, y: 0 };
   zoom = 1;
-  private panning = false;
+  spacePressed = false;
+  panning = false;
   private panStart = { x: 0, y: 0 };
   private panOffsetStart = { x: 0, y: 0 };
   selectedId;
+  selectedIds;
   graph;
 
+  selectionBox: { x: number; y: number; width: number; height: number } | null = null;
+  private marqueeStart: Point | null = null;
+  marqueeActive = false;
+  private previewSelection: Set<string> | null = null;
+  draggingSelection = false;
+  nodeDragging = false;
+  private selectionDragStart: Point | null = null;
+  private selectionRectStart: { x: number; y: number; width: number; height: number } | null = null;
+  private selectionInitialNodePositions: Record<string, Point> = {};
+  private selectionDragDelta: Point = { x: 0, y: 0 };
+  private areaSelectionActive = false;
+  private suppressClick = false;
+  private readonly selectionPadding = 16;
+  private readonly defaultEdgeStroke = 2;
+  private readonly selectedEdgeStroke = 4;
+  private readonly defaultEdgeColor = '#b9bed1';
+  private readonly selectedEdgeColor = '#4f46e5';
+  private readonly hoveredEdgeColor = '#ff4d4f';
   // dimensões do "mundo" para posicionamento e arestas
   readonly worldW = 2000;
   readonly worldH = 1200;
@@ -56,12 +76,241 @@ export class CanvasComponent {
   // posições temporárias enquanto arrasta
   private dragOffsets: Record<string, Point> = {};
 
+  selectionTransform(id: string): string | null {
+    if (!this.draggingSelection) return null;
+    const off = this.dragOffsets[id];
+    if (!off) return null;
+    if (!off.x && !off.y) return null;
+    return `translate(${off.x}px, ${off.y}px)`;
+  }
+
+  private bodySelectionStyles: { userSelect: string; webkitUserSelect: string; msUserSelect: string } | null = null;
+
+  private setGlobalSelection(disabled: boolean) {
+    if (typeof document === 'undefined') return;
+    const style = document.body.style as CSSStyleDeclaration & { webkitUserSelect?: string; msUserSelect?: string };
+    if (disabled) {
+      if (!this.bodySelectionStyles) {
+        this.bodySelectionStyles = {
+          userSelect: style.userSelect,
+          webkitUserSelect: style.webkitUserSelect ?? '',
+          msUserSelect: style.msUserSelect ?? ''
+        };
+      }
+      style.userSelect = 'none';
+      style.webkitUserSelect = 'none';
+      style.msUserSelect = 'none';
+    } else if (this.bodySelectionStyles) {
+      style.userSelect = this.bodySelectionStyles.userSelect;
+      style.webkitUserSelect = this.bodySelectionStyles.webkitUserSelect;
+      style.msUserSelect = this.bodySelectionStyles.msUserSelect;
+      this.bodySelectionStyles = null;
+    }
+  }
+
+  private clearTextSelection() {
+    try {
+      const selection = window.getSelection?.();
+      selection?.removeAllRanges?.();
+    } catch {
+      // ignore
+    }
+  }
+
+  private worldPointFromEvent(ev: MouseEvent): Point {
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    return {
+      x: (ev.clientX - rect.left - this.offset.x * this.zoom) / this.zoom,
+      y: (ev.clientY - rect.top - this.offset.y * this.zoom) / this.zoom
+    };
+  }
+
+  private rectFromPoints(a: Point, b: Point) {
+    const x = Math.min(a.x, b.x);
+    const y = Math.min(a.y, b.y);
+    return { x, y, width: Math.abs(a.x - b.x), height: Math.abs(a.y - b.y) };
+  }
+
+  private rectsOverlap(selection: { x: number; y: number; width: number; height: number }, bbox: { x1: number; y1: number; x2: number; y2: number }) {
+    const selX2 = selection.x + selection.width;
+    const selY2 = selection.y + selection.height;
+    return !(bbox.x2 < selection.x || bbox.x1 > selX2 || bbox.y2 < selection.y || bbox.y1 > selY2);
+  }
+
+  private nodesInRect(selection: { x: number; y: number; width: number; height: number }): string[] {
+    if (!selection.width && !selection.height) return [];
+    const ids: string[] = [];
+    for (const node of this.graph().nodes) {
+      const bbox = this.getNodeBBoxForSelection(node);
+      if (this.rectsOverlap(selection, bbox)) {
+        ids.push(node.id);
+      }
+    }
+    return ids;
+  }
+
+  private computeSelectionBoxFromIds(ids: string[]): { x: number; y: number; width: number; height: number } | null {
+    if (!ids.length) return null;
+    let x1 = Number.POSITIVE_INFINITY;
+    let y1 = Number.POSITIVE_INFINITY;
+    let x2 = Number.NEGATIVE_INFINITY;
+    let y2 = Number.NEGATIVE_INFINITY;
+    for (const id of ids) {
+      const node = this.graph().nodes.find(n => n.id === id);
+      if (!node) continue;
+      const bbox = this.getNodeBBoxForSelection(node);
+      x1 = Math.min(x1, bbox.x1);
+      y1 = Math.min(y1, bbox.y1);
+      x2 = Math.max(x2, bbox.x2);
+      y2 = Math.max(y2, bbox.y2);
+    }
+    const selectedSet = new Set(ids);
+    for (const edge of this.graph().edges) {
+      if (!selectedSet.has(edge.from) || !selectedSet.has(edge.to)) continue;
+      const bounds = this.edgeBoundingBox(edge);
+      if (!bounds) continue;
+      x1 = Math.min(x1, bounds.x1);
+      y1 = Math.min(y1, bounds.y1);
+      x2 = Math.max(x2, bounds.x2);
+      y2 = Math.max(y2, bounds.y2);
+    }
+    if (x1 === Number.POSITIVE_INFINITY) return null;
+    const padding = this.selectionPadding;
+    return { x: x1 - padding, y: y1 - padding, width: x2 - x1 + padding * 2, height: y2 - y1 + padding * 2 };
+  }
+
+  private clearAreaSelection() {
+    this.selectionBox = null;
+    this.areaSelectionActive = false;
+    this.previewSelection = null;
+  }
+
+  private pointInRect(point: Point, rect: { x: number; y: number; width: number; height: number }) {
+    return point.x >= rect.x && point.x <= rect.x + rect.width &&
+           point.y >= rect.y && point.y <= rect.y + rect.height;
+  }
+
+  private beginSelectionDrag(start: Point) {
+    if (!this.selectionBox) return;
+    this.suppressClick = true;
+    this.draggingSelection = true;
+    this.selectionDragStart = start;
+    this.selectionRectStart = { ...this.selectionBox };
+    this.selectionDragDelta = { x: 0, y: 0 };
+    this.selectionInitialNodePositions = {};
+    for (const id of this.selectedIds()) {
+      const node = this.graph().nodes.find(n => n.id === id);
+      if (!node) continue;
+      this.selectionInitialNodePositions[id] = { ...node.position };
+      this.dragOffsets[id] = { x: 0, y: 0 };
+    }
+  }
+
+  private updateSelectionDrag(point: Point) {
+    if (!this.draggingSelection || !this.selectionDragStart || !this.selectionRectStart) return;
+    const dx = point.x - this.selectionDragStart.x;
+    const dy = point.y - this.selectionDragStart.y;
+    this.selectionDragDelta = { x: dx, y: dy };
+    this.selectionBox = {
+      x: this.selectionRectStart.x + dx,
+      y: this.selectionRectStart.y + dy,
+      width: this.selectionRectStart.width,
+      height: this.selectionRectStart.height
+    };
+    for (const id of Object.keys(this.selectionInitialNodePositions)) {
+      this.dragOffsets[id] = { x: dx, y: dy };
+    }
+  }
+
+  private finalizeSelectionDrag() {
+    if (!this.draggingSelection) return;
+    const delta = this.selectionDragDelta;
+    const moved = Object.entries(this.selectionInitialNodePositions);
+    if (delta.x !== 0 || delta.y !== 0) {
+      for (const [id, origin] of moved) {
+        this.state.moveNode(id, {
+          x: origin.x + delta.x,
+          y: origin.y + delta.y
+        });
+      }
+    }
+    for (const [id] of moved) {
+      delete this.dragOffsets[id];
+    }
+    this.draggingSelection = false;
+    this.selectionDragStart = null;
+    this.selectionRectStart = null;
+    this.selectionInitialNodePositions = {};
+    this.selectionDragDelta = { x: 0, y: 0 };
+    if (this.areaSelectionActive) {
+      const ids = this.selectedIds();
+      const rect = this.computeSelectionBoxFromIds(ids);
+      if (rect) this.selectionBox = rect;
+    }
+  }
+
+  private beginMarquee(start: Point) {
+    this.suppressClick = true;
+    this.marqueeActive = true;
+    this.marqueeStart = start;
+    this.selectionBox = { x: start.x, y: start.y, width: 0, height: 0 };
+    this.previewSelection = new Set();
+  }
+
+  private updateMarquee(point: Point) {
+    if (!this.marqueeActive || !this.marqueeStart) return;
+    const rect = this.rectFromPoints(this.marqueeStart, point);
+    this.selectionBox = rect;
+    this.previewSelection = new Set(this.nodesInRect(rect));
+  }
+
+  private finalizeMarquee() {
+    if (!this.marqueeActive) return;
+    this.marqueeActive = false;
+    const ids = this.previewSelection ? Array.from(this.previewSelection) : [];
+    this.previewSelection = null;
+    this.marqueeStart = null;
+    if (!ids.length) {
+      this.clearAreaSelection();
+      this.state.clearSelection();
+      return;
+    }
+    this.areaSelectionActive = true;
+    const rect = this.computeSelectionBoxFromIds(ids);
+    if (rect) {
+      this.selectionBox = rect;
+    }
+    const primary = ids.length === 1 ? ids[0] : null;
+    this.state.setSelection(ids, primary);
+  }
+
+
+
   constructor(private state: GraphStateService) {
     this.library.addIcons(faEdit, faTrash, faGear, faCodeBranch);
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
     this.selectedId = toSignal(this.state.selectedId$, { initialValue: null as string | null });
+    this.selectedIds = toSignal(this.state.selectedIds$, { initialValue: [] as string[] });
 
+    effect(() => {
+      const ids = this.selectedIds();
+      if (!ids.length) {
+        if (!this.marqueeActive && !this.draggingSelection) {
+          this.selectionBox = null;
+          this.areaSelectionActive = false;
+          this.previewSelection = null;
+        }
+        return;
+      }
+      if (!this.areaSelectionActive || this.marqueeActive || this.draggingSelection) {
+        return;
+      }
+      const rect = this.computeSelectionBoxFromIds(ids);
+      if (rect) {
+        this.selectionBox = rect;
+      }
+    });
   }
 
   private nodeSize(kind: string) {
@@ -199,6 +448,19 @@ export class CanvasComponent {
     return { x1, y1, x2: x1 + w, y2: y1 + h };
   }
 
+  // Inclui pequenas extensões visuais (ex.: handle de saída) para o cálculo da área selecionada
+  private getNodeBBoxForSelection(n: GraphNode): { x1: number, y1: number, x2: number, y2: number } {
+    const base = this.getNodeBBox(n);
+    let extraRight = 0;
+    // Para nós que exibem o handle de saída à direita, adiciona metade do diâmetro do handle (~7-8px)
+    // Aplique para todos não-condição, exceto nó final com condições (que usa handles próprios)
+    if (n.kind !== 'condition') {
+      const hasEndConditions = n.kind === 'end' && !!(n as any).data?.conditions?.length;
+      if (!hasEndConditions) extraRight = 12; // cobre handle (14px) com folga
+    }
+    return { x1: base.x1, y1: base.y1, x2: base.x2 + extraRight, y2: base.y2 };
+  }
+
   private expanded(rect: { x1: number, y1: number, x2: number, y2: number }, pad = this.ROUTE_PAD) {
     return { x1: rect.x1 - pad, y1: rect.y1 - pad, x2: rect.x2 + pad, y2: rect.y2 + pad };
   }
@@ -326,6 +588,59 @@ export class CanvasComponent {
     ];
   }
 
+  private boundsFromPoints(points: Point[]): { x1: number; y1: number; x2: number; y2: number } | null {
+    if (!points.length) return null;
+    let minX = points[0].x;
+    let minY = points[0].y;
+    let maxX = points[0].x;
+    let maxY = points[0].y;
+    for (let i = 1; i < points.length; i++) {
+      const { x, y } = points[i];
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+    return { x1: minX, y1: minY, x2: maxX, y2: maxY };
+  }
+
+  private cubicBounds(p1: Point, p2: Point): { x1: number; y1: number; x2: number; y2: number } {
+    const mx = (p1.x + p2.x) / 2;
+    const xs = [p1.x, mx, p2.x];
+    const ys = [p1.y, p2.y];
+    const x1 = Math.min(...xs);
+    const y1 = Math.min(...ys);
+    const x2 = Math.max(...xs);
+    const y2 = Math.max(...ys);
+    return { x1, y1, x2, y2 };
+  }
+
+  private edgeBoundingBox(edge: GraphEdge): { x1: number; y1: number; x2: number; y2: number } | null {
+    const fromNode = this.graph().nodes.find(n => n.id === edge.from);
+    const toNode = this.graph().nodes.find(n => n.id === edge.to);
+    if (!fromNode || !toNode) return null;
+
+    const out = this.getOutPointForEdge(edge);
+    const to = this.inPoint(edge.to);
+    const fromR = this.expanded(this.getNodeBBox(fromNode));
+    const toR = this.expanded(this.getNodeBBox(toNode));
+    const overlapX = !(fromR.x2 < toR.x1 || toR.x2 < fromR.x1);
+    const approxVertical = Math.abs(out.x - to.x) < 80;
+
+    if (overlapX || approxVertical) {
+      const points = this.verticalContourPoints(out, to, fromR, toR);
+      const bounds = this.boundsFromPoints(points);
+      if (bounds) return bounds;
+    }
+
+    if (to.x < out.x) {
+      const points = this.horizontalContourPoints(out, to, fromR, toR);
+      const bounds = this.boundsFromPoints(points);
+      if (bounds) return bounds;
+    }
+
+    return this.cubicBounds(out, to);
+  }
   private route(p1: Point, p2: Point, excludeIds: string[] = []) {
     // Roteamento ortogonal com até 5-6 segmentos, evitando retângulos (nós) com margem
     const rs = this.rects(excludeIds);
@@ -429,11 +744,33 @@ export class CanvasComponent {
   }
 
   // seleção
-  isSelected(id: string) { return this.selectedId() === id; }
-  select(id: string)      { this.state.select(id); }
-  deselect()              { this.state.closeSidebar(); }
+  isSelected(id: string) {
+    if (this.marqueeActive) {
+      return this.previewSelection?.has(id) ?? false;
+    }
+    if (this.previewSelection?.has(id)) return true;
+    return this.selectedIds().includes(id);
+  }
+  select(id: string) {
+    this.clearAreaSelection();
+    this.marqueeActive = false;
+    this.draggingSelection = false;
+    this.state.select(id);
+  }
+  deselect() {
+    this.clearAreaSelection();
+    this.marqueeActive = false;
+    this.draggingSelection = false;
+    this.state.closeSidebar();
+  }
 
   // drag do nó
+  dragStart(_: CdkDragStart) {
+    this.nodeDragging = true;
+    this.clearTextSelection();
+    this.setGlobalSelection(true);
+  }
+
   dragMove(n: GraphNode, ev: CdkDragMove) {
     this.dragOffsets[n.id] = ev.source.getFreeDragPosition();
   }
@@ -446,23 +783,109 @@ export class CanvasComponent {
     });
     ev.source.reset();
     delete this.dragOffsets[n.id];
+    this.nodeDragging = false;
+    this.clearTextSelection();
+    this.setGlobalSelection(false);
   }
 
   // pan do canvas (arrastar o fundo)
-  startPan(ev: MouseEvent) {
-    // só inicia pan se clicou fora de um nó/handle e não estivermos conectando
-    const hit = (ev.target as HTMLElement).closest('.node-wrapper');
-    if (hit || this.connectingFrom) return;
+  @HostListener('window:keydown', ['$event'])
+  onWindowKeyDown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+      return;
+    }
 
-    this.panning = true;
-    this.panStart = { x: ev.clientX, y: ev.clientY };
-    this.panOffsetStart = { ...this.offset };
+    // Space: enable pan mode
+    if (event.code === 'Space') {
+      event.preventDefault();
+      if (!this.spacePressed) {
+        this.spacePressed = true;
+      }
+      return;
+    }
+
+    // Delete/Backspace: remove selected node(s)
+    if (event.key === 'Delete' || event.code === 'Delete' || event.key === 'Del' || event.key === 'Backspace') {
+      const ids = this.selectedIds();
+      if (!ids.length) return;
+      event.preventDefault();
+      ids.forEach(id => this.state.removeNode(id));
+      // Clear any selection UI remnants
+      this.clearAreaSelection();
+      return;
+    }
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  onWindowKeyUp(event: KeyboardEvent) {
+    if (event.code !== 'Space') return;
+    event.preventDefault();
+    this.spacePressed = false;
+    if (this.panning) {
+      this.endPan();
+    }
+  }
+
+  @HostListener('window:blur')
+  onWindowBlur() {
+    this.spacePressed = false;
+    if (this.panning) {
+      this.endPan();
+    }
+  }
+
+  startPan(ev: MouseEvent) {
+    if (this.connectingFrom) return;
+    const isLeftButton = ev.button === 0;
+
+    if (this.spacePressed && isLeftButton) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.suppressClick = true;
+      this.panning = true;
+      this.panStart = { x: ev.clientX, y: ev.clientY };
+      this.panOffsetStart = { ...this.offset };
+      return;
+    }
+
+    if (!isLeftButton) return;
+
+    const target = ev.target as HTMLElement;
+    const insideSelectionBox = !!target.closest('.selection-box');
+
+    if (!insideSelectionBox && target.closest('.node-wrapper')) {
+      return;
+    }
+
+    const worldPoint = this.worldPointFromEvent(ev);
+
+    if (this.selectionBox && this.areaSelectionActive && this.pointInRect(worldPoint, this.selectionBox)) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this.beginSelectionDrag(worldPoint);
+      return;
+    }
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.clearAreaSelection();
+    this.beginMarquee(worldPoint);
   }
   onMove(ev: MouseEvent) {
     if (this.panning) {
       const dx = (ev.clientX - this.panStart.x) / this.zoom;
       const dy = (ev.clientY - this.panStart.y) / this.zoom;
       this.offset = { x: this.panOffsetStart.x + dx, y: this.panOffsetStart.y + dy };
+      return;
+    }
+
+    if (this.draggingSelection) {
+      ev.preventDefault();
+      this.updateSelectionDrag(this.worldPointFromEvent(ev));
+    } else if (this.marqueeActive) {
+      ev.preventDefault();
+      this.updateMarquee(this.worldPointFromEvent(ev));
     }
 
     if (this.connectingFrom) {
@@ -497,7 +920,7 @@ export class CanvasComponent {
       if (fromNode?.kind === 'condition' && toNode?.kind === 'condition') {
         conditionId = undefined;
       }
-      // Restringir: saídas do nó final só conectam a nós de ação
+      // Restringir: saidas do no final so conectam a nos de acao
       if (fromNode?.kind === 'end' && toNode?.kind !== 'action') {
         this.connectingFrom = null;
         this.connectingConditionId = null;
@@ -526,14 +949,53 @@ export class CanvasComponent {
   zoomIn()  { this.zoom = Math.min(2, this.zoom + 0.1); }
   zoomOut() { this.zoom = Math.max(0.5, this.zoom - 0.1); }
 
+  onCanvasClick(ev: MouseEvent) {
+    if (this.suppressClick) {
+      this.suppressClick = false;
+      return;
+    }
+    if (this.connectingFrom) return;
+    if (this.selectionBox && this.areaSelectionActive) {
+      const point = this.worldPointFromEvent(ev);
+      if (this.pointInRect(point, this.selectionBox)) {
+        return;
+      }
+    }
+    this.deselect();
+  }
+
   onCanvasMouseUp() {
-    this.endPan();
+    if (this.panning) {
+      this.endPan();
+    }
+
+    if (this.draggingSelection) {
+      this.finalizeSelectionDrag();
+    }
+
+    if (this.marqueeActive) {
+      this.finalizeMarquee();
+    }
+
     if (this.connectingFrom) this.finishConnection(null);
   }
 
   removeEdge(id: string, ev: MouseEvent) {
     ev.stopPropagation();
     this.state.removeEdge(id);
+  }
+
+  private edgeHighlightsSelection(edge: GraphEdge) {
+    return this.isSelected(edge.from) && this.isSelected(edge.to);
+  }
+
+  edgeStrokeWidth(edge: GraphEdge) {
+    return this.edgeHighlightsSelection(edge) ? this.selectedEdgeStroke : this.defaultEdgeStroke;
+  }
+
+  edgeStrokeColor(edge: GraphEdge) {
+    if (this.hoveredEdgeId === edge.id) return this.hoveredEdgeColor;
+    return this.edgeHighlightsSelection(edge) ? this.selectedEdgeColor : this.defaultEdgeColor;
   }
 
   edgeMidpoint(e: GraphEdge): Point {
@@ -588,6 +1050,10 @@ export class CanvasComponent {
     this.state.removeNode(id);
   }
 
+  ngOnDestroy(): void {
+    this.setGlobalSelection(false);
+  }
+
   get viewBox() {
     const cw = this.canvasRef?.nativeElement.clientWidth || 1;
     const ch = this.canvasRef?.nativeElement.clientHeight || 1;
@@ -599,4 +1065,37 @@ export class CanvasComponent {
     };
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
