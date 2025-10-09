@@ -227,12 +227,8 @@ export class CanvasComponent implements OnDestroy {
     const delta = this.selectionDragDelta;
     const moved = Object.entries(this.selectionInitialNodePositions);
     if (delta.x !== 0 || delta.y !== 0) {
-      for (const [id, origin] of moved) {
-        this.state.moveNode(id, {
-          x: origin.x + delta.x,
-          y: origin.y + delta.y
-        });
-      }
+      const moves = moved.map(([id, origin]) => ({ id, position: { x: origin.x + delta.x, y: origin.y + delta.y } }));
+      this.state.moveNodes(moves);
     }
     for (const [id] of moved) {
       delete this.dragOffsets[id];
@@ -796,6 +792,13 @@ export class CanvasComponent implements OnDestroy {
       return;
     }
 
+    // Ctrl+Z / Cmd+Z: undo last action
+    if ((event.ctrlKey || event.metaKey) && (event.key === 'z' || event.key === 'Z')) {
+      event.preventDefault();
+      this.state.undo();
+      return;
+    }
+
     // Space: enable pan mode
     if (event.code === 'Space') {
       event.preventDefault();
@@ -810,7 +813,7 @@ export class CanvasComponent implements OnDestroy {
       const ids = this.selectedIds();
       if (!ids.length) return;
       event.preventDefault();
-      ids.forEach(id => this.state.removeNode(id));
+      this.state.removeNodes(ids);
       // Clear any selection UI remnants
       this.clearAreaSelection();
       return;

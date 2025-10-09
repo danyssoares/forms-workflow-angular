@@ -6,16 +6,19 @@ import { CanvasComponent } from '../canvas/canvas.component';
 import { InspectorComponent } from '../inspector/inspector.component';
 import { GraphStateService } from '../graph-state.service';
 import { GraphMapperService } from '../graph-mapper.service';
-import { AsyncPipe } from '@angular/common';
-import { NgIf } from '@angular/common';
+import { AsyncPipe, NgIf, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [NgIf, AsyncPipe, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [NgIf, AsyncPipe, NgStyle, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatSnackBarModule, MatProgressSpinnerModule, FontAwesomeModule, PaletteComponent, CanvasComponent, InspectorComponent],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
@@ -24,6 +27,16 @@ import { MatInputModule } from '@angular/material/input';
       <mat-label>Nome do Formulário</mat-label>
       <input matInput [(ngModel)]="formName" placeholder="Informe o nome..." />
     </mat-form-field>
+    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !(formName?.trim())" title="Salvar">
+      <ng-container *ngIf="saving; else savedOrDefault">
+        <mat-progress-spinner [diameter]="18" mode="indeterminate"></mat-progress-spinner>
+        <span style="margin-left:8px">Salvando...</span>
+      </ng-container>
+      <ng-template #savedOrDefault>
+        <fa-icon [icon]="faCheck" [ngStyle]="savedOk ? {'color':'#2e7d32'} : {}" style="margin-right:6px"></fa-icon>
+        <span>{{ savedOk ? 'Salvo' : 'Salvar' }}</span>
+      </ng-template>
+    </button>
   </div>
   <div class="flow-shell" [class.resizing]="resizing">
     <app-inspector
@@ -45,13 +58,16 @@ import { MatInputModule } from '@angular/material/input';
 export class FlowDesignerComponent {
   inspectorWidth = 320;
   private minWidth = 240;
-  private maxWidthRatio = 0.6; // 60% da largura disponível
+  private maxWidthRatio = 0.6;
   resizing = false;
   private startX = 0;
   private startWidth = 320;
   formName = '';
+  faCheck = faCheck;
+  saving = false;
+  savedOk = false;
 
-  constructor(public state: GraphStateService, private mapper: GraphMapperService) {
+  constructor(public state: GraphStateService, private mapper: GraphMapperService, private snack: MatSnackBar) {
     const saved = Number(localStorage.getItem('inspectorWidth'));
     if (!Number.isNaN(saved) && saved >= this.minWidth) {
       this.inspectorWidth = saved;
@@ -68,7 +84,7 @@ export class FlowDesignerComponent {
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(event: MouseEvent) {
     if (!this.resizing) return;
-    const delta = event.clientX - this.startX; // inspector está à esquerda do resizer
+    const delta = event.clientX - this.startX;
     const shell = document.querySelector('.flow-shell') as HTMLElement | null;
     const containerWidth = shell ? shell.clientWidth : window.innerWidth;
     const maxWidth = Math.max(this.minWidth, Math.floor(containerWidth * this.maxWidthRatio));
@@ -125,9 +141,32 @@ export class FlowDesignerComponent {
     const graph = this.state.graph;
     const form = this.mapper.toFormDefinition(graph, { name: 'Formulário Criado', status: 'draft', version: 1 });
     console.log('FormDefinition =>', form);
-    alert('FormDefinition gerado! Veja no console do navegador.');
+    this.snack.open('FormDefinition gerado! Veja o console do navegador.', 'Fechar', { duration: 3000 });
+  }
+
+  saveForm() {
+    const name = (this.formName || '').trim();
+    if (!name) return;
+    try {
+      this.saving = true;
+      this.savedOk = false;
+      const graph = this.state.graph;
+      const form = this.mapper.toFormDefinition(graph, { name, status: 'draft', version: 1 });
+      const payload = { savedAt: new Date().toISOString(), name, form, graph };
+      localStorage.setItem(`formDesigner:saved:${name}`, JSON.stringify(payload));
+      localStorage.setItem('formDesigner:lastSavedName', name);
+      console.log('Formulario salvo:', payload);
+      this.snack.open('Formulário salvo com sucesso!', 'Fechar', { duration: 2500 });
+      this.savedOk = true;
+    } catch (e) {
+      console.error('Erro ao salvar formulario', e);
+      this.snack.open('Não foi possível salvar o formulário.', 'Fechar', { duration: 3500 });
+    }
+    finally {
+      // dar um pequeno tempo para mostrar o spinner antes de concluir
+      setTimeout(() => { this.saving = false; }, 300);
+      // limpar estado "salvo" após um tempo
+      setTimeout(() => { this.savedOk = false; }, 1500);
+    }
   }
 }
-
-
-
