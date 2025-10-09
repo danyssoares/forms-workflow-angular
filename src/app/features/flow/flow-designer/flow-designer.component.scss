@@ -4,6 +4,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
+  height: 64px; /* keep consistent with shell calc */
+  box-sizing: border-box;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -64,4 +66,8 @@
 
 .flow-shell app-inspector ::ng-deep .sidebar {
   height: 100%;
+}
+
+:host ::ng-deep .nome-formulario .mat-mdc-form-field-subscript-wrapper {
+  height: 0px !important;
 }

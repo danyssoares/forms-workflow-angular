@@ -168,6 +168,8 @@ export class GraphStateService {
   clearSelection() {
     this._selectedIds.next([]);
     this._selectedId.next(null);
+    // Ensure sidebar closes when there is no active selection
+    this._sidebarOpen.next(false);
   }
 
   openSidebar(id: string) {

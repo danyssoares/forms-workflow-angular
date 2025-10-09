@@ -23,7 +23,7 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
     <span class="spacer"></span>
-    <mat-form-field appearance="outline" class="form-name-field">
+    <mat-form-field appearance="outline" class="form-name-field nome-formulario">
       <mat-label>Nome do Formulário</mat-label>
       <input matInput [(ngModel)]="formName" placeholder="Informe o nome..." />
     </mat-form-field>
@@ -96,6 +96,27 @@ export class FlowDesignerComponent {
     if (!this.resizing) return;
     this.resizing = false;
     try { localStorage.setItem('inspectorWidth', String(this.inspectorWidth)); } catch {}
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(ev: MouseEvent) {
+    // Close inspector when clicking outside nodes and inspector UI
+    const target = ev.target as HTMLElement | null;
+    if (!target) return;
+
+    // If inspector host not visible, ignore
+    const inspectorHost = document.querySelector('app-inspector') as HTMLElement | null;
+    if (!inspectorHost) return;
+
+    // Click inside inspector host? keep it open
+    if (inspectorHost.contains(target)) return;
+
+    // Click inside any node wrapper? keep open (user interacting with node)
+    const insideNode = target.closest('.node-wrapper');
+    if (insideNode) return;
+
+    // Otherwise, close the inspector
+    this.state.closeSidebar();
   }
 
   onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
