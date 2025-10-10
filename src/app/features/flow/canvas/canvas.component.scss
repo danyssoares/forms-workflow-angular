@@ -94,6 +94,8 @@
   display: block;
 }
 
+.canvas { position: relative; }
+
 .field-container {
   background: #f4f4f7;
   border: 2px solid transparent;
@@ -258,6 +260,34 @@
 .selection-offset {
   position: relative;
 }
+
+/* Context menu */
+.context-menu {
+  position: absolute;
+  z-index: 1000;
+  background: var(--app-bg);
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 160px;
+}
+.context-menu .ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 4px;
+}
+.context-menu .ctx-item fa-icon { font-size: 14px; width: 14px; height: 14px; }
+.context-menu .ctx-item:hover { background: #f5f5f5; }
+.context-menu .ctx-item.danger { color: #d32f2f; }
+.context-menu .ctx-item.danger:hover { background: #fdecea; }
 
 .canvas {
   cursor: default;

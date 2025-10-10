@@ -47,7 +47,7 @@
         </lib-control-material-select>
         <!--<mat-form-field appearance="outline" style="width:100%">
           <mat-label>Pergunta</mat-label>
-          <mat-select formControlName="questionId">
+          <mat-select formControlName="questionId" panelClass="large-data">
             <mat-option *ngFor="let question of availableQuestions" [value]="question.data.id">
               {{ question.data.label }}
             </mat-option>
@@ -58,7 +58,7 @@
 
       <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('valueType')?.value === 'condition'">
         <mat-label>Condição</mat-label>
-        <mat-select formControlName="conditionId">
+        <mat-select formControlName="conditionId" panelClass="large-data">
           <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
             {{ cond.name || 'Condição' }}
           </mat-option>
@@ -69,7 +69,7 @@
     <div class="value-section" style="margin-top: 10px; margin-bottom: 10px;">
       <h5 style="margin-bottom: 5px;">Operador</h5>
       <mat-form-field appearance="outline" style="width:100%;">        
-        <mat-select formControlName="operator">
+        <mat-select formControlName="operator" panelClass="large-data">
           <mat-option *ngFor="let op of filteredOperators" [value]="op.value">
             {{ op.label }}
           </mat-option>
@@ -106,7 +106,7 @@
       <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'question'">
         <mat-form-field appearance="outline" style="width:100%">
           <mat-label>Pergunta</mat-label>
-          <mat-select formControlName="compareQuestionId">
+          <mat-select formControlName="compareQuestionId" panelClass="large-data">
             <mat-option *ngFor="let question of availableQuestionsForComparison" [value]="question.data.id">
               {{ question.data.label }}
             </mat-option>
@@ -117,7 +117,7 @@
 
       <mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'condition'">
         <mat-label>Condição</mat-label>
-        <mat-select formControlName="compareConditionId">
+        <mat-select formControlName="compareConditionId" panelClass="large-data">
           <mat-option *ngFor="let cond of availableConditions" [value]="cond.id">
             {{ cond.name || 'Condição' }}
           </mat-option>

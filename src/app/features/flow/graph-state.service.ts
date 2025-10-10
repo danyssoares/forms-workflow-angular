@@ -139,6 +139,9 @@ export class GraphStateService {
     this.select(null);
   }
   connect(fromId: string, toId: string, label?: string, conditionId?: string) {
+    // Prevent duplicate edges with the same origin and destination
+    const exists = this.graph.edges.some(e => e.from === fromId && e.to === toId);
+    if (exists) return;
     this.pushHistory();
     const id = crypto.randomUUID();
     const edge: GraphEdge = { id, from: fromId, to: toId, label, conditionId };

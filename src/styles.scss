@@ -5,6 +5,93 @@ html, body {
   font-family: 'Nunito', sans-serif;
 }
 
+/* App background variable to sync overlay menus/selects */
+:root { --app-bg: #ffffff; }
+body { background-color: var(--app-bg); }
+
+/* Ensure Nunito is used across all app text, including Angular Material */
+:root,
+body,
+.mat-typography,
+button,
+input,
+textarea,
+select,
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-form-field,
+.mat-mdc-select,
+.mat-mdc-menu-panel,
+.mat-mdc-tooltip,
+.mat-mdc-chip,
+.mat-mdc-table {
+  font-family: 'Nunito', sans-serif !important;
+}
+/* Ensure Nunito in Angular Material toolbar/header */
+.mat-toolbar, .mat-mdc-toolbar, .mat-toolbar-row, .mat-mdc-toolbar-row {
+  font-family: 'Nunito', sans-serif !important;
+}
+
+/* Ensure Nunito on overlay contents (mat-select options, menus, dialogs, tooltips) */
+.cdk-overlay-container, .cdk-overlay-container * { font-family: 'Nunito', sans-serif !important; }
+.mat-mdc-option { font-family: 'Nunito', sans-serif !important; }
+
+/* Match overlay dropdown backgrounds (menus, selects, autocomplete) to body */
+.mat-mdc-menu-panel,
+.mat-mdc-menu-content,
+.mdc-menu-surface,
+.mat-mdc-select-panel,
+.mat-mdc-select-panel .mdc-list,
+.mat-mdc-autocomplete-panel {
+  background-color: var(--app-bg) !important;
+}
+.mat-mdc-option { font-family: 'Nunito', sans-serif !important; }
+/* Ensure Nunito on Material form field labels and inputs */
+.mat-mdc-form-field .mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label--float-above,
+.mat-mdc-form-field .mdc-text-field__input,
+.mat-mdc-select-value,
+.mat-mdc-select-placeholder,
+.mat-mdc-form-field-subscript-wrapper,
+.mdc-list-item__primary-text {
+  font-family: 'Nunito', sans-serif !important;
+}
+
+/* Fix: primary raised buttons showing white background. Force primary color background */
+.mat-mdc-raised-button.mat-primary,
+button.mat-mdc-raised-button.mat-primary {
+  background-color: #4978ff !important; /* primary tone */
+  color: #fff !important;
+}
+.mat-mdc-raised-button.mat-primary:hover,
+button.mat-mdc-raised-button.mat-primary:hover {
+  filter: brightness(0.95);
+}
+.mat-mdc-raised-button.mat-primary:disabled,
+button.mat-mdc-raised-button.mat-primary:disabled {
+  background-color: rgba(73, 120, 255, 0.38) !important;
+  color: rgba(255,255,255,0.8) !important;
+}
+
+/* Ensure primary stroked (outlined) buttons use primary border/text */
+.mat-mdc-outlined-button.mat-primary,
+button.mat-mdc-outlined-button.mat-primary {
+  color: #4978ff !important;
+  border-color: #4978ff !important;
+}
+.mat-mdc-outlined-button.mat-primary:hover,
+button.mat-mdc-outlined-button.mat-primary:hover {
+  background-color: rgba(73,120,255,0.06) !important;
+}
+
+/* Large-data selects: remove top/bottom padding from panel list */
+.mat-mdc-select-panel.large-data .mdc-list {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* Global button shape overrides: make all Material buttons rectangular with rounded corners */
 .mat-mdc-button-base {
   border-radius: 10px !important;
@@ -229,7 +316,9 @@ html, body {
   height: 120px;
 }
 .node-wrapper.condition .handle.in {
-  left: 0;
+  /* Align inbound handle center to the left vertex of the diamond */
+  left: 25px;  /* diamond left offset inside wrapper */
+  top: 85px;   /* 25px top offset + 60px (half of 120px diamond size) */
 }
 .node-wrapper.condition .handle.out {
   right: 0;

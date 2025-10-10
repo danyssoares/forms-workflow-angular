@@ -65,7 +65,7 @@
 
                 <mat-form-field appearance="outline" style="width:120px">
                   <mat-label>Operador</mat-label>
-                  <mat-select formControlName="operator">
+                  <mat-select formControlName="operator" panelClass="large-data">
                     <mat-option value="==">==</mat-option>
                     <mat-option value="!=">!=</mat-option>
                     <mat-option value=">=">>=</mat-option>
@@ -121,7 +121,7 @@
         <form *ngSwitchCase="'action'" [formGroup]="fgA">
           <mat-form-field appearance="outline" style="width:100%">
             <mat-label>Tipo de Ação</mat-label>
-            <mat-select formControlName="type">
+            <mat-select formControlName="type" panelClass="large-data">
               <mat-option value="sendNotification">Enviar Notificação</mat-option>              
             </mat-select>
           </mat-form-field>
@@ -129,7 +129,7 @@
       </div>
     </div>
     <div class="actions">
-      <button mat-button type="button" (click)="cancel()">
+      <button mat-stroked-button color="primary" type="button" (click)="cancel()">
         <fa-icon [icon]="faTimes"></fa-icon>
         Cancelar
       </button>

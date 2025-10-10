@@ -74,7 +74,11 @@
             [class.action]="n.kind === 'action'"
             [class.end]="n.kind === 'end'"
             [class.selected]="isSelected(n.id)"
-            (click)="$event.stopPropagation(); select(n.id)">
+            (click)="$event.stopPropagation(); select(n.id)"
+            (dblclick)="$event.stopPropagation(); startEdit(n)"
+            (contextmenu)="$event.preventDefault(); $event.stopPropagation(); openContextMenu(n, $event)">
+
+          
           
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
@@ -154,6 +158,22 @@
         
         <div class="handle out" *ngIf="isSelected(n.id) && n.kind !== 'condition' && !(n.kind==='end' && n.data.conditions?.length)" (mousedown)="startConnection(n.id, $event)"></div>
         </div>
+      </div>
+
+      <!-- Context Menu -->
+      <div *ngIf="contextMenu.visible" class="context-menu" [ngStyle]="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }" (click)="$event.stopPropagation()">
+        <button class="ctx-item" (click)="onContextAction('duplicate')">
+          <fa-icon [icon]="faClone"></fa-icon>
+          <span>Duplicar</span>
+        </button>
+        <button class="ctx-item" (click)="onContextAction('edit')">
+          <fa-icon [icon]="faEdit"></fa-icon>
+          <span>Editar</span>
+        </button>
+        <button class="ctx-item danger" (click)="onContextAction('delete')">
+          <fa-icon [icon]="faTrash"></fa-icon>
+          <span>Excluir</span>
+        </button>
       </div>
     <div *ngIf="selectionBox"
          class="selection-box"

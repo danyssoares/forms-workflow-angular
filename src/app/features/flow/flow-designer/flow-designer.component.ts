@@ -100,9 +100,14 @@ export class FlowDesignerComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(ev: MouseEvent) {
-    // Close inspector when clicking outside nodes and inspector UI
+    // Close inspector only when clicking on canvas background (not on nodes)
     const target = ev.target as HTMLElement | null;
     if (!target) return;
+
+    // If click happens inside an Angular Material overlay (e.g., mat-select, mat-menu),
+    // keep the inspector open while interacting with overlay content.
+    const overlayContainer = document.querySelector('.cdk-overlay-container') as HTMLElement | null;
+    if (overlayContainer && overlayContainer.contains(target)) return;
 
     // If inspector host not visible, ignore
     const inspectorHost = document.querySelector('app-inspector') as HTMLElement | null;
@@ -115,13 +120,18 @@ export class FlowDesignerComponent {
     const insideNode = target.closest('.node-wrapper');
     if (insideNode) return;
 
-    // Otherwise, close the inspector
+    // Only close if the click happened within the canvas area (background)
+    const canvasHost = document.querySelector('.canvas') as HTMLElement | null;
+    if (!canvasHost) return;
+    if (!canvasHost.contains(target)) return;
+
+    // Otherwise, close the inspector (clicked on canvas background)
     this.state.closeSidebar();
   }
 
   onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
-    if(e.kind==='question') this.state.addNode('question', { id:'', label:'What is your name?', type: e.type||{id: 0, label:'Texto'}, score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
+    if(e.kind==='question') this.state.addNode('question', { id: 'q_' + crypto.randomUUID().slice(0,4), label:'What is your name?', type: e.type||{id: 0, label:'Texto'}, score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
     if(e.kind==='condition') {
       if(e.conditionType === 'expression') {
         this.state.addNode('condition', {

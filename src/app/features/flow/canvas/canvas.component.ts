@@ -4,7 +4,7 @@ import { DragDropModule, CdkDragEnd, CdkDragMove, CdkDragStart } from '@angular/
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash, faGear, faCodeBranch } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faGear, faCodeBranch, faClone } from '@fortawesome/free-solid-svg-icons';
 import { GraphModel, GraphNode, Point, GraphEdge, ConditionNodeData } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 import { NodeQuestionComponent } from '../node-question/node-question.component';
@@ -31,6 +31,7 @@ export class CanvasComponent implements OnDestroy {
   faTrash = faTrash;
   faGear = faGear;
   faCodeBranch = faCodeBranch;
+  faClone = faClone;
 
   // pan/zoom do canvas
   offset = { x: 0, y: 0 };
@@ -75,6 +76,30 @@ export class CanvasComponent implements OnDestroy {
 
   // posições temporárias enquanto arrasta
   private dragOffsets: Record<string, Point> = {};
+
+  // Context menu state
+  contextMenu = { visible: false, x: 0, y: 0, node: null as GraphNode | null };
+
+  openContextMenu(node: GraphNode, ev: MouseEvent) {
+    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+    this.contextMenu = { visible: true, x: ev.clientX - rect.left, y: ev.clientY - rect.top, node };
+  }
+  closeContextMenu() { this.contextMenu.visible = false; this.contextMenu.node = null; }
+  onContextAction(action: 'duplicate'|'edit'|'delete') {
+    const node = this.contextMenu.node;
+    this.closeContextMenu();
+    if (!node) return;
+    if (action === 'edit') { this.startEdit(node); return; }
+    if (action === 'delete') { this.deleteNode(node.id); return; }
+    if (action === 'duplicate') {
+      const pos = { x: node.position.x + 24, y: node.position.y + 24 };
+      const data: any = JSON.parse(JSON.stringify(node.data));
+      if (node.kind === 'question') {
+        data.id = `q_${crypto.randomUUID().slice(0,4)}`;
+      }
+      this.state.addNode(node.kind as any, data, pos);
+    }
+  }
 
   selectionTransform(id: string): string | null {
     if (!this.draggingSelection) return null;
@@ -283,7 +308,7 @@ export class CanvasComponent implements OnDestroy {
 
 
   constructor(private state: GraphStateService) {
-    this.library.addIcons(faEdit, faTrash, faGear, faCodeBranch);
+    this.library.addIcons(faEdit, faTrash, faGear, faCodeBranch, faClone);
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
     this.selectedId = toSignal(this.state.selectedId$, { initialValue: null as string | null });
@@ -442,6 +467,17 @@ export class CanvasComponent implements OnDestroy {
     const x1 = n.position.x + off.x;
     const y1 = n.position.y + off.y;
     return { x1, y1, x2: x1 + w, y2: y1 + h };
+  }
+
+  // Close context menu when clicking anywhere outside it
+  @HostListener('document:click', ['$event'])
+  onDocumentClickForMenu(ev: MouseEvent) {
+    if (!this.contextMenu.visible) return;
+    const target = ev.target as HTMLElement | null;
+    if (!target) { this.closeContextMenu(); return; }
+    const menuEl = document.querySelector('.context-menu') as HTMLElement | null;
+    if (menuEl && menuEl.contains(target)) return;
+    this.closeContextMenu();
   }
 
   // Inclui pequenas extensões visuais (ex.: handle de saída) para o cálculo da área selecionada
@@ -953,6 +989,12 @@ export class CanvasComponent implements OnDestroy {
   zoomOut() { this.zoom = Math.max(0.5, this.zoom - 0.1); }
 
   onCanvasClick(ev: MouseEvent) {
+    // Close context menu first
+    if (this.contextMenu.visible) {
+      this.closeContextMenu();
+      // Do not also deselect on same click if menu was open
+      return;
+    }
     if (this.suppressClick) {
       this.suppressClick = false;
       return;
