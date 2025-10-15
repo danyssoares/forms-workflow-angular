@@ -2,11 +2,12 @@ import { Component, inject, Input } from '@angular/core';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCodeBranch, faDiamond } from '@fortawesome/free-solid-svg-icons';
 import { GraphNode, ConditionNodeData } from '../graph.types';
+import { TranslationPipe } from '@angulartoolsdr/translation';
 
 @Component({
   selector: 'app-node-condition',
   standalone: true,
-  imports: [FontAwesomeModule],
+  imports: [FontAwesomeModule, TranslationPipe],
   templateUrl: './node-condition.component.html',
   styleUrl: './node-condition.component.scss'
 })

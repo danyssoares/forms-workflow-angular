@@ -1,0 +1,46 @@
+<section class="workflow-page">
+  <header class="header">
+    <div>
+      <h1>Workflows Salvos</h1>
+      <p>Continue um fluxo existente ou crie um novo processo em poucos cliques.</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="createWorkflow()">
+      <mat-icon>add</mat-icon>
+      Novo Workflow
+    </button>
+  </header>
+
+  <ng-container *ngIf="workflows().length; else emptyState">
+    <div class="grid">
+      <mat-card *ngFor="let workflow of workflows(); trackBy: trackByName" class="workflow-card">
+        <mat-card-header>
+          <fa-icon mat-card-avatar [icon]="faDiagramProject" color="primary"></fa-icon>
+          <mat-card-title>{{ workflow.name }}</mat-card-title>
+          <mat-card-subtitle>
+            Atualizado em {{ workflow.savedAt | date:'dd/MM/yyyy HH:mm' }}
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p>Fluxo com {{ workflow.graph.nodes.length }} nós e {{ workflow.graph.edges.length }} conexões.</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-stroked-button color="primary" (click)="openWorkflow(workflow)">
+            <mat-icon>play_arrow</mat-icon>
+            Abrir Workflow
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </ng-container>
+
+  <ng-template #emptyState>
+    <div class="empty">
+      <fa-icon [icon]="faDiagramProject"></fa-icon>
+      <h2>Nenhum workflow salvo ainda</h2>
+      <p>Organize suas perguntas, condições e ações criando o primeiro fluxo.</p>
+      <button mat-raised-button color="primary" (click)="createWorkflow()">
+        Começar agora
+      </button>
+    </div>
+  </ng-template>
+</section>

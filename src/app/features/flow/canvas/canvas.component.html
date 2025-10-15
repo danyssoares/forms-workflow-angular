@@ -83,18 +83,18 @@
           <!-- Action buttons (show only when node is selected) -->
           <div class="node-actions" *ngIf="isSelected(n.id)">
             <ng-container *ngIf="n.kind === 'end'; else defaultButtons">
-              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" [title]="'EDIT' | translate">
                 <fa-icon [icon]="faEdit"></fa-icon>
               </button>
-              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" [title]="'DELETE' | translate">
                 <fa-icon [icon]="faTrash"></fa-icon>
               </button>
             </ng-container>
             <ng-template #defaultButtons>
-              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" title="Editar">
+              <button mat-icon-button class="action-btn edit-btn" (click)="startEdit(n)" [title]="'EDIT' | translate">
                 <fa-icon [icon]="faEdit"></fa-icon>
               </button>
-              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" title="Excluir">
+              <button mat-icon-button class="action-btn delete-btn" (click)="deleteNode(n.id)" [title]="'DELETE' | translate">
                 <fa-icon [icon]="faTrash"></fa-icon>
               </button>
             </ng-template>
@@ -109,17 +109,10 @@
             <app-node-condition *ngSwitchCase="'condition'" [node]="n"></app-node-condition>
 
             <!-- Action = Rectangle -->
-            <div *ngSwitchCase="'action'">
-              <div class="title"><fa-icon [icon]="faGear"></fa-icon> Ação #{{ n.data.seq }}</div>
-              <div class="sub">{{ n.data.type || 'Enviar Notificação' }}</div>
-              </div>
+            <app-node-action *ngSwitchCase="'action'" [node]="n"></app-node-action>
 
             <!-- End = Capsule -->
-            <div *ngSwitchCase="'end'" class="end">
-              <div class="content">
-                <div class="title">FIM</div>
-              </div>
-            </div>
+            <app-node-end *ngSwitchCase="'end'" [node]="n"></app-node-end>
 
           </ng-container>
         </div>
@@ -132,14 +125,14 @@
             [attr.data-condition-id]="condition.id"
             (mousedown)="startConnection(n.id, $event, condition.id)"
             [ngStyle]="{ top: conditionHandleTop(totalConditionHandles(n.id), i) + 'px' }">
-            <span class="handle-label">{{ condition.name || 'Condição ' + (i + 1) }}</span>
+            <span class="handle-label">{{ condition.name || defaultConditionLabel(i) }}</span>
           </div>
           <div
             *ngIf="hasAllConditionsEdge(n.id)"
             class="handle out condition-handle all-conditions-handle"
             (mousedown)="$event.stopPropagation()"
             [ngStyle]="{ top: conditionHandleTop(totalConditionHandles(n.id), n.data.conditions.length) + 'px' }">
-            <span class="handle-label">Todas as condições</span>
+            <span class="handle-label">{{ defaultAllConditionsLabel() }}</span>
           </div>
         </ng-container>
         
@@ -152,7 +145,7 @@
             [attr.data-condition-id]="c.id"
             (mousedown)="startConnection(n.id, $event, c.id)"
             [ngStyle]="{ top: endConditionHandleTop(n.data.conditions.length, i) + 'px' }">
-            <span class="handle-label">{{ c.name || 'Condição ' + (i + 1) }}</span>
+            <span class="handle-label">{{ c.name || defaultConditionLabel(i) }}</span>
           </div>
         </ng-container>
         
@@ -164,15 +157,15 @@
       <div *ngIf="contextMenu.visible" class="context-menu" [ngStyle]="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }" (click)="$event.stopPropagation()">
         <button class="ctx-item" (click)="onContextAction('duplicate')">
           <fa-icon [icon]="faClone"></fa-icon>
-          <span>Duplicar</span>
+          <span>{{ 'DUPLICATE' | translate }}</span>
         </button>
         <button class="ctx-item" (click)="onContextAction('edit')">
           <fa-icon [icon]="faEdit"></fa-icon>
-          <span>Editar</span>
+          <span>{{ 'EDIT' | translate }}</span>
         </button>
         <button class="ctx-item danger" (click)="onContextAction('delete')">
           <fa-icon [icon]="faTrash"></fa-icon>
-          <span>Excluir</span>
+          <span>{{ 'DELETE' | translate }}</span>
         </button>
       </div>
     <div *ngIf="selectionBox"

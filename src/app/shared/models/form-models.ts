@@ -1,17 +1,46 @@
-export const questionTypes = [
-  {id: 0, label:'Texto'}, 
-  {id: 1, label:'Número'}, 
-  {id: 2, label:'Data'}, 
-  {id: 3, label:'Hora'}, 
-  {id: 4, label:'Data e Hora'}, 
-  {id: 5, label:'Booleano'}, 
-  {id: 6, label:'Imagem'}, 
-  {id: 7, label:'Arquivo'}, 
-  {id: 8, label:'Lista de Opções'},     
-  {id: 9, label:'Seleção Única'}, 
-  {id: 10, label:'Seleção Múltipla'}];
+export interface QuestionTypeDefinition {
+  id: number;
+  labelKey: string;
+  promptKey: string;
+}
 
-  export const questionTypeOperators: Record<string, string[]> = {
+export interface QuestionTypeOption {
+  id: number;
+  label: string;
+}
+
+export const questionTypeDefinitions: QuestionTypeDefinition[] = [
+  { id: 0, labelKey: 'QUESTION_TYPE_TEXT', promptKey: 'QUESTION_PROMPT_TEXT' },
+  { id: 1, labelKey: 'QUESTION_TYPE_NUMBER', promptKey: 'QUESTION_PROMPT_NUMBER' },
+  { id: 2, labelKey: 'QUESTION_TYPE_DATE', promptKey: 'QUESTION_PROMPT_DATE' },
+  { id: 3, labelKey: 'QUESTION_TYPE_TIME', promptKey: 'QUESTION_PROMPT_TIME' },
+  { id: 4, labelKey: 'QUESTION_TYPE_DATETIME', promptKey: 'QUESTION_PROMPT_DATETIME' },
+  { id: 5, labelKey: 'QUESTION_TYPE_BOOLEAN', promptKey: 'QUESTION_PROMPT_BOOLEAN' },
+  { id: 6, labelKey: 'QUESTION_TYPE_IMAGE', promptKey: 'QUESTION_PROMPT_IMAGE' },
+  { id: 7, labelKey: 'QUESTION_TYPE_FILE', promptKey: 'QUESTION_PROMPT_FILE' },
+  { id: 8, labelKey: 'QUESTION_TYPE_OPTIONS', promptKey: 'QUESTION_PROMPT_OPTIONS' },
+  { id: 9, labelKey: 'QUESTION_TYPE_SINGLE_SELECT', promptKey: 'QUESTION_PROMPT_SINGLE_SELECT' },
+  { id: 10, labelKey: 'QUESTION_TYPE_MULTI_SELECT', promptKey: 'QUESTION_PROMPT_MULTI_SELECT' }
+];
+
+export function getQuestionTypeDefinition(typeId?: number): QuestionTypeDefinition {
+  const fallback = questionTypeDefinitions[0];
+  if (typeId === undefined || typeId === null) return fallback;
+  return questionTypeDefinitions.find(def => def.id === typeId) ?? fallback;
+}
+
+export function getQuestionTypePromptKey(typeId?: number): string {
+  return getQuestionTypeDefinition(typeId).promptKey;
+}
+
+export function createQuestionTypeOption(
+  def: QuestionTypeDefinition,
+  translate: (key: string) => string
+): QuestionTypeOption {
+  return { id: def.id, label: translate(def.labelKey) };
+}
+
+export const questionTypeOperators: Record<string, string[]> = {
     0: ['==', '!=', '>', '>=', '<', '<=', 'contains'],
     1: ['==', '!=', '>', '>=', '<', '<='],
     2: ['==', '!=', '>', '>=', '<', '<='],

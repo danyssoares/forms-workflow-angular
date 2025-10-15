@@ -57,6 +57,19 @@ export class GraphStateService {
     end: 0
   };
 
+  private recalculateCounters(graph: GraphModel) {
+    const kinds: NodeKind[] = ['question', 'condition', 'action', 'scoreGate', 'end'];
+    for (const kind of kinds) {
+      const maxSeq = graph.nodes
+        .filter(n => n.kind === kind)
+        .reduce((max, node) => {
+          const seq = Number((node.data as any)?.seq);
+          return Number.isFinite(seq) && seq > max ? seq : max;
+        }, 0);
+      this.counters[kind] = maxSeq;
+    }
+  }
+
   private nextSeqFor(kind: NodeKind): number {
     const maxExisting = this.graph.nodes
       .filter(n => n.kind === kind)
@@ -78,6 +91,14 @@ export class GraphStateService {
     const node: GraphNode = { id, kind, data: { ...data, seq }, position };
     this._graph.next({ ...this.graph, nodes: [...this.graph.nodes, node] });
     this.select(id);
+  }
+
+  setGraph(graph: GraphModel) {
+    const snapshot = this.cloneGraph(graph);
+    this._graph.next(snapshot);
+    this.recalculateCounters(snapshot);
+    this.undoStack = [];
+    this.clearSelection();
   }
   updateNode(id: string, data: any) {
     this.pushHistory();
@@ -187,4 +208,3 @@ export class GraphStateService {
 
   get selectedNode(): GraphNode|undefined { return this.graph.nodes.find(n=>n.id===(this._selectedId.value||'')); }
 }
-

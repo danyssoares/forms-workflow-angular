@@ -1,14 +1,17 @@
 import { Component, ElementRef, HostListener, OnDestroy, inject, ViewChild, effect } from '@angular/core';
-import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase, TitleCasePipe } from '@angular/common';
+import { NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase } from '@angular/common';
 import { DragDropModule, CdkDragEnd, CdkDragMove, CdkDragStart } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faEdit, faTrash, faGear, faCodeBranch, faClone } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faCodeBranch, faClone } from '@fortawesome/free-solid-svg-icons';
 import { GraphModel, GraphNode, Point, GraphEdge, ConditionNodeData } from '../graph.types';
 import { GraphStateService } from '../graph-state.service';
 import { NodeQuestionComponent } from '../node-question/node-question.component';
 import { NodeConditionComponent } from '../node-condition/node-condition.component';
+import { NodeActionComponent } from '../node-action/node-action.component';
+import { NodeEndComponent } from '../node-end/node-end.component';
+import { TranslationPipe, TranslationService } from '@angulartoolsdr/translation';
 
 @Component({
   selector: 'app-canvas',
@@ -17,7 +20,7 @@ import { NodeConditionComponent } from '../node-condition/node-condition.compone
   imports: [
     NgFor, NgIf, NgStyle, NgSwitch, NgSwitchCase,
     DragDropModule, MatButtonModule, FontAwesomeModule, 
-    NodeQuestionComponent, NodeConditionComponent
+    NodeQuestionComponent, NodeConditionComponent, NodeActionComponent, NodeEndComponent, TranslationPipe
   ],
   templateUrl: './canvas.component.html'
 })
@@ -25,11 +28,11 @@ export class CanvasComponent implements OnDestroy {
   @ViewChild('canvasEl') canvasRef!: ElementRef<HTMLDivElement>;
 
   library = inject(FaIconLibrary);
+  private readonly translation = inject(TranslationService);
 
   // Font Awesome icons
   faEdit = faEdit;
   faTrash = faTrash;
-  faGear = faGear;
   faCodeBranch = faCodeBranch;
   faClone = faClone;
 
@@ -308,7 +311,7 @@ export class CanvasComponent implements OnDestroy {
 
 
   constructor(private state: GraphStateService) {
-    this.library.addIcons(faEdit, faTrash, faGear, faCodeBranch, faClone);
+    this.library.addIcons(faEdit, faTrash, faCodeBranch, faClone);
     /** Observa o grafo e o id selecionado do serviço (sem depender de getters opcionais) */
     this.graph = toSignal(this.state.graph$, { initialValue: { nodes: [], edges: [] } as GraphModel });
     this.selectedId = toSignal(this.state.selectedId$, { initialValue: null as string | null });
@@ -397,6 +400,14 @@ export class CanvasComponent implements OnDestroy {
     const x = n.position.x + off.x + w + 6;
     const y = n.position.y + off.y + center + (conditionIndex - (totalHandles - 1) / 2) * spacing + 6;
     return { x, y };
+  }
+
+  defaultConditionLabel(index: number): string {
+    return `${this.translation.instant('CONDITION')} ${index + 1}`;
+  }
+
+  defaultAllConditionsLabel(): string {
+    return this.translation.instant('CONDITION_ALL');
   }
 
   private isAllConditionsEdge(edge: GraphEdge): boolean {
@@ -1110,8 +1121,6 @@ export class CanvasComponent implements OnDestroy {
     };
   }
 }
-
-
 
 
 

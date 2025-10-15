@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { PaletteComponent } from '../palette/palette.component';
@@ -14,27 +14,59 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { TranslationPipe } from '@angulartoolsdr/translation';
+import { QuestionTypeOption, QuestionTypeDefinition, createQuestionTypeOption, getQuestionTypePromptKey, questionTypeDefinitions } from '../../../shared/models/form-models';
+import { TranslationService } from '@angulartoolsdr/translation';
+import { WorkflowStorageService } from '../workflow-storage.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
 
 @Component({
   selector: 'app-flow-designer',
   standalone: true,
-  imports: [NgIf, AsyncPipe, NgStyle, FormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatSnackBarModule, MatProgressSpinnerModule, FontAwesomeModule, PaletteComponent, CanvasComponent, InspectorComponent],
+  imports: [
+    NgIf, 
+    AsyncPipe, 
+    NgStyle, 
+    FormsModule, 
+    MatFormFieldModule, 
+    MatInputModule, 
+    MatButtonModule, 
+    MatIconModule, 
+    MatSnackBarModule, 
+    MatProgressSpinnerModule, 
+    FontAwesomeModule, 
+    PaletteComponent, 
+    CanvasComponent, 
+    InspectorComponent,
+    TranslationPipe,
+    ControlMaterialComponent
+  ],
   template: `
   <div class="palette">
     <app-palette (add)="onAdd($event)"></app-palette>
+    <button mat-stroked-button color="primary" class="back-button" (click)="goToList()">
+      <mat-icon>arrow_back</mat-icon>
+      Workflows
+    </button>
     <span class="spacer"></span>
-    <mat-form-field appearance="outline" class="form-name-field nome-formulario">
-      <mat-label>Nome do Formulário</mat-label>
-      <input matInput [(ngModel)]="formName" placeholder="Informe o nome..." />
-    </mat-form-field>
-    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !(formName?.trim())" title="Salvar">
+    <lib-control-material style="margin-top: 20px;" label="{{'FORM_NAME' | translate}}">
+      <input
+        matInput
+        name="formName"
+        required
+        [(ngModel)]="formName"
+        placeholder="{{'PLACEHOLDER_FORM_NAME' | translate}}"
+      />
+    </lib-control-material>
+    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !(formName?.trim())" title="{{'SAVE' | translate}}">
       <ng-container *ngIf="saving; else savedOrDefault">
         <mat-progress-spinner [diameter]="18" mode="indeterminate"></mat-progress-spinner>
-        <span style="margin-left:8px">Salvando...</span>
+        <span style="margin-left:8px">{{'SAVING' | translate}}</span>
       </ng-container>
       <ng-template #savedOrDefault>
         <fa-icon [icon]="faCheck" [ngStyle]="savedOk ? {'color':'#2e7d32'} : {}" style="margin-right:6px"></fa-icon>
-        <span>{{ savedOk ? 'Salvo' : 'Salvar' }}</span>
+        <span>{{ (savedOk ? 'SAVED' : 'SAVE') | translate }}</span>
       </ng-template>
     </button>
   </div>
@@ -52,10 +84,10 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
     </div>
     <app-canvas></app-canvas>
   </div>
-  `,
+  `,  
   styleUrl: './flow-designer.component.scss'
 })
-export class FlowDesignerComponent {
+export class FlowDesignerComponent implements OnInit {
   inspectorWidth = 320;
   private minWidth = 240;
   private maxWidthRatio = 0.6;
@@ -66,11 +98,38 @@ export class FlowDesignerComponent {
   faCheck = faCheck;
   saving = false;
   savedOk = false;
+  private readonly translation = inject(TranslationService);
 
-  constructor(public state: GraphStateService, private mapper: GraphMapperService, private snack: MatSnackBar) {
+  constructor(
+    public state: GraphStateService,
+    private mapper: GraphMapperService,
+    private snack: MatSnackBar,
+    private workflowStorage: WorkflowStorageService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
     const saved = Number(localStorage.getItem('inspectorWidth'));
     if (!Number.isNaN(saved) && saved >= this.minWidth) {
       this.inspectorWidth = saved;
+    }
+  }
+
+  ngOnInit(): void {
+    const workflowName = this.route.snapshot.queryParamMap.get('workflow');
+    if (workflowName) {
+      const snapshot = this.workflowStorage.loadWorkflow(workflowName);
+      if (snapshot) {
+        this.state.setGraph(snapshot.graph);
+        this.formName = snapshot.formName ?? snapshot.name;
+        this.snack.open('Workflow carregado com sucesso!', 'Fechar', { duration: 2000 });
+      } else {
+        this.snack.open('Workflow não encontrado.', 'Fechar', { duration: 3000 });
+        this.state.setGraph({ nodes: [], edges: [] });
+        this.formName = '';
+      }
+    } else {
+      this.state.setGraph({ nodes: [], edges: [] });
+      this.formName = '';
     }
   }
 
@@ -129,9 +188,26 @@ export class FlowDesignerComponent {
     this.state.closeSidebar();
   }
 
-  onAdd(e:{kind:string,type?:string,conditionType?:'comparison'|'expression'}){
+  onAdd(e:{kind:string,type?:QuestionTypeDefinition,conditionType?:'comparison'|'expression'}){
     const pos = { x: 80 + Math.random()*120, y: 120 + Math.random()*80 };
-    if(e.kind==='question') this.state.addNode('question', { id: 'q_' + crypto.randomUUID().slice(0,4), label:'What is your name?', type: e.type||{id: 0, label:'Texto'}, score:0, trueLabel:'Verdadeiro', falseLabel:'Falso', options:[] }, pos);
+    if(e.kind==='question') {
+      const definition = e.type ?? questionTypeDefinitions[0];
+      const typeOption: QuestionTypeOption = createQuestionTypeOption(
+        definition,
+        (key) => this.translation.instant(key)
+      );
+      const labelKey = getQuestionTypePromptKey(typeOption?.id);
+      const label = this.translation.instant(labelKey);
+      this.state.addNode('question', { 
+        id: 'q_' + crypto.randomUUID().slice(0,4), 
+        label,
+        type: typeOption, 
+        score:0, 
+        trueLabel:'Verdadeiro', 
+        falseLabel:'Falso', 
+        options:[]
+      }, pos);
+    }
     if(e.kind==='condition') {
       if(e.conditionType === 'expression') {
         this.state.addNode('condition', {
@@ -165,7 +241,7 @@ export class FlowDesignerComponent {
       }
     }
     if(e.kind==='action') this.state.addNode('action', { type:'sendNotification', params:{ alertCode:'ALERTA' } }, pos);
-    if(e.kind==='end') this.state.addNode('end', { label: 'Fim do Formulário', conditions: [] }, pos);
+    if(e.kind==='end') this.state.addNode('end', { label: 'END', conditions: [] }, pos);
   }
 
   exportForm(){
@@ -178,20 +254,20 @@ export class FlowDesignerComponent {
   saveForm() {
     const name = (this.formName || '').trim();
     if (!name) return;
+    this.formName = name;
     try {
       this.saving = true;
       this.savedOk = false;
       const graph = this.state.graph;
       const form = this.mapper.toFormDefinition(graph, { name, status: 'draft', version: 1 });
-      const payload = { savedAt: new Date().toISOString(), name, form, graph };
-      localStorage.setItem(`formDesigner:saved:${name}`, JSON.stringify(payload));
-      localStorage.setItem('formDesigner:lastSavedName', name);
-      console.log('Formulario salvo:', payload);
-      this.snack.open('Formulário salvo com sucesso!', 'Fechar', { duration: 2500 });
+      const snapshot = this.workflowStorage.saveWorkflow(name, graph, this.formName);
+      localStorage.setItem('formDesigner:lastSavedName', snapshot.name);
+      console.log('Workflow salvo:', { snapshot, form });
+      this.snack.open('Fluxo salvo com sucesso!', 'Fechar', { duration: 2500 });
       this.savedOk = true;
     } catch (e) {
-      console.error('Erro ao salvar formulario', e);
-      this.snack.open('Não foi possível salvar o formulário.', 'Fechar', { duration: 3500 });
+      console.error('Erro ao salvar workflow', e);
+      this.snack.open('Não foi possível salvar o fluxo.', 'Fechar', { duration: 3500 });
     }
     finally {
       // dar um pequeno tempo para mostrar o spinner antes de concluir
@@ -199,5 +275,9 @@ export class FlowDesignerComponent {
       // limpar estado "salvo" após um tempo
       setTimeout(() => { this.savedOk = false; }, 1500);
     }
+  }
+
+  goToList() {
+    this.router.navigate(['/flow']);
   }
 }

@@ -1,0 +1,14 @@
+<div class="end">
+  <div class="content">
+    <div class="title">
+      <ng-container *ngIf="hasCustomLabel(); else defaultEndLabel">
+        {{ node.data.label }}
+      </ng-container>
+      <ng-template #defaultEndLabel>{{ 'END' | translate }}</ng-template>
+    </div>
+    <div class="conditions" *ngIf="hasConditions()">
+      {{ node.data.conditions!.length }}
+      {{ (node.data.conditions!.length === 1 ? 'END_CONDITION_SINGLE' : 'END_CONDITION_PLURAL') | translate }}
+    </div>
+  </div>
+</div>

@@ -14,7 +14,8 @@ import { GraphModel, QuestionNodeData, GraphNode, Condition, ComparisonCondition
 import { ConditionEditorComponent } from '../node-condition/condition-editor/condition-editor.component';
 import { ExpressionConditionEditorComponent } from '../node-condition/expression-condition-editor/expression-condition-editor.component';
 import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
-import { questionTypes } from '../../../shared/models/form-models';
+import { QuestionTypeOption, createQuestionTypeOption, questionTypeDefinitions } from '../../../shared/models/form-models';
+import { TranslationService } from '@angulartoolsdr/translation';
 
 @Component({
   selector: 'app-inspector',
@@ -33,7 +34,7 @@ export class InspectorComponent {
   library = inject(FaIconLibrary);
   graph: Signal<GraphModel>;
   selectedId: Signal<string | null>;
-  questionTypes = questionTypes;
+  questionTypes: QuestionTypeOption[] = [];
   node = computed(() => this.graph().nodes.find(n => n.id === this.selectedId()));
   availableQuestions = computed(() => {
     const g = this.graph();
@@ -123,6 +124,21 @@ export class InspectorComponent {
 
     this.graph = toSignal(this.state.graph$, {initialValue:{nodes:[],edges:[]}});
     this.selectedId = toSignal(this.state.selectedId$, {initialValue: null});
+
+    const translation = inject(TranslationService);
+    effect(() => {
+      translation.currentLanguage();
+      this.questionTypes = questionTypeDefinitions.map(def =>
+        createQuestionTypeOption(def, key => translation.instant(key))
+      );
+      const current = this.node();
+      if (current?.kind === 'question') {
+        const type = this.questionTypes.find(q => q.id === current.data.type?.id);
+        if (type) {
+          this.fgQ.get('type')?.setValue(type, { emitEvent: false });
+        }
+      }
+    });
 
     effect(() => {
       const n = this.node();
@@ -321,4 +337,3 @@ export class InspectorComponent {
 
   cancel() { this.state.closeSidebar(); }
 }
-

@@ -1,6 +1,25 @@
 <div class="content">
-  <div class="title"><fa-icon [icon]="faComment"></fa-icon> Questão #{{ node.data.seq }}</div>
-  <div style="font-size:18px">{{ node.data.label || 'Pergunta' }}</div>
+  <div class="title"><fa-icon [icon]="faComment"></fa-icon> {{'QUESTION' | translate}} #{{ node.data.seq }}</div>
+  <div class="label-row">
+    <div #labelEl class="label-text">{{ node.data.label || 'Pergunta' }}</div>
+    <span
+      *ngIf="showOverflowIndicator"
+      class="info-icon"
+      #labelTooltip="matTooltip"
+      matTooltip="{{ node.data.label }}"
+      matTooltipShowDelay="0"
+      matTooltipHideDelay="4000"
+      matTooltipClass="question-full-tooltip"
+      (click)="showTooltip(labelTooltip, $event)"
+      (keydown.enter)="showTooltip(labelTooltip, $event)"
+      (keydown.space)="showTooltip(labelTooltip, $event)"
+      (mouseenter)="showTooltip(labelTooltip, $event)"
+      (mouseleave)="hideTooltip(labelTooltip)"
+      role="button"
+      tabindex="0">
+      <fa-icon [icon]="faInfoCircle"></fa-icon>
+    </span>
+  </div>
   <div class="sub">{{ node.data.type?.label | titlecase }}</div>
   <div class="score" *ngIf="(node.data.score || 0) > 0">
     <fa-icon [icon]="faStar"></fa-icon>

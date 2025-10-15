@@ -20,6 +20,38 @@
   color: #6b7280;
 }
 
+.label-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  width: 200px;
+  max-width: 200px;
+  font-size: 18px;
+  line-height: 1.2;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.info-icon {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.info-icon:hover {
+  color: #111827;
+}
+
 .order {
   font-size: 12px;
   color: #4f46e5;
@@ -37,4 +69,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+:host ::ng-deep .question-full-tooltip {
+  white-space: normal;
+  max-width: 240px;
+  line-height: 1.4;
 }

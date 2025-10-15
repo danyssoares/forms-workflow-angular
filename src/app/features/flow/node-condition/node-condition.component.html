@@ -2,10 +2,10 @@
   <div class="content">
     <div class="title">
       <fa-icon [icon]="node.data.conditionType === 'comparison' ? faDiamond : faCodeBranch"></fa-icon>
-      Condição #{{ node.data.seq }}
+      {{'CONDITION' | translate}} #{{ node.data.seq }}
     </div>
     <div class="condition-count">
-      {{ node.data.conditions.length }} {{ node.data.conditions.length === 1 ? 'condição' : 'condições' }}
+      {{ node.data.conditions.length }} {{ (node.data.conditions.length === 1 ? 'CONDICAO' : 'CONDICAOES') | translate }}
     </div>
   </div>
 </div>

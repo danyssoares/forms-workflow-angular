@@ -1,0 +1,90 @@
+.workflow-page {
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.header p {
+  margin: 4px 0 0;
+  color: #6b7280;
+}
+
+.header button mat-icon {
+  margin-right: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.workflow-card {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+.workflow-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.workflow-card mat-card-content {
+  min-height: 64px;
+}
+
+.workflow-card mat-card-title,
+.workflow-card mat-card-subtitle {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+.workflow-card mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.workflow-card fa-icon[mat-card-avatar] {
+  background: rgba(79, 70, 229, 0.12);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty {
+  margin: 64px auto;
+  max-width: 420px;
+  text-align: center;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+.empty fa-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  color: #a855f7;
+}
+
+.empty button {
+  margin-top: 8px;
+}

@@ -1,1 +1,5 @@
-<p>node-action works!</p>
+<div class="title">
+  <fa-icon [icon]="faGear"></fa-icon>
+  {{ 'ACTION' | translate }} #{{ node.data.seq }}
+</div>
+<div class="sub">{{ labelKey() | translate }}</div>

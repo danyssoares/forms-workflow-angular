@@ -9,12 +9,21 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.palette .back-button mat-icon {
+  margin-right: 6px;
+}
+
+.palette .back-button {
+  margin-left: 12px;
+}
+
 .palette .spacer {
   flex: 1;
 }
 
 .palette .form-name-field {
-  width: 320px;
+  width: 350px;
+  margin-right: 0;
 }
 
 .flow-shell {
@@ -66,8 +75,4 @@
 
 .flow-shell app-inspector ::ng-deep .sidebar {
   height: 100%;
-}
-
-:host ::ng-deep .nome-formulario .mat-mdc-form-field-subscript-wrapper {
-  height: 0px !important;
 }
