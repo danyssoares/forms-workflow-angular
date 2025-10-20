@@ -36,4 +36,9 @@ export class WorkflowListComponent {
   openWorkflow(snapshot: WorkflowSnapshot) {
     this.router.navigate(['/flow/designer'], { queryParams: { workflow: snapshot.name } });
   }
+
+  deleteWorkflow(snapshot: WorkflowSnapshot) {
+    this.storage.deleteWorkflow(snapshot.name);
+    this.workflows.set(this.storage.listWorkflows());
+  }
 }

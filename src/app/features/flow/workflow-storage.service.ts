@@ -44,6 +44,21 @@ export class WorkflowStorageService {
     return snapshots.sort((a, b) => b.savedAt.localeCompare(a.savedAt));
   }
 
+  deleteWorkflow(name: string): void {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    this.safeRemoveItem(this.keyFor(trimmedName));
+
+    const index = (this.safeGetItem<string[]>(this.indexKey) ?? []).filter(entry => entry !== trimmedName);
+    this.safeSetItem(this.indexKey, index);
+
+    const lastSnapshot = this.safeGetItem<WorkflowSnapshot>(`${this.storageNamespace}:last`);
+    if (lastSnapshot?.name === trimmedName) {
+      this.safeRemoveItem(`${this.storageNamespace}:last`);
+    }
+  }
+
   private keyFor(name: string): string {
     return `${this.storageNamespace}:${name}`;
   }
@@ -61,6 +76,15 @@ export class WorkflowStorageService {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (err) {
       console.error('Failed to persist workflow', err);
+      throw err;
+    }
+  }
+
+  private safeRemoveItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      console.error('Failed to remove workflow', err);
       throw err;
     }
   }

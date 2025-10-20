@@ -6,6 +6,7 @@ describe('WorkflowStorageService', () => {
   let service: WorkflowStorageService;
   let setItemSpy: jasmine.Spy;
   let getItemSpy: jasmine.Spy;
+  let removeItemSpy: jasmine.Spy;
   let storage: Record<string, string>;
 
   const graphMock: GraphModel = { nodes: [], edges: [] };
@@ -16,6 +17,9 @@ describe('WorkflowStorageService', () => {
       storage[key] = value;
     });
     getItemSpy = spyOn(localStorage, 'getItem').and.callFake((key: string) => storage[key] ?? null);
+    removeItemSpy = spyOn(localStorage, 'removeItem').and.callFake((key: string) => {
+      delete storage[key];
+    });
 
     TestBed.configureTestingModule({});
     service = TestBed.inject(WorkflowStorageService);
@@ -48,5 +52,18 @@ describe('WorkflowStorageService', () => {
   it('should return null when workflow not found', () => {
     const workflow = service.loadWorkflow('unknown');
     expect(workflow).toBeNull();
+  });
+
+  it('should delete workflow and update index', () => {
+    service.saveWorkflow('A', graphMock);
+    service.saveWorkflow('B', graphMock);
+
+    service.deleteWorkflow('A');
+
+    expect(removeItemSpy).toHaveBeenCalledWith('flowDesigner:workflow:A');
+    const index = JSON.parse(storage['flowDesigner:workflow:index']) as string[];
+    expect(index).toEqual(['B']);
+    expect(service.loadWorkflow('A')).toBeNull();
+    expect(service.listWorkflows().map(w => w.name)).toEqual(['B']);
   });
 });

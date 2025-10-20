@@ -50,16 +50,10 @@ import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
       Workflows
     </button>
     <span class="spacer"></span>
-    <lib-control-material style="margin-top: 20px;" label="{{'FORM_NAME' | translate}}">
-      <input
-        matInput
-        name="formName"
-        required
-        [(ngModel)]="formName"
-        placeholder="{{'PLACEHOLDER_FORM_NAME' | translate}}"
-      />
+    <lib-control-material style="margin-top: 20px;" label="{{'FORM_NAME' | translate}}" [obrigatorio]="true">
+      <input [(ngModel)]="formName" />
     </lib-control-material>
-    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !(formName?.trim())" title="{{'SAVE' | translate}}">
+    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !formName.trim()" title="{{'SAVE' | translate}}">
       <ng-container *ngIf="saving; else savedOrDefault">
         <mat-progress-spinner [diameter]="18" mode="indeterminate"></mat-progress-spinner>
         <span style="margin-left:8px">{{'SAVING' | translate}}</span>

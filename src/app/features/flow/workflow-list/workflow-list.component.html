@@ -24,6 +24,10 @@
           <p>Fluxo com {{ workflow.graph.nodes.length }} nós e {{ workflow.graph.edges.length }} conexões.</p>
         </mat-card-content>
         <mat-card-actions>
+          <button mat-button color="warn" (click)="deleteWorkflow(workflow)">
+            <mat-icon>delete</mat-icon>
+            Excluir
+          </button>
           <button mat-stroked-button color="primary" (click)="openWorkflow(workflow)">
             <mat-icon>play_arrow</mat-icon>
             Abrir Workflow

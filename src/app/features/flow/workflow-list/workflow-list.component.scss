@@ -56,6 +56,8 @@
 .workflow-card mat-card-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
 .workflow-card fa-icon[mat-card-avatar] {
