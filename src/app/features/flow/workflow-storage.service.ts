@@ -36,6 +36,10 @@ export class WorkflowStorageService {
     return this.safeGetItem<WorkflowSnapshot>(this.keyFor(name.trim()));
   }
 
+  loadLastWorkflow(): WorkflowSnapshot | null {
+    return this.safeGetItem<WorkflowSnapshot>(`${this.storageNamespace}:last`);
+  }
+
   listWorkflows(): WorkflowSnapshot[] {
     const index = this.safeGetItem<string[]>(this.indexKey) ?? [];
     const snapshots = index

@@ -1,1 +1,173 @@
-<p>run-form works!</p>
+<ng-container *ngIf="loading(); else loaded">
+  <div class="state-card">
+    <mat-card class="feedback-card">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Carregando a simulação...</p>
+    </mat-card>
+  </div>
+</ng-container>
+
+<ng-template #loaded>
+  <ng-container *ngIf="!error(); else errorState">
+    <ng-container *ngIf="!completed(); else summaryState">
+      <div class="runner-shell">
+        <mat-card class="wizard-card">
+          <div class="wizard-header">
+            <div class="wizard-title">
+              <h1>{{ workflowName() }}</h1>
+              <p class="wizard-subtitle">Pergunta {{ currentIndex() + 1 }} de {{ questions().length }}</p>
+            </div>
+            <button mat-icon-button color="primary" type="button" aria-label="Reiniciar" (click)="restart()">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+
+          <mat-progress-bar mode="determinate" [value]="progress()"></mat-progress-bar>
+
+          <div class="question-shell" *ngIf="currentQuestion() as question">
+            <div class="question-header">
+              <span class="question-pill">Passo {{ currentIndex() + 1 }}</span>
+              <h2>{{ question.label }}</h2>
+              <p class="help-text" *ngIf="question.helpText">{{ question.helpText }}</p>
+            </div>
+
+            <form [formGroup]="form" class="question-form">
+              <ng-container [ngSwitch]="question.typeId">
+                <ng-container *ngSwitchCase="0">
+                  <lib-control-material label="Sua resposta" style="width:100%">
+                    <input [formControlName]="question.questionId" type="text" autocomplete="off" />
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="1">
+                  <lib-control-material-number label="Informe um número" style="width:100%">
+                    <input [formControlName]="question.questionId" type="number" />
+                  </lib-control-material-number>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="2">
+                  <lib-control-material label="Selecione uma data" style="width:100%">
+                    <input [formControlName]="question.questionId" type="date" />
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="3">
+                  <lib-control-material label="Selecione um horário" style="width:100%">
+                    <input [formControlName]="question.questionId" type="time" />
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="4">
+                  <lib-control-material label="Data e hora" style="width:100%">
+                    <input [formControlName]="question.questionId" type="datetime-local" />
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="5">
+                  <lib-control-material label="Escolha uma opção" style="width:100%">
+                    <mat-radio-group [formControlName]="question.questionId" class="boolean-group">
+                      <mat-radio-button [value]="true">{{ question.trueLabel || 'Sim' }}</mat-radio-button>
+                      <mat-radio-button [value]="false">{{ question.falseLabel || 'Não' }}</mat-radio-button>
+                    </mat-radio-group>
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="8">
+                  <ng-container *ngTemplateOutlet="singleSelect; context: { $implicit: question }"></ng-container>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="9">
+                  <ng-container *ngTemplateOutlet="singleSelect; context: { $implicit: question }"></ng-container>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="10">
+                  <lib-control-material label="Selecione uma ou mais opções" style="width:100%">
+                    <mat-selection-list [multiple]="true" [formControlName]="question.questionId" class="multi-select">
+                      <mat-list-option *ngFor="let opt of question.options ?? []; trackBy: trackOption" [value]="opt.value">
+                        {{ opt.label }}
+                      </mat-list-option>
+                    </mat-selection-list>
+                  </lib-control-material>
+                </ng-container>
+
+                <ng-container *ngSwitchDefault>
+                  <lib-control-material label="Sua resposta" style="width:100%">
+                    <input [formControlName]="question.questionId" type="text" autocomplete="off" />
+                  </lib-control-material>
+                </ng-container>
+              </ng-container>
+            </form>
+
+            <div class="wizard-actions">
+              <button mat-stroked-button color="primary" type="button" (click)="goPrevious()" [disabled]="currentIndex() === 0">
+                Anterior
+              </button>
+              <button mat-raised-button color="primary" type="button" (click)="goNext()">
+                {{ currentIndex() === questions().length - 1 ? 'Finalizar' : 'Próxima' }}
+              </button>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </ng-container>
+  </ng-container>
+</ng-template>
+
+<ng-template #errorState>
+  <div class="state-card">
+    <mat-card class="feedback-card">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+    </mat-card>
+  </div>
+</ng-template>
+
+<ng-template #summaryState>
+  <div class="runner-shell">
+    <mat-card class="summary-card">
+      <div class="summary-header">
+        <mat-icon>celebration</mat-icon>
+        <div>
+          <h2>Formulário concluído!</h2>
+          <p>Revise as suas respostas antes de finalizar o fluxo.</p>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="summary-list">
+        <div class="summary-item" *ngFor="let question of questions(); trackBy: trackQuestion">
+          <span class="summary-label">{{ question.label }}</span>
+          <ng-container *ngIf="displayAnswer(question) as answer">
+            <span class="summary-answer" *ngIf="!isArrayAnswer(answer)">{{ answer }}</span>
+            <span class="summary-answer" *ngIf="isArrayAnswer(answer)">
+              <mat-chip-set>
+                <mat-chip *ngFor="let value of answer">{{ value }}</mat-chip>
+              </mat-chip-set>
+            </span>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="wizard-actions">
+        <button mat-stroked-button color="primary" type="button" (click)="restart()">
+          Refazer
+        </button>
+        <button mat-raised-button color="primary" type="button">
+          Enviar
+        </button>
+      </div>
+    </mat-card>
+  </div>
+</ng-template>
+
+<ng-template #singleSelect let-question>
+  <lib-control-material-select
+    label="Selecione uma opção"
+    style="width:100%"
+    bindId="value"
+    bindLabel="label"
+    [selectList]="question.options || []">
+    <input [formControlName]="question.questionId" />
+  </lib-control-material-select>
+</ng-template>
