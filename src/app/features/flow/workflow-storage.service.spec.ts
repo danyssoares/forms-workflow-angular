@@ -45,6 +45,20 @@ describe('WorkflowStorageService', () => {
     expect(list.map(l => l.name).sort()).toEqual(['A', 'B']);
   });
 
+  it('should recover the last saved workflow snapshot', () => {
+    const first = service.saveWorkflow('A', graphMock);
+    const second = service.saveWorkflow('B', graphMock);
+
+    const last = service.loadLastWorkflow();
+
+    expect(last).toEqual(jasmine.objectContaining({ name: second.name }));
+    expect(last?.savedAt).toBe(second.savedAt);
+
+    // ensure storage relies on the persisted entry, not cached reference
+    expect(getItemSpy).toHaveBeenCalledWith('flowDesigner:workflow:last');
+    expect(last).not.toBe(first);
+  });
+
   it('should throw error when saving without name', () => {
     expect(() => service.saveWorkflow('', graphMock)).toThrow();
   });
