@@ -58,7 +58,7 @@ describe('FlowDesignerComponent', () => {
     spyOn(localStorage, 'setItem');
     spyOn(snack, 'open');
 
-    component.formName = 'Fluxo Teste';
+    component.formNameControl.setValue('Fluxo Teste');
     component.saveForm();
 
     expect(saveSpy).toHaveBeenCalledWith(
@@ -82,6 +82,6 @@ describe('FlowDesignerComponent', () => {
     createComponent();
 
     expect(storage.loadWorkflow).toHaveBeenCalledWith('Existente');
-    expect(component.formName).toBe('Existente');
+    expect(component.formNameControl.value).toBe('Existente');
   });
 });

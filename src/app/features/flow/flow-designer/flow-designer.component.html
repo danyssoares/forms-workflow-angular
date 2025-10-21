@@ -1,1 +1,37 @@
-<p>flow-designer works!</p>
+<div class="palette">
+    <app-palette (add)="onAdd($event)"></app-palette>
+    <button mat-stroked-button color="primary" class="back-button" (click)="goToList()">
+        <mat-icon>arrow_back</mat-icon>
+        Workflows
+    </button>
+    <span class="spacer"></span>
+    <form [formGroup]="form" (ngSubmit)="saveForm()">
+      <lib-control-material label="{{'FORM_NAME' | translate}}" [obrigatorio]="true">
+          <input formControlName="formName" />
+      </lib-control-material>
+      <button type="submit" mat-raised-button color="primary" [disabled]="saving || form.invalid" title="{{'SAVE' | translate}}">
+        <ng-container *ngIf="saving; else savedOrDefault">
+        <mat-progress-spinner [diameter]="18" mode="indeterminate"></mat-progress-spinner>
+        <span style="margin-left:8px">{{'SAVING' | translate}}</span>
+        </ng-container>
+        <ng-template #savedOrDefault>
+        <fa-icon [icon]="faCheck" [ngStyle]="savedOk ? {'color':'#2e7d32'} : {}" style="margin-right:6px"></fa-icon>
+        <span>{{ (savedOk ? 'SAVED' : 'SAVE') | translate }}</span>
+        </ng-template>
+      </button>
+    </form>
+    </div>
+    <div class="flow-shell" [class.resizing]="resizing">
+    <app-inspector
+        *ngIf="(state.sidebarOpen$ | async)"
+        [style.width.px]="inspectorWidth"
+        style="min-width: 342px;">
+    </app-inspector>
+    <div
+        *ngIf="(state.sidebarOpen$ | async)"
+        class="resizer"
+        (mousedown)="startResizing($event)"
+        title="Arraste para redimensionar">
+    </div>
+    <app-canvas></app-canvas>
+</div>

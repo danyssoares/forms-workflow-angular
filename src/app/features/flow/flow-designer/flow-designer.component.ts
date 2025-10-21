@@ -7,7 +7,7 @@ import { InspectorComponent } from '../inspector/inspector.component';
 import { GraphStateService } from '../graph-state.service';
 import { GraphMapperService } from '../graph-mapper.service';
 import { AsyncPipe, NgIf, NgStyle } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -28,7 +28,7 @@ import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
     NgIf, 
     AsyncPipe, 
     NgStyle, 
-    FormsModule, 
+    ReactiveFormsModule, 
     MatFormFieldModule, 
     MatInputModule, 
     MatButtonModule, 
@@ -42,43 +42,7 @@ import { ControlMaterialComponent } from '@angulartoolsdr/control-material';
     TranslationPipe,
     ControlMaterialComponent
   ],
-  template: `
-  <div class="palette">
-    <app-palette (add)="onAdd($event)"></app-palette>
-    <button mat-stroked-button color="primary" class="back-button" (click)="goToList()">
-      <mat-icon>arrow_back</mat-icon>
-      Workflows
-    </button>
-    <span class="spacer"></span>
-    <lib-control-material style="margin-top: 20px;" label="{{'FORM_NAME' | translate}}" [obrigatorio]="true">
-      <input [(ngModel)]="formName" />
-    </lib-control-material>
-    <button mat-raised-button color="primary" (click)="saveForm()" [disabled]="saving || !formName.trim()" title="{{'SAVE' | translate}}">
-      <ng-container *ngIf="saving; else savedOrDefault">
-        <mat-progress-spinner [diameter]="18" mode="indeterminate"></mat-progress-spinner>
-        <span style="margin-left:8px">{{'SAVING' | translate}}</span>
-      </ng-container>
-      <ng-template #savedOrDefault>
-        <fa-icon [icon]="faCheck" [ngStyle]="savedOk ? {'color':'#2e7d32'} : {}" style="margin-right:6px"></fa-icon>
-        <span>{{ (savedOk ? 'SAVED' : 'SAVE') | translate }}</span>
-      </ng-template>
-    </button>
-  </div>
-  <div class="flow-shell" [class.resizing]="resizing">
-    <app-inspector
-      *ngIf="(state.sidebarOpen$ | async)"
-      [style.width.px]="inspectorWidth"
-      style="min-width: 342px;">
-    </app-inspector>
-    <div
-      *ngIf="(state.sidebarOpen$ | async)"
-      class="resizer"
-      (mousedown)="startResizing($event)"
-      title="Arraste para redimensionar">
-    </div>
-    <app-canvas></app-canvas>
-  </div>
-  `,  
+  templateUrl: './flow-designer.component.html',  
   styleUrl: './flow-designer.component.scss'
 })
 export class FlowDesignerComponent implements OnInit {
@@ -88,11 +52,15 @@ export class FlowDesignerComponent implements OnInit {
   resizing = false;
   private startX = 0;
   private startWidth = 320;
-  formName = '';
+  form = new FormGroup({
+    formName: new FormControl('', [Validators.required, Validators.pattern(/\S+/)])
+  });
+  get formNameControl() { return this.form.get('formName') as FormControl; }
   faCheck = faCheck;
   saving = false;
   savedOk = false;
   private readonly translation = inject(TranslationService);
+  // disabled state now derives from form control validity
 
   constructor(
     public state: GraphStateService,
@@ -114,16 +82,16 @@ export class FlowDesignerComponent implements OnInit {
       const snapshot = this.workflowStorage.loadWorkflow(workflowName);
       if (snapshot) {
         this.state.setGraph(snapshot.graph);
-        this.formName = snapshot.formName ?? snapshot.name;
+        this.formNameControl.setValue(snapshot.formName ?? snapshot.name ?? '');
         this.snack.open('Workflow carregado com sucesso!', 'Fechar', { duration: 2000 });
       } else {
         this.snack.open('Workflow não encontrado.', 'Fechar', { duration: 3000 });
         this.state.setGraph({ nodes: [], edges: [] });
-        this.formName = '';
+        this.formNameControl.setValue('');
       }
     } else {
       this.state.setGraph({ nodes: [], edges: [] });
-      this.formName = '';
+      this.formNameControl.setValue('');
     }
   }
 
@@ -246,15 +214,14 @@ export class FlowDesignerComponent implements OnInit {
   }
 
   saveForm() {
-    const name = (this.formName || '').trim();
+    const name = (this.formNameControl.value || '').trim();
     if (!name) return;
-    this.formName = name;
     try {
       this.saving = true;
       this.savedOk = false;
       const graph = this.state.graph;
       const form = this.mapper.toFormDefinition(graph, { name, status: 'draft', version: 1 });
-      const snapshot = this.workflowStorage.saveWorkflow(name, graph, this.formName);
+      const snapshot = this.workflowStorage.saveWorkflow(name, graph, name);
       localStorage.setItem('formDesigner:lastSavedName', snapshot.name);
       console.log('Workflow salvo:', { snapshot, form });
       this.snack.open('Fluxo salvo com sucesso!', 'Fechar', { duration: 2500 });
