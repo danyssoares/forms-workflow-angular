@@ -4,11 +4,18 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
-import { importProvidersFrom } from '@angular/core';
+import { importProvidersFrom, NgModule } from '@angular/core';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
+import { provideNgxMatNativeDate } from '@katyan/datetime-picker';
+import { NgxNativeDateModule } from '@katyan/datetime-picker';
+import { MatNativeDateModule, MatRippleModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
+@NgModule({
+  imports: [NgxNativeDateModule, MatNativeDateModule, MatRippleModule, MatDatepickerModule],
+})
 export class SharedModule {
   constructor(library: FaIconLibrary) {
     // Adiciona os ícones que serão usados na aplicação
@@ -22,6 +29,7 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes), 
     provideHttpClient(), 
     provideAnimations(),
+    provideNgxMatNativeDate(),
     importProvidersFrom(SharedModule),
   ]
 }).catch(err => console.error(err));

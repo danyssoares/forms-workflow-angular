@@ -84,4 +84,30 @@ describe('FlowDesignerComponent', () => {
     expect(storage.loadWorkflow).toHaveBeenCalledWith('Existente');
     expect(component.formNameControl.value).toBe('Existente');
   });
+
+  it('should replace stored workflow entry when name changes', () => {
+    const storage = TestBed.inject(WorkflowStorageService);
+    const graph = { nodes: [], edges: [] };
+    routeStub.snapshot.queryParamMap = convertToParamMap({ workflow: 'Original' });
+    spyOn(storage, 'loadWorkflow').and.returnValue({
+      name: 'Original',
+      formName: 'Original',
+      graph,
+      savedAt: new Date().toISOString()
+    });
+
+    createComponent();
+
+    const saveSpy = spyOn(storage, 'saveWorkflow').and.returnValue({
+      name: 'Renomeado',
+      graph,
+      savedAt: new Date().toISOString()
+    });
+    const deleteSpy = spyOn(storage, 'deleteWorkflow');
+    component.formNameControl.setValue('Renomeado');
+    component.saveForm();
+
+    expect(saveSpy).toHaveBeenCalledWith('Renomeado', jasmine.objectContaining(graph), 'Renomeado');
+    expect(deleteSpy).toHaveBeenCalledWith('Original');
+  });
 });

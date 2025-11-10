@@ -11,6 +11,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent } from '@angulartoolsdr/control-material';
+import { ActivatedRoute } from '@angular/router';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
 import { GraphNode, QuestionNodeData } from '../../flow/graph.types';
 import { Option } from '../../../shared/models/form-models';
@@ -58,6 +59,7 @@ type RunnerQuestion = {
 export class RunFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly storage = inject(WorkflowStorageService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -189,7 +191,17 @@ export class RunFormComponent implements OnInit {
   private initializeFromStorage(): void {
     let snapshot: WorkflowSnapshot | null = null;
     try {
-      snapshot = this.storage.loadLastWorkflow();
+      const workflowParam = this.route.snapshot.queryParamMap.get('workflow');
+      if (workflowParam) {
+        snapshot = this.storage.loadWorkflow(workflowParam);
+        if (!snapshot) {
+          this.error.set('Workflow selecionado não foi encontrado. Salve-o novamente no designer.');
+          this.loading.set(false);
+          return;
+        }
+      } else {
+        snapshot = this.storage.loadLastWorkflow();
+      }
     } catch (err) {
       console.error('Failed to load workflow snapshot', err);
       this.error.set('Não foi possível carregar o fluxo configurado.');

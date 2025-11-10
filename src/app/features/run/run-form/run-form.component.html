@@ -46,8 +46,8 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="2">
-                  <lib-control-material-date-time [showTime]="false" label="Selecione uma data" style="width:100%">
-                    <input [formControlName]="question.questionId" type="date" />
+                  <lib-control-material-date-time [showTime]="true" label="Selecione uma data" style="width:100%">
+                    <input [formControlName]="question.questionId" />
                   </lib-control-material-date-time>
                 </ng-container>
 
@@ -58,9 +58,9 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="4">
-                  <lib-control-material label="Data e hora" style="width:100%">
-                    <input [formControlName]="question.questionId" type="datetime-local" />
-                  </lib-control-material>
+                  <lib-control-material-date-time label="Data e hora" style="width:100%">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="5">

@@ -171,6 +171,15 @@ button.mat-mdc-outlined-button.mat-primary:hover {
   line-height: 1.2;
 }
 
+.mat-mdc-select-value {
+  color: rgba(5, 21, 68, 0.68) !important;
+}
+
+.mat-datetimepicker-calendar-header-date-time {
+  font-size: 18px !important;
+  line-height: 20px !important;
+}
+
 /* Fundo do canvas */
 .canvas {
   position: relative;
@@ -348,3 +357,33 @@ button.mat-mdc-outlined-button.mat-primary:hover {
   padding-top: var(--mat-form-field-container-vertical-padding, 10px) !important;
   padding-bottom: var(--mat-form-field-container-vertical-padding, 10px) !important;
 } 
+
+.mat-mdc-text-field-wrapper {
+    height: 44px !important;
+}
+
+lib-control-material-date-time .mat-datepicker-input {
+  height: 0px !important;
+}
+
+lib-control-material-date-time .mat-mdc-form-field-flex .d-inline-flex {
+    display: inline-flex !important;
+}
+
+lib-control-material-date-time .mat-mdc-form-field-flex .d-inline-flex.frame {
+  position: absolute !important;
+  top: 10px !important;
+}
+
+lib-control-material-date-time button[mat-icon-button] {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    line-height: 1 !important;
+}
+
+lib-control-material-date-time .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mdc-text-field__input {
+    display: block !important;
+}
+
+    

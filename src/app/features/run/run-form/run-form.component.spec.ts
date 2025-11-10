@@ -4,9 +4,11 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RunFormComponent } from './run-form.component';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
 import { GraphModel } from '../../flow/graph.types';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 
 describe('RunFormComponent', () => {
   let storage: jasmine.SpyObj<WorkflowStorageService>;
+  let routeStub: { snapshot: { queryParamMap: ReturnType<typeof convertToParamMap> } };
 
   const mockGraph: GraphModel = {
     nodes: [
@@ -46,7 +48,8 @@ describe('RunFormComponent', () => {
   };
 
   beforeEach(() => {
-    storage = jasmine.createSpyObj<WorkflowStorageService>('WorkflowStorageService', ['loadLastWorkflow']);
+    storage = jasmine.createSpyObj<WorkflowStorageService>('WorkflowStorageService', ['loadLastWorkflow', 'loadWorkflow']);
+    routeStub = { snapshot: { queryParamMap: convertToParamMap({}) } };
   });
 
   describe('quando há um workflow salvo', () => {
@@ -58,7 +61,10 @@ describe('RunFormComponent', () => {
 
       await TestBed.configureTestingModule({
         imports: [RunFormComponent, NoopAnimationsModule],
-        providers: [{ provide: WorkflowStorageService, useValue: storage }]
+        providers: [
+          { provide: WorkflowStorageService, useValue: storage },
+          { provide: ActivatedRoute, useValue: routeStub }
+        ]
       }).compileComponents();
 
       fixture = TestBed.createComponent(RunFormComponent);
@@ -96,7 +102,10 @@ describe('RunFormComponent', () => {
 
       await TestBed.configureTestingModule({
         imports: [RunFormComponent, NoopAnimationsModule],
-        providers: [{ provide: WorkflowStorageService, useValue: storage }]
+        providers: [
+          { provide: WorkflowStorageService, useValue: storage },
+          { provide: ActivatedRoute, useValue: routeStub }
+        ]
       }).compileComponents();
 
       fixture = TestBed.createComponent(RunFormComponent);
@@ -106,6 +115,61 @@ describe('RunFormComponent', () => {
 
     it('deve exibir mensagem de erro orientando a salvar um fluxo', () => {
       expect(component.error()).toContain('Salve um workflow');
+      expect(component.loading()).toBeFalse();
+    });
+  });
+
+  describe('quando um workflow é indicado na URL', () => {
+    let component: RunFormComponent;
+    let fixture: ComponentFixture<RunFormComponent>;
+
+    beforeEach(async () => {
+      routeStub.snapshot.queryParamMap = convertToParamMap({ workflow: 'Fluxo Teste' });
+      storage.loadWorkflow.and.returnValue(snapshot);
+
+      await TestBed.configureTestingModule({
+        imports: [RunFormComponent, NoopAnimationsModule],
+        providers: [
+          { provide: WorkflowStorageService, useValue: storage },
+          { provide: ActivatedRoute, useValue: routeStub }
+        ]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(RunFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('deve carregar o workflow informado nos parâmetros', () => {
+      expect(storage.loadWorkflow).toHaveBeenCalledWith('Fluxo Teste');
+      expect(component.workflowName()).toBe('Formulário Teste');
+      expect(component.loading()).toBeFalse();
+    });
+  });
+
+  describe('quando o workflow informado não existe', () => {
+    let component: RunFormComponent;
+    let fixture: ComponentFixture<RunFormComponent>;
+
+    beforeEach(async () => {
+      routeStub.snapshot.queryParamMap = convertToParamMap({ workflow: 'Inexistente' });
+      storage.loadWorkflow.and.returnValue(null);
+
+      await TestBed.configureTestingModule({
+        imports: [RunFormComponent, NoopAnimationsModule],
+        providers: [
+          { provide: WorkflowStorageService, useValue: storage },
+          { provide: ActivatedRoute, useValue: routeStub }
+        ]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(RunFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('deve exibir erro informando que o workflow selecionado não foi encontrado', () => {
+      expect(component.error()).toContain('Workflow selecionado não foi encontrado');
       expect(component.loading()).toBeFalse();
     });
   });

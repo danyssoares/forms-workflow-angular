@@ -49,6 +49,7 @@ export class FlowDesignerComponent implements OnInit {
   inspectorWidth = 320;
   private minWidth = 240;
   private maxWidthRatio = 0.6;
+  private currentWorkflowName: string | null = null;
   resizing = false;
   private startX = 0;
   private startWidth = 320;
@@ -83,15 +84,18 @@ export class FlowDesignerComponent implements OnInit {
       if (snapshot) {
         this.state.setGraph(snapshot.graph);
         this.formNameControl.setValue(snapshot.formName ?? snapshot.name ?? '');
+        this.currentWorkflowName = snapshot.name ?? workflowName;
         this.snack.open('Workflow carregado com sucesso!', 'Fechar', { duration: 2000 });
       } else {
         this.snack.open('Workflow não encontrado.', 'Fechar', { duration: 3000 });
         this.state.setGraph({ nodes: [], edges: [] });
         this.formNameControl.setValue('');
+        this.currentWorkflowName = null;
       }
     } else {
       this.state.setGraph({ nodes: [], edges: [] });
       this.formNameControl.setValue('');
+      this.currentWorkflowName = null;
     }
   }
 
@@ -216,12 +220,18 @@ export class FlowDesignerComponent implements OnInit {
   saveForm() {
     const name = (this.formNameControl.value || '').trim();
     if (!name) return;
+    const previousName = this.currentWorkflowName;
+    const renamed = !!previousName && previousName !== name;
     try {
       this.saving = true;
       this.savedOk = false;
       const graph = this.state.graph;
       const form = this.mapper.toFormDefinition(graph, { name, status: 'draft', version: 1 });
       const snapshot = this.workflowStorage.saveWorkflow(name, graph, name);
+      if (renamed && previousName) {
+        this.workflowStorage.deleteWorkflow(previousName);
+      }
+      this.currentWorkflowName = snapshot.name;
       localStorage.setItem('formDesigner:lastSavedName', snapshot.name);
       console.log('Workflow salvo:', { snapshot, form });
       this.snack.open('Fluxo salvo com sucesso!', 'Fechar', { duration: 2500 });
