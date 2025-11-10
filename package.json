@@ -23,7 +23,7 @@
     "@angular/router": "20.3.6",
     "@angulartoolsdr/control-material": "20.3.6",
     "@angulartoolsdr/translation": "20.3.6",
-    "@fortawesome/angular-fontawesome": "ˆ3.0.0",
+    "@fortawesome/angular-fontawesome": "3.0.0",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
     "@fortawesome/free-regular-svg-icons": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
