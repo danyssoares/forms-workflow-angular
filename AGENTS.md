@@ -1,20 +1,20 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Angular sources live in `src/app`, with feature-specific flows under `src/app/features/{forms,flow,run}` and shareable contracts in `src/app/shared/models`. Root wiring sits in `src/app/app.routes.ts` and `src/app/app.config.ts`. Global styles are centralized in `src/styles.scss`, while static assets (logos, localization files) belong in `public/`. Build and TypeScript settings are managed via `angular.json` and the `tsconfig*.json` files—mirror existing patterns when adding new modules or paths.
+Source code lives under `src/app`, with standalone Angular features grouped in `src/app/features/{forms,flow,run}`. Keep reusable contracts in `src/app/shared/models`, and wire new routes or providers via `src/app/app.routes.ts` and `src/app/app.config.ts`. Place templates and SCSS beside their components, global styles in `src/styles.scss`, and static assets in `public/`. Update `angular.json` plus the relevant `tsconfig*.json` when introducing aliases, custom builders, or stricter compilation options.
 
 ## Build, Test & Development Commands
-- `npm install`: Install or refresh Angular CLI, Material, and shared control dependencies.
-- `npm start`: Launch the dev server (`ng serve`) on the default port with HMR-ready rebuilds.
-- `npm run build`: Produce an optimized production bundle via `ng build`.
-- `npm run watch`: Rebuild in development mode while watching file changes.
-- `npm test`: Execute Karma/Jasmine specs in Chrome; keep the watcher open when iterating.
+- `npm install`: Sync Angular CLI, Material modules, and shared control packages.
+- `npm start`: Run `ng serve` with hot reload for local development.
+- `npm run build`: Produce the production bundle (`ng build`) used by CI and releases.
+- `npm run watch`: Rebuild continuously in development mode for rapid iteration.
+- `npm test`: Launch Karma/Jasmine in Chrome; leave it open while iterating on specs.
 
 ## Coding Style & Naming Conventions
-Use TypeScript with Angular standalone components and 2-space indentation. File names should follow Angular conventions (`feature-name.component.ts`, `form-runner.service.ts`) and colocate HTML/SCSS alongside their component. Prefer SCSS modules, securing class names with a component-based prefix. Keep imports ordered (Angular → library → local) and favor readonly `const` declarations for configuration. Run the Angular CLI generators (`ng g component`, `ng g service`) to scaffold compliant boilerplate when possible.
+Author TypeScript with 2-space indentation and Angular standalone components. Name files by feature and artifact (`forms-overview.component.ts`, `run-queue.service.ts`), and prefix SCSS classes with the component name to avoid collisions. Order imports Angular → third-party → local, prefer `const` for configuration, and rely on Angular CLI generators (`ng g component FeatureName`) to scaffold compliant boilerplate. Keep templates declarative, push business rules into services, and document tricky flows with brief inline comments when necessary.
 
 ## Testing Guidelines
-Jasmine/Karma tests live next to their targets using the `*.spec.ts` suffix (e.g., `forms-overview.component.spec.ts`). When adding UI or workflow logic, couple it with behavior-driven specs that assert emitted events and translated text. Aim to preserve or raise the current coverage by validating success and failure paths, and rerun `npm test` before pushing to ensure deterministic results.
+Unit and integration specs sit beside their targets as `*.spec.ts`. Use Jasmine’s `describe/it` vocabulary to cover success and failure paths, asserting both emitted events and translated text. Karma runs in watch mode by default, so fix failing specs before committing. When adding workflows, provide mock services for HTTP or translation dependencies to keep tests deterministic. Re-run `npm test` (or `ng test --watch=false` before CI) to verify coverage hasn’t regressed.
 
 ## Commit & Pull Request Guidelines
-Git history favors concise Portuguese summaries (`Ajuste dos ícones dos nós`, `Correção de pequenos bugs`). Write single-purpose commits in the imperative mood, referencing related tickets when available. For pull requests, include a clear problem statement, key changes, manual verification steps, and UI screenshots whenever you touch templates or styles. Request review from a teammate who owns the affected feature, and confirm CI/test results before marking ready for merge.
+Commits follow concise Portuguese imperatives (`Ajusta validações do formulário`) and focus on a single concern. Reference tickets in the footer when applicable and avoid bundling unrelated refactors. Pull requests should outline the problem, highlight key changes, describe manual validation (commands run, browsers checked), and attach screenshots or clips for any UI touch. Ensure CI build/test jobs pass before requesting review and tag the feature owner for final approval.

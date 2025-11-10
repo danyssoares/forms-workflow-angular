@@ -112,6 +112,16 @@
   --lib-control-material-padding: 16px;
 }
 
+.question-form lib-control-material.text-control {
+  width: 100%;
+  display: block;
+}
+
+.question-form lib-control-material.text-control input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .wizard-actions {
   display: flex;
   justify-content: flex-end;

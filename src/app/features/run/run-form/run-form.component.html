@@ -34,7 +34,7 @@
             <form [formGroup]="form" class="question-form">
               <ng-container [ngSwitch]="question.typeId">
                 <ng-container *ngSwitchCase="0">
-                  <lib-control-material label="Sua resposta" style="width:100%">
+                  <lib-control-material class="text-control" label="Sua resposta" style="width:100%">
                     <input [formControlName]="question.questionId" type="text" autocomplete="off" />
                   </lib-control-material>
                 </ng-container>
@@ -46,9 +46,9 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="2">
-                  <lib-control-material label="Selecione uma data" style="width:100%">
+                  <lib-control-material-date-time [showTime]="false" label="Selecione uma data" style="width:100%">
                     <input [formControlName]="question.questionId" type="date" />
-                  </lib-control-material>
+                  </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="3">
@@ -91,7 +91,7 @@
                 </ng-container>
 
                 <ng-container *ngSwitchDefault>
-                  <lib-control-material label="Sua resposta" style="width:100%">
+                  <lib-control-material class="text-control" label="Sua resposta" style="width:100%">
                     <input [formControlName]="question.questionId" type="text" autocomplete="off" />
                   </lib-control-material>
                 </ng-container>

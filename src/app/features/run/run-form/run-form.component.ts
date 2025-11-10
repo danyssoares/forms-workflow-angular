@@ -10,7 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent } from '@angulartoolsdr/control-material';
+import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent } from '@angulartoolsdr/control-material';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
 import { GraphNode, QuestionNodeData } from '../../flow/graph.types';
 import { Option } from '../../../shared/models/form-models';
@@ -49,6 +49,7 @@ type RunnerQuestion = {
     ControlMaterialComponent,
     ControlMaterialNumberComponent,
     ControlMaterialSelectComponent,
+    ControlMaterialDateTimeComponent,
     MatListModule
   ],
   templateUrl: './run-form.component.html',

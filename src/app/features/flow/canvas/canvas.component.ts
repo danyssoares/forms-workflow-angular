@@ -468,9 +468,12 @@ export class CanvasComponent implements OnDestroy {
   }
 
   // Roteamento ortogonal com desvio dos nós (estilo n8n)
-  private readonly ROUTE_GAP = 24;   // afastamento inicial/final do nó
-  private readonly ROUTE_PAD = 16;   // margem ao redor dos nós para não encostar
+  private readonly ROUTE_GAP = 36;   // afastamento inicial/final do nó
+  private readonly ROUTE_PAD = 24;   // margem ao redor dos nós para não encostar
   private readonly ROUTE_STEP = 20;  // passo de busca por corredores livres
+  private readonly VERTICAL_STACK_MARGIN = 72; // margem lateral extra para arestas verticais
+  private readonly EDGE_NODE_MARGIN = 18;      // folga mínima entre o nó e o caminho horizontal
+  private readonly ROUTE_CORNER_RADIUS = 12;
 
   private getNodeBBox(n: GraphNode): { x1: number, y1: number, x2: number, y2: number } {
     const off = this.dragOffsets[n.id] || { x: 0, y: 0 };
@@ -575,43 +578,69 @@ export class CanvasComponent implements OnDestroy {
   }
 
   private verticalContourPath(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}) {
-    // Contorna ambos nós: sai pela direita do origem e entra pela esquerda do destino
-    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
-    const toCenterY = (toRect.y1 + toRect.y2) / 2;
-    const goBelow = toCenterY >= fromCenterY;
-    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
-    const xRightFrom = fromRect.x2 + this.ROUTE_PAD;    // totalmente fora do nó origem
-    const xLeftTo = toRect.x1 - this.ROUTE_PAD;         // totalmente fora do nó destino
-    return this.toPathString(this.verticalContourPoints(p1, p2, fromRect, toRect));
+    return this.roundedPolylinePath(this.verticalContourPoints(p1, p2, fromRect, toRect));
   }
 
   private horizontalContourPath(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}) {
     // Destino está à esquerda do origem: contornar ambos e entrar pela esquerda do destino
-    const gap = this.ROUTE_GAP;
-    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
-    const toCenterY = (toRect.y1 + toRect.y2) / 2;
-    const goBelow = toCenterY >= fromCenterY;
-    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
-    const xA = p1.x + gap; // coluna fora do nó origem
-    const xLeftDest = toRect.x1 - this.ROUTE_PAD; // coluna à esquerda do nó destino
-    return this.toPathString(this.horizontalContourPoints(p1, p2, fromRect, toRect));
+    return this.roundedPolylinePath(this.horizontalContourPoints(p1, p2, fromRect, toRect));
+  }
+
+  private detachTowards(point: Point, targetX: number): Point | null {
+    const distance = Math.abs(targetX - point.x);
+    if (distance < 4) return null;
+    const clearance = Math.min(this.EDGE_NODE_MARGIN, distance - 2);
+    if (clearance <= 0) return null;
+    const dir = targetX >= point.x ? 1 : -1;
+    return { x: point.x + dir * clearance, y: point.y };
+  }
+
+  private verticalLanePoints(p1: Point, p2: Point, laneX: number): Point[] {
+    const points: Point[] = [{ x: p1.x, y: p1.y }];
+    const startDetach = this.detachTowards(p1, laneX);
+    if (startDetach) points.push(startDetach);
+    points.push(
+      { x: laneX, y: p1.y },
+      { x: laneX, y: p2.y }
+    );
+    const endDetach = this.detachTowards(p2, laneX);
+    if (endDetach) points.push(endDetach);
+    points.push({ x: p2.x, y: p2.y });
+    return points;
   }
 
   private verticalContourPoints(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}): Point[] {
-    const fromCenterY = (fromRect.y1 + fromRect.y2) / 2;
-    const toCenterY = (toRect.y1 + toRect.y2) / 2;
-    const goBelow = toCenterY >= fromCenterY;
-    const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
-    const xRightFrom = fromRect.x2 + this.ROUTE_PAD;
-    const xLeftTo = toRect.x1 - this.ROUTE_PAD;
-    return [
-      { x: p1.x, y: p1.y },
-      { x: xRightFrom, y: p1.y },
-      { x: xRightFrom, y: yPass },
-      { x: xLeftTo,    y: yPass },
-      { x: xLeftTo,    y: p2.y },
-      { x: p2.x,       y: p2.y }
-    ];
+    const rightmost = Math.max(fromRect.x2, toRect.x2);
+    const leftmost = Math.min(fromRect.x1, toRect.x1);
+    const laneRight = rightmost + this.VERTICAL_STACK_MARGIN;
+    const laneLeft = leftmost - this.VERTICAL_STACK_MARGIN;
+    const roomRight = this.worldW - rightmost;
+    const roomLeft = leftmost;
+    const useRightLane = roomRight >= Math.abs(roomLeft);
+    const laneX = useRightLane ? laneRight : laneLeft;
+    const destBelow = p2.y >= p1.y;
+    const destTop = Math.min(toRect.y1, toRect.y2);
+    const destBottom = Math.max(toRect.y1, toRect.y2);
+    const shelfCandidate = destBelow
+      ? Math.min(destTop - this.ROUTE_PAD, p2.y - this.EDGE_NODE_MARGIN)
+      : Math.max(destBottom + this.ROUTE_PAD, p2.y + this.EDGE_NODE_MARGIN);
+    const hasShelf = destBelow
+      ? shelfCandidate > p1.y + this.ROUTE_PAD
+      : shelfCandidate < p1.y - this.ROUTE_PAD;
+    if (!hasShelf) {
+      return this.verticalLanePoints(p1, p2, laneX);
+    }
+    const shelfY = shelfCandidate;
+    const points: Point[] = [{ x: p1.x, y: p1.y }];
+    const startDetach = this.detachTowards(p1, laneX);
+    if (startDetach) points.push(startDetach);
+    points.push(
+      { x: laneX, y: p1.y },
+      { x: laneX, y: shelfY },
+      { x: p2.x, y: shelfY },
+      { x: p2.x, y: p2.y }
+    );
+    return points;
   }
 
   private horizontalContourPoints(p1: Point, p2: Point, fromRect: {x1:number,y1:number,x2:number,y2:number}, toRect: {x1:number,y1:number,x2:number,y2:number}): Point[] {
@@ -621,14 +650,49 @@ export class CanvasComponent implements OnDestroy {
     const yPass = goBelow ? Math.max(fromRect.y2, toRect.y2) + this.ROUTE_PAD : Math.min(fromRect.y1, toRect.y1) - this.ROUTE_PAD;
     const xA = p1.x + this.ROUTE_GAP;
     const xLeftDest = toRect.x1 - this.ROUTE_PAD;
-    return [
-      { x: p1.x, y: p1.y },
+    const points: Point[] = [{ x: p1.x, y: p1.y }];
+    const startDetach = this.detachTowards(p1, xA);
+    if (startDetach) points.push(startDetach);
+    points.push(
       { x: xA,   y: p1.y },
       { x: xA,   y: yPass },
       { x: xLeftDest, y: yPass },
-      { x: xLeftDest, y: p2.y },
-      { x: p2.x, y: p2.y }
-    ];
+      { x: xLeftDest, y: p2.y }
+    );
+    const endDetach = this.detachTowards(p2, xLeftDest);
+    if (endDetach) points.push(endDetach);
+    points.push({ x: p2.x, y: p2.y });
+    return points;
+  }
+
+  private roundedPolylinePath(points: Point[]): string {
+    if (!points.length) return '';
+    if (points.length < 3) {
+      return this.toPathString(points);
+    }
+    const radius = this.ROUTE_CORNER_RADIUS;
+    const commands: string[] = [`M ${points[0].x} ${points[0].y}`];
+    for (let i = 1; i < points.length - 1; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const next = points[i + 1];
+      const inVec = { x: curr.x - prev.x, y: curr.y - prev.y };
+      const outVec = { x: next.x - curr.x, y: next.y - curr.y };
+      const inLen = Math.hypot(inVec.x, inVec.y);
+      const outLen = Math.hypot(outVec.x, outVec.y);
+      if (!inLen || !outLen) {
+        commands.push(`L ${curr.x} ${curr.y}`);
+        continue;
+      }
+      const r = Math.min(radius, inLen / 2, outLen / 2);
+      const entry = { x: curr.x - (inVec.x / inLen) * r, y: curr.y - (inVec.y / inLen) * r };
+      const exit = { x: curr.x + (outVec.x / outLen) * r, y: curr.y + (outVec.y / outLen) * r };
+      commands.push(`L ${entry.x} ${entry.y}`);
+      commands.push(`Q ${curr.x} ${curr.y} ${exit.x} ${exit.y}`);
+    }
+    const last = points[points.length - 1];
+    commands.push(`L ${last.x} ${last.y}`);
+    return commands.join(' ');
   }
 
   private boundsFromPoints(points: Point[]): { x1: number; y1: number; x2: number; y2: number } | null {
@@ -701,14 +765,18 @@ export class CanvasComponent implements OnDestroy {
       // Garantir verticais claras em xA e xB
       const xAClear = this.findClearX(xA, y1, yMid, 1, rs);
       const xBClear = this.findClearX(xB, yMid, y2, -1, rs);
+      points.push({ x: x1, y: y1 });
+      const startDetach = this.detachTowards({ x: x1, y: y1 }, xAClear);
+      if (startDetach) points.push(startDetach);
       points.push(
-        { x: x1, y: y1 },
         { x: xAClear, y: y1 },
         { x: xAClear, y: yMid },
         { x: xBClear, y: yMid },
-        { x: xBClear, y: y2 },
-        { x: x2, y: y2 }
+        { x: xBClear, y: y2 }
       );
+      const endDetach = this.detachTowards({ x: x2, y: y2 }, xBClear);
+      if (endDetach) points.push(endDetach);
+      points.push({ x: x2, y: y2 });
       return this.toPathString(points);
     }
 
@@ -728,15 +796,19 @@ export class CanvasComponent implements OnDestroy {
     const xA2 = Math.min(x1 + gap, xC);
     const xB2 = Math.max(x2 - gap, xC);
 
+    points.push({ x: x1, y: y1 });
+    const startDetach = this.detachTowards({ x: x1, y: y1 }, xA2);
+    if (startDetach) points.push(startDetach);
     points.push(
-      { x: x1, y: y1 },
       { x: xA2, y: y1 },
       { x: xC,  y: y1 },
       { x: xC,  y: y2 },
-      { x: xB2, y: y2 },
-      { x: x2,  y: y2 }
+      { x: xB2, y: y2 }
     );
-    return this.toPathString(points);
+    const endDetach = this.detachTowards({ x: x2, y: y2 }, xB2);
+    if (endDetach) points.push(endDetach);
+    points.push({ x: x2, y: y2 });
+    return this.roundedPolylinePath(points);
   }
 
   pathBetween(edge: GraphEdge) {
@@ -1121,16 +1193,6 @@ export class CanvasComponent implements OnDestroy {
     };
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

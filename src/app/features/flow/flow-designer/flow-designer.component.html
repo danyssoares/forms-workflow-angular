@@ -6,7 +6,7 @@
     </button>
     <span class="spacer"></span>
     <form [formGroup]="form" (ngSubmit)="saveForm()">
-      <lib-control-material label="{{'FORM_NAME' | translate}}" [obrigatorio]="true">
+      <lib-control-material label="{{'FORM_NAME' | translate}}" class="form-name-field" [obrigatorio]="true">
           <input formControlName="formName" />
       </lib-control-material>
       <button type="submit" mat-raised-button color="primary" [disabled]="saving || form.invalid" title="{{'SAVE' | translate}}">
