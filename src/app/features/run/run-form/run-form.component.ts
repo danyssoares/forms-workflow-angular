@@ -8,13 +8,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatListModule } from '@angular/material/list';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent } from '@angulartoolsdr/control-material';
+import { ControlMaterialTimeComponent, ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent, ControlMaterialRadioComponent } from '@angulartoolsdr/control-material';
 import { ActivatedRoute } from '@angular/router';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
 import { GraphNode, QuestionNodeData } from '../../flow/graph.types';
 import { Option } from '../../../shared/models/form-models';
+import { TranslationService } from '@angulartoolsdr/translation';
 
 type RunnerQuestion = {
   nodeId: string;
@@ -51,7 +52,10 @@ type RunnerQuestion = {
     ControlMaterialNumberComponent,
     ControlMaterialSelectComponent,
     ControlMaterialDateTimeComponent,
-    MatListModule
+    ControlMaterialTimeComponent,
+    ControlMaterialRadioComponent,
+    ControlMaterialSelectComponent,
+    MatCheckboxModule
   ],
   templateUrl: './run-form.component.html',
   styleUrl: './run-form.component.scss'
@@ -60,6 +64,7 @@ export class RunFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly storage = inject(WorkflowStorageService);
   private readonly route = inject(ActivatedRoute);
+  private readonly translation = inject(TranslationService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -160,8 +165,36 @@ export class RunFormComponent implements OnInit {
     return question.questionId;
   }
 
+  isOptionSelected(questionId: string, value: any): boolean {
+    const control = this.form.get(questionId);
+    if (!control) return false;
+    const current = control.value;
+    if (!Array.isArray(current)) return false;
+    return current.some(item => item === value);
+  }
+
+  toggleMultiOption(questionId: string, value: any, checked: boolean): void {
+    const control = this.form.get(questionId);
+    if (!control) return;
+    const current = Array.isArray(control.value) ? [...control.value] : [];
+    const index = current.findIndex(item => item === value);
+    if (checked && index === -1) {
+      current.push(value);
+    } else if (!checked && index !== -1) {
+      current.splice(index, 1);
+    }
+    control.setValue(current);
+    control.markAsDirty();
+    control.markAsTouched();
+    control.updateValueAndValidity();
+  }
+
   displayAnswer(question: RunnerQuestion): string | string[] {
     const value = this.answers()[question.questionId];
+
+    if ([2, 3, 4].includes(question.typeId)) {
+      return this.formatTemporalAnswer(value, question.typeId);
+    }
 
     if (question.typeId === 10 && Array.isArray(value)) {
       return value.map(v => this.optionLabel(question, v));
@@ -307,5 +340,78 @@ export class RunFormComponent implements OnInit {
     }
     const found = question.options?.find(opt => opt.value === value);
     return found?.label ?? String(value);
+  }
+
+  private formatTemporalAnswer(value: any, typeId: number): string {
+    if (value === null || value === undefined || value === '') {
+      return '—';
+    }
+    try {
+      const locale = this.resolveLocale();
+      const date = this.parseTemporalValue(value, typeId);
+      if (!date) return String(value);
+      const options: Intl.DateTimeFormatOptions =
+        typeId === 2
+          ? { dateStyle: 'short' }
+          : typeId === 3
+            ? { timeStyle: 'short' }
+            : { dateStyle: 'short', timeStyle: 'short' };
+      return new Intl.DateTimeFormat(locale, options).format(date);
+    } catch {
+      return String(value);
+    }
+  }
+
+  private resolveLocale(): string {
+    const lang = (this.translation.currentLang || '').trim();
+    if (lang) return lang;
+    try {
+      const browser = this.translation.getBrowserLang?.();
+      if (browser) return browser;
+    } catch {
+      // ignore
+    }
+    return 'pt-BR';
+  }
+
+  private parseTemporalValue(value: any, typeId: number): Date | null {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === 'number') {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+      if (typeId === 2 && /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const [y, m, d] = trimmed.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      if (typeId === 3 && /^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+        const [h, min = '00', sec = '00'] = trimmed.split(':');
+        return new Date(1970, 0, 1, Number(h), Number(min), Number(sec));
+      }
+
+      if (typeId === 4 && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed)) {
+        const [datePart, timePart] = trimmed.split('T');
+        const [y, m, d] = datePart.split('-').map(Number);
+        const [h, minuteSec] = timePart.split(':');
+        const minute = Number(minuteSec.slice(0, 2));
+        const seconds = minuteSec.length > 2 ? Number(minuteSec.slice(3, 5)) : 0;
+        return new Date(y, m - 1, d, Number(h), minute, seconds);
+      }
+
+      const fallback = new Date(trimmed);
+      return Number.isNaN(fallback.getTime()) ? null : fallback;
+    } catch {
+      return null;
+    }
   }
 }

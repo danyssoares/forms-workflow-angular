@@ -46,48 +46,64 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="2">
-                  <lib-control-material-date-time [showTime]="true" label="Selecione uma data" style="width:100%">
+                  <lib-control-material-date-time [showTime]="false" label="Selecione uma data" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="3">
-                  <lib-control-material label="Selecione um horário" style="width:100%">
-                    <input [formControlName]="question.questionId" type="time" />
-                  </lib-control-material>
+                  <lib-control-material-time label="Selecione um horário" style="width:100%">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="4">
-                  <lib-control-material-date-time label="Data e hora" style="width:100%">
+                  <lib-control-material-date-time [showTime]="true" label="Data e Hora" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="5">
-                  <lib-control-material label="Escolha uma opção" style="width:100%">
-                    <mat-radio-group [formControlName]="question.questionId" class="boolean-group">
-                      <mat-radio-button [value]="true">{{ question.trueLabel || 'Sim' }}</mat-radio-button>
-                      <mat-radio-button [value]="false">{{ question.falseLabel || 'Não' }}</mat-radio-button>
-                    </mat-radio-group>
-                  </lib-control-material>
+                  <lib-control-material-radio label="Selecione" [inlineRadioLabel]="true" 
+                                    bindLabel="nome" [translate]="true"                                     
+                                    [selectList]="[{nome: question.trueLabel || 'Sim', value: true}, {nome: question.falseLabel || 'Não', value: false}]">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-radio>                  
                 </ng-container>
 
                 <ng-container *ngSwitchCase="8">
-                  <ng-container *ngTemplateOutlet="singleSelect; context: { $implicit: question }"></ng-container>
+                  <lib-control-material-select [selectList]="question.options" label="Selecione uma ou mais opções" style="width:100%">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-select>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="9">
-                  <ng-container *ngTemplateOutlet="singleSelect; context: { $implicit: question }"></ng-container>
+                  <lib-control-material-radio label="Selecione uma das opções" [inlineRadioLabel]="false" 
+                                    bindLabel="nome" [translate]="true"                                     
+                                    [selectList]="question.options">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-radio>   
                 </ng-container>
 
                 <ng-container *ngSwitchCase="10">
-                  <lib-control-material label="Selecione uma ou mais opções" style="width:100%">
-                    <mat-selection-list [multiple]="true" [formControlName]="question.questionId" class="multi-select">
-                      <mat-list-option *ngFor="let opt of question.options ?? []; trackBy: trackOption" [value]="opt.value">
-                        {{ opt.label }}
-                      </mat-list-option>
-                    </mat-selection-list>
-                  </lib-control-material>
+                  <div class="multi-checkbox-group"
+                       [class.invalid]="form.get(question.questionId)?.invalid && form.get(question.questionId)?.touched">
+                    <p class="multi-checkbox-label">Selecione uma ou mais opções</p>
+                    <div class="multi-checkbox-list">
+                      @for (opt of question.options ?? []; track opt.label) {
+                        <mat-checkbox
+                          [checked]="isOptionSelected(question.questionId, opt.value)"
+                          (change)="toggleMultiOption(question.questionId, opt.value, $event.checked)">
+                          {{ opt.label }}
+                        </mat-checkbox>
+                      }
+                    </div>
+                    @if (form.get(question.questionId)?.invalid && form.get(question.questionId)?.touched) {
+                      <small class="field-error">
+                        Selecione ao menos uma opção.
+                      </small>
+                    }
+                  </div>
                 </ng-container>
 
                 <ng-container *ngSwitchDefault>
