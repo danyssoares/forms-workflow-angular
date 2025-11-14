@@ -10,6 +10,8 @@
   },
   "include": [
     "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "projects/forms-workflow/src/**/*.spec.ts",
+    "projects/forms-workflow/src/**/*.d.ts"
   ]
 }

@@ -1,19 +1,9 @@
 import { Routes } from '@angular/router';
-import { FormsListComponent } from './features/forms/forms-list/forms-list.component';
-import { FormEditorComponent } from './features/forms/form-editor/form-editor.component';
-import { FlowDesignerComponent } from './features/flow/flow-designer/flow-designer.component';
-import { WorkflowListComponent } from './features/flow/workflow-list/workflow-list.component';
-import { RunFormComponent } from './features/run/run-form/run-form.component';
-import { RunSummaryComponent } from './features/run/run-summary/run-summary.component';
+import { FlowDesignerComponent, FORMS_ROUTES, RunFormComponent, RunSummaryComponent, WorkflowListComponent } from 'forms-workflow';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'flow' },
-  {
-    path: 'forms', children: [
-      { path: '', component: FormsListComponent },
-      { path: ':id', component: FormEditorComponent },
-    ]
-  },
+  { path: 'forms', children: FORMS_ROUTES },
   {
     path: 'flow', children: [
       { path: '', component: WorkflowListComponent },
