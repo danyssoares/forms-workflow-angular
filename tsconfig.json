@@ -16,8 +16,20 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2022"
+    "module": "ES2022",
+    "baseUrl": "./",
+    "paths": {
+      "forms-workflow": ["projects/forms-workflow/src/public-api"],
+      "forms-workflow/*": ["projects/forms-workflow/src/lib/*"]
+    }
   },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.spec.json" },
+    { "path": "./projects/forms-workflow/tsconfig.lib.json" },
+    { "path": "./projects/forms-workflow/tsconfig.spec.json" }
+  ],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,

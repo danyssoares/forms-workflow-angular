@@ -1,0 +1,23 @@
+{
+  "name": "forms-workflow",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/animations": "^20.0.0",
+    "@angular/cdk": "^20.0.0",
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/material": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "@angulartoolsdr/control-material": "^20.0.0",
+    "@angulartoolsdr/translation": "^20.0.0",
+    "@fortawesome/angular-fontawesome": "^3.0.0",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-regular-svg-icons": "^7.0.0",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@katyan/datetime-picker": "^20.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}
