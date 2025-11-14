@@ -12,6 +12,7 @@ import { provideNgxMatNativeDate } from '@katyan/datetime-picker';
 import { NgxNativeDateModule } from '@katyan/datetime-picker';
 import { MatNativeDateModule, MatRippleModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideToastr } from 'ngx-toastr';
 
 @NgModule({
   imports: [NgxNativeDateModule, MatNativeDateModule, MatRippleModule, MatDatepickerModule],
@@ -31,6 +32,11 @@ bootstrapApplication(AppComponent, {
     provideAnimations(),
     provideNgxMatNativeDate(),
     importProvidersFrom(SharedModule),
+    provideToastr({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    }),
   ]
 }).catch(err => console.error(err));
 

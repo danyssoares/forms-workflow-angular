@@ -10,12 +10,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { ControlMaterialTimeComponent, ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent, ControlMaterialRadioComponent } from '@angulartoolsdr/control-material';
+import { ControlMaterialTimeComponent, ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent, ControlMaterialRadioComponent, ControlMaterialFileComponent } from '@angulartoolsdr/control-material';
 import { ActivatedRoute } from '@angular/router';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
 import { GraphNode, QuestionNodeData } from '../../flow/graph.types';
 import { Option } from '../../../shared/models/form-models';
-import { TranslationService } from '@angulartoolsdr/translation';
+import { TranslationPipe, TranslationService } from '@angulartoolsdr/translation';
 
 type RunnerQuestion = {
   nodeId: string;
@@ -55,7 +55,9 @@ type RunnerQuestion = {
     ControlMaterialTimeComponent,
     ControlMaterialRadioComponent,
     ControlMaterialSelectComponent,
-    MatCheckboxModule
+    ControlMaterialFileComponent,
+    MatCheckboxModule,
+    TranslationPipe
   ],
   templateUrl: './run-form.component.html',
   styleUrl: './run-form.component.scss'
@@ -88,6 +90,17 @@ export class RunFormComponent implements OnInit {
   });
 
   readonly form: FormGroup = this.fb.group({});
+
+  arquivo: any = undefined;
+  arquivoImagem: any = undefined;
+
+  selectedFile($event: any) {
+    this.arquivo = $event.target.files;
+  }
+
+  selectedImageFile($event: any) { 
+    this.arquivoImagem = $event.target.files;
+  }
 
   ngOnInit(): void {
     this.initializeFromStorage();
@@ -191,6 +204,10 @@ export class RunFormComponent implements OnInit {
 
   displayAnswer(question: RunnerQuestion): string | string[] {
     const value = this.answers()[question.questionId];
+
+    if ([6, 7].includes(question.typeId)) {
+      return this.formatFileAnswer(value);
+    }
 
     if ([2, 3, 4].includes(question.typeId)) {
       return this.formatTemporalAnswer(value, question.typeId);
@@ -413,5 +430,130 @@ export class RunFormComponent implements OnInit {
     } catch {
       return null;
     }
+  }
+
+  private formatFileAnswer(value: any): string {
+    const names = this.extractFileNames(value);
+    if (names.length) {
+      return names.join(', ');
+    }
+
+    const fallback = this.extractFallbackFileName(value);
+    return fallback ?? '—';
+  }
+
+  private extractFileNames(value: any): string[] {
+    if (!value) return [];
+
+    if (typeof value === 'string') {
+      const fromPath = this.extractNameFromPath(value);
+      return fromPath ? [fromPath] : [];
+    }
+
+    if (this.hasFilesCollection(value)) {
+      const names = this.filesToNames(value.files);
+      if (names.length) return names;
+    }
+
+    if (this.isFileList(value)) {
+      const names = this.filesToNames(value);
+      if (names.length) return names;
+    }
+
+    if (Array.isArray(value)) {
+      const names = this.filesToNames(value);
+      if (names.length) return names;
+    }
+
+    const singleName = this.normalizeFileName(value);
+    return singleName ? [singleName] : [];
+  }
+
+  private extractFallbackFileName(value: any): string | null {
+    if (!value) return null;
+
+    if (typeof value === 'string') {
+      return this.extractNameFromPath(value);
+    }
+
+    const candidates = [value.fileNames, value._fileNames, value.name, value.filename];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+
+    if (typeof value.path === 'string') {
+      return this.extractNameFromPath(value.path);
+    }
+
+    return null;
+  }
+
+  private filesToNames(files: any): string[] {
+    return this.normalizeFilesArray(files)
+      .map(file => this.normalizeFileName(file))
+      .filter((name): name is string => !!name);
+  }
+
+  private normalizeFilesArray(files: any): any[] {
+    if (!files) return [];
+    if (Array.isArray(files)) {
+      return files;
+    }
+    if (this.isFileList(files)) {
+      return Array.from(files);
+    }
+    return [];
+  }
+
+  private normalizeFileName(file: any): string | null {
+    if (!file) return null;
+
+    if (typeof file === 'string') {
+      return this.extractNameFromPath(file);
+    }
+
+    if (this.isBrowserFile(file) && typeof file.name === 'string' && file.name.trim()) {
+      return file.name.trim();
+    }
+
+    if (typeof file.name === 'string' && file.name.trim()) {
+      return file.name.trim();
+    }
+
+    if (typeof file.filename === 'string' && file.filename.trim()) {
+      return file.filename.trim();
+    }
+
+    if (typeof file.path === 'string') {
+      return this.extractNameFromPath(file.path);
+    }
+
+    return null;
+  }
+
+  private extractNameFromPath(source: string): string | null {
+    const trimmed = source?.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith('data:')) return null;
+
+    const parts = trimmed.split(/[/\\]/).filter(Boolean);
+    if (!parts.length) return null;
+
+    const last = parts[parts.length - 1].trim();
+    return last || null;
+  }
+
+  private hasFilesCollection(value: any): value is { files: any } {
+    return value && typeof value === 'object' && 'files' in value && value.files;
+  }
+
+  private isFileList(value: any): value is FileList {
+    return !!value && typeof value === 'object' && typeof (value as FileList).length === 'number' && typeof (value as FileList).item === 'function';
+  }
+
+  private isBrowserFile(entry: any): entry is File {
+    return typeof File !== 'undefined' && entry instanceof File;
   }
 }

@@ -91,6 +91,36 @@ describe('RunFormComponent', () => {
       expect(component.completed()).toBeTrue();
       expect(component.answers()).toEqual(jasmine.objectContaining({ q1: 'João Teste', q2: true }));
     });
+
+    it('deve mostrar o nome do arquivo em questões de imagem no resumo', () => {
+      component.answers.set({
+        foto: { files: [{ name: 'selfie.png' }] }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'foto',
+        label: 'Envie uma foto',
+        seq: 3,
+        typeId: 6
+      } as any);
+
+      expect(answer).toBe('selfie.png');
+    });
+
+    it('deve mostrar o nome do arquivo em questões de upload genéricas no resumo', () => {
+      component.answers.set({
+        contrato: { fileNames: 'contrato.pdf' }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'contrato',
+        label: 'Contrato social',
+        seq: 4,
+        typeId: 7
+      } as any);
+
+      expect(answer).toBe('contrato.pdf');
+    });
   });
 
   describe('quando não há workflow salvo', () => {

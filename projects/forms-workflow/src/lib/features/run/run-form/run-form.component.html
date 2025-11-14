@@ -71,6 +71,20 @@
                   </lib-control-material-radio>                  
                 </ng-container>
 
+                <ng-container *ngSwitchCase="6">
+                  <lib-control-material-file label="{{'SELECIONE_IMAGEM' | translate}}" (selectedFile)="selectedImageFile($event)" 
+                    [extensao]="['png', 'jpeg', 'jpg', 'gif', 'webp']" [file]="arquivoImagem">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-file>
+                </ng-container>
+
+                <ng-container *ngSwitchCase="7">
+                  <lib-control-material-file label="{{'SELECIONE_ARQUIVO' | translate}}" (selectedFile)="selectedFile($event)" 
+                    [file]="arquivo">
+                    <input [formControlName]="question.questionId" />
+                  </lib-control-material-file>
+                </ng-container>
+
                 <ng-container *ngSwitchCase="8">
                   <lib-control-material-select [selectList]="question.options" label="Selecione uma ou mais opções" style="width:100%">
                     <input [formControlName]="question.questionId" />
