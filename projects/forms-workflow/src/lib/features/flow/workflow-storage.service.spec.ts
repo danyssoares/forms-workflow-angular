@@ -34,6 +34,7 @@ describe('WorkflowStorageService', () => {
     const parsed = JSON.parse(storage['flowDesigner:workflow:Teste']) as WorkflowSnapshot;
     expect(parsed.graph).toEqual(graphMock);
     expect(parsed.formName).toBe('Form Teste');
+    expect(parsed.createdAt).toBeTruthy();
   });
 
   it('should list saved workflows', () => {
@@ -57,6 +58,14 @@ describe('WorkflowStorageService', () => {
     // ensure storage relies on the persisted entry, not cached reference
     expect(getItemSpy).toHaveBeenCalledWith('flowDesigner:workflow:last');
     expect(last).not.toBe(first);
+  });
+
+  it('should preserve createdAt when workflow is updated', () => {
+    const first = service.saveWorkflow('A', graphMock);
+    const updated = service.saveWorkflow('A', graphMock);
+
+    expect(updated.createdAt).toBe(first.createdAt);
+    expect(updated.savedAt).not.toBe(first.savedAt);
   });
 
   it('should throw error when saving without name', () => {

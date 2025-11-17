@@ -23,6 +23,7 @@ export class WorkflowListComponent {
 
   readonly workflows = signal<WorkflowSnapshot[]>([]);
   readonly trackByName = (_: number, item: WorkflowSnapshot) => item.name;
+  readonly descriptionFallback = 'Fluxo sem formulário associado';
 
   constructor() {
     this.library.addIcons(faDiagramProject);
@@ -44,5 +45,18 @@ export class WorkflowListComponent {
   deleteWorkflow(snapshot: WorkflowSnapshot) {
     this.storage.deleteWorkflow(snapshot.name);
     this.workflows.set(this.storage.listWorkflows());
+  }
+
+  questionCount(snapshot: WorkflowSnapshot): number {
+    return snapshot.graph.nodes.filter(node => node.kind === 'question').length;
+  }
+
+  questionLabel(snapshot: WorkflowSnapshot): string {
+    const total = this.questionCount(snapshot);
+    return total === 1 ? '1 questão' : `${total} questões`;
+  }
+
+  createdDate(snapshot: WorkflowSnapshot): string {
+    return snapshot.createdAt ?? snapshot.savedAt;
   }
 }

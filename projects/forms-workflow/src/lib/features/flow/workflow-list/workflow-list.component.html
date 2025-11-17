@@ -1,8 +1,8 @@
 <section class="workflow-page">
   <header class="header">
     <div>
-      <h1>Workflows Salvos</h1>
-      <p>Continue um fluxo existente ou crie um novo processo em poucos cliques.</p>
+      <h1>Fluxos cadastrados</h1>
+      <p>Visualize, edite e teste rapidamente os workflows que você já configurou.</p>
     </div>
     <button mat-raised-button color="primary" (click)="createWorkflow()">
       <mat-icon>add</mat-icon>
@@ -13,30 +13,57 @@
   <ng-container *ngIf="workflows().length; else emptyState">
     <div class="grid">
       <mat-card *ngFor="let workflow of workflows(); trackBy: trackByName" class="workflow-card">
-        <mat-card-header>
-          <fa-icon mat-card-avatar [icon]="faDiagramProject" color="primary"></fa-icon>
-          <mat-card-title>{{ workflow.name }}</mat-card-title>
-          <mat-card-subtitle>
-            Atualizado em {{ workflow.savedAt | date:'dd/MM/yyyy HH:mm' }}
-          </mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <p>Fluxo com {{ workflow.graph.nodes.length }} nós e {{ workflow.graph.edges.length }} conexões.</p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button color="warn" (click)="deleteWorkflow(workflow)">
-            <mat-icon>delete</mat-icon>
-            Excluir
-          </button>
-          <button mat-stroked-button color="accent" (click)="testWorkflow(workflow)">
-            <mat-icon>science</mat-icon>
-            Testar fluxo
-          </button>
-          <button mat-stroked-button color="primary" (click)="openWorkflow(workflow)">
-            <mat-icon>play_arrow</mat-icon>
-            Abrir Workflow
-          </button>
-        </mat-card-actions>
+        <div class="card-head">
+          <span class="badge">{{ questionLabel(workflow) }}</span>
+        </div>
+
+        <div class="card-body">
+          <div class="title">
+            <span class="icon-wrapper">
+              <fa-icon [icon]="faDiagramProject"></fa-icon>
+            </span>
+            <div>
+              <h3>{{ workflow.name }}</h3>
+              <p>{{ workflow.formName || descriptionFallback }}</p>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div class="meta-item">
+              <mat-icon>event_available</mat-icon>
+              <div>
+                <span class="meta-label">Criado</span>
+                <strong>{{ createdDate(workflow) | date:'dd/MM/yyyy' }}</strong>
+              </div>
+            </div>
+            <div class="meta-item">
+              <mat-icon>update</mat-icon>
+              <div>
+                <span class="meta-label">Atualizado</span>
+                <strong>{{ workflow.savedAt | date:'dd/MM/yyyy' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button mat-stroked-button color="primary" (click)="openWorkflow(workflow)">
+              <mat-icon>edit</mat-icon>
+              Editar
+            </button>
+            <button mat-flat-button color="primary" (click)="testWorkflow(workflow)">
+              <mat-icon>play_arrow</mat-icon>
+              Testar
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              class="delete-button"
+              (click)="deleteWorkflow(workflow)"
+              aria-label="Excluir workflow">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
       </mat-card>
     </div>
   </ng-container>
