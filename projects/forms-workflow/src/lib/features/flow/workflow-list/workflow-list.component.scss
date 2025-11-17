@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  background: #f8fafc;
 }
 
 .header {
@@ -10,17 +11,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .header h1 {
   margin: 0;
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .header p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 .header button mat-icon {
@@ -29,7 +32,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 18px;
 }
 
@@ -37,35 +40,109 @@
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-family: 'Nunito', 'Segoe UI', sans-serif;
+  padding: 12px 16px 16px;
+  border-radius: 16px;
+  border: 1px solid #ede9fe;
+  background: #f9fafb;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
 .workflow-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
 }
 
-.workflow-card mat-card-content {
-  min-height: 64px;
-}
-
-.workflow-card mat-card-title,
-.workflow-card mat-card-subtitle {
-  font-family: 'Nunito', 'Segoe UI', sans-serif;
-}
-
-.workflow-card mat-card-actions {
+.card-head {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
 }
 
-.workflow-card fa-icon[mat-card-avatar] {
-  background: rgba(79, 70, 229, 0.12);
-  border-radius: 50%;
+.badge {
+  background: rgba(79, 70, 229, 0.15);
+  color: #4338ca;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.icon-wrapper {
+  background: rgba(99, 102, 241, 0.18);
+  color: #4f46e5;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.title h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.title p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.meta-item mat-icon {
+  color: #6b7280;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.meta strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.actions .delete-button {
+  margin-left: auto;
 }
 
 .empty {
@@ -84,7 +161,7 @@
   font-size: 48px;
   height: 48px;
   width: 48px;
-  color: #a855f7;
+  color: #4f46e5;
 }
 
 .empty button {

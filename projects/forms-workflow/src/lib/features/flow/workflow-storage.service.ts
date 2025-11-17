@@ -5,6 +5,7 @@ export interface WorkflowSnapshot {
   name: string;
   graph: GraphModel;
   savedAt: string;
+  createdAt?: string;
   formName?: string;
 }
 
@@ -18,11 +19,15 @@ export class WorkflowStorageService {
     if (!trimmedName) {
       throw new Error('Workflow name is required to save.');
     }
+
+    const now = new Date().toISOString();
+    const existing = this.loadWorkflow(trimmedName);
     const snapshot: WorkflowSnapshot = {
       name: trimmedName,
       graph,
       formName,
-      savedAt: new Date().toISOString()
+      createdAt: existing?.createdAt ?? existing?.savedAt ?? now,
+      savedAt: now
     };
 
     this.safeSetItem(this.keyFor(trimmedName), snapshot);
