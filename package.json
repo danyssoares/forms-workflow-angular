@@ -6,6 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "build:lib": "ng build forms-workflow",
+    "test:lib": "ng test forms-workflow --watch=false --browsers=ChromeHeadless",
+    "pack:lib": "npm run build:lib && cd dist/forms-workflow && npm pack",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
