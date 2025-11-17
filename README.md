@@ -37,3 +37,53 @@ Os estilos SCSS e arquivos de internacionalização sob `projects/forms-workflow
 
 ## Publicação via CI
 O workflow `.github/workflows/publish.yml` publica automaticamente versões da biblioteca quando um tag `v*` é enviado ou via _workflow dispatch_. Ele executa `npm ci`, `npm run test:lib`, `npm run build:lib` e publica `dist/forms-workflow` usando o `NPM_TOKEN` configurado nos segredos do repositório. Certifique-se de que o tag criado corresponda à versão definida em `projects/forms-workflow/package.json`.
+
+## Como consumir a biblioteca em outro projeto Angular
+1. Instale a biblioteca publicada (`npm i forms-workflow`) ou, durante o desenvolvimento local, use `npm link forms-workflow` após rodar `npm run build:lib` aqui. Instale também os _peer dependencies_ listados em `projects/forms-workflow/package.json` (Angular 20, Angular Material, FontAwesome e os pacotes `@angulartoolsdr`).
+2. Exponha os _assets_ de tradução da biblioteca no seu projeto. Inclua em `angular.json` (ou no `project.json` equivalente) um item de `assets` apontando para `node_modules/forms-workflow/assets`, por exemplo:
+
+   ```json
+   {
+     "glob": "**/*",
+     "input": "node_modules/forms-workflow/assets",
+     "output": "assets/forms-workflow"
+   }
+   ```
+
+   Ajuste o caminho no `TranslationService` do `@angulartoolsdr/translation` conforme a convenção usada no seu app.
+3. Importe os componentes standalone expostos no `public-api`: `FlowDesignerComponent`, `WorkflowListComponent`, `RunFormComponent` e `RunSummaryComponent`. Eles podem ser usados diretamente em um componente pai:
+
+   ```ts
+   import { Component } from '@angular/core';
+   import { FlowDesignerComponent } from 'forms-workflow';
+
+   @Component({
+     selector: 'app-flow-shell',
+     standalone: true,
+     imports: [FlowDesignerComponent],
+     template: '<app-flow-designer />'
+   })
+   export class FlowShellComponent {}
+   ```
+4. Para montar as telas via roteamento, reaproveite as rotas exportadas pela biblioteca. O exemplo abaixo replica a navegação usada no _playground_ deste repositório:
+
+   ```ts
+   import { Routes } from '@angular/router';
+   import { FlowDesignerComponent, FORMS_ROUTES, RunFormComponent, RunSummaryComponent, WorkflowListComponent } from 'forms-workflow';
+
+   export const routes: Routes = [
+     { path: '', pathMatch: 'full', redirectTo: 'flow' },
+     { path: 'forms', children: FORMS_ROUTES },
+     {
+       path: 'flow',
+       children: [
+         { path: '', component: WorkflowListComponent },
+         { path: 'designer', component: FlowDesignerComponent }
+       ]
+     },
+     { path: 'run', component: RunFormComponent },
+     { path: 'run/summary', component: RunSummaryComponent }
+   ];
+   ```
+
+5. Garanta que os _providers_ básicos estejam registrados (roteamento com `provideRouter`, `provideHttpClient`, `provideAnimations` e os módulos que configuram ícones/temas do Angular Material) para que os componentes funcionem como no exemplo da aplicação de demonstração (`src/main.ts`).
