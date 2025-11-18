@@ -37,6 +37,14 @@ bootstrapApplication(AppComponent, {
       positionClass: 'toast-top-right',
       preventDuplicates: true,
     }),
+    {
+      provide: FaIconLibrary,
+      useFactory: () => {
+        const library = new FaIconLibrary();
+        library.addIconPacks(fas, far);
+        return library;
+      }
+    }
   ]
 }).catch(err => console.error(err));
 

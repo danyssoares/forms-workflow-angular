@@ -73,7 +73,6 @@ O workflow `.github/workflows/publish.yml` publica automaticamente versões da b
 
    export const routes: Routes = [
      { path: '', pathMatch: 'full', redirectTo: 'flow' },
-     { path: 'forms', children: FORMS_ROUTES },
      {
        path: 'flow',
        children: [

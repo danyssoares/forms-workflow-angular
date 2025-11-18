@@ -2,8 +2,6 @@ export * from './lib/shared/models/form-models';
 export * from './lib/shared/rules.service';
 export * from './lib/shared/score.service';
 
-export * from './lib/features/forms/forms.routes';
-
 export * from './lib/features/flow/flow-designer/flow-designer.component';
 export * from './lib/features/flow/workflow-list/workflow-list.component';
 

@@ -16,7 +16,6 @@ import { faDiagramProject } from '@fortawesome/free-solid-svg-icons';
       <fa-icon [icon]="faDiagramProject"></fa-icon>
       <span style="margin-left:8px">{{ 'FORMS_WORKFLOW' | translate }}</span>
       <span class="spacer"></span>
-      <a mat-button routerLink="/forms">{{ 'FORMS' | translate }}</a>
       <a mat-button routerLink="/flow">{{ 'FLOW' | translate }}</a>
       <a mat-button routerLink="/run">{{ 'RUNNER' | translate }}</a>
     </mat-toolbar>
