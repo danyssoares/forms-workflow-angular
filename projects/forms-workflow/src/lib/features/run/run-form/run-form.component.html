@@ -15,7 +15,7 @@
           <div class="wizard-header">
             <div class="wizard-title">
               <h1>{{ workflowName() }}</h1>
-              <p class="wizard-subtitle">Pergunta {{ currentIndex() + 1 }} de {{ questions().length }}</p>
+              <p class="wizard-subtitle">{{'QUESTION' | translate}} {{ currentIndex() + 1 }} de {{ questions().length }}</p>
             </div>
             <button mat-icon-button color="primary" type="button" aria-label="Reiniciar" (click)="restart()">
               <mat-icon>refresh</mat-icon>
@@ -26,7 +26,7 @@
 
           <div class="question-shell" *ngIf="currentQuestion() as question">
             <div class="question-header">
-              <span class="question-pill">Passo {{ currentIndex() + 1 }}</span>
+              <span class="question-pill">{{'STEP' | translate}} {{ currentIndex() + 1 }}</span>
               <h2>{{ question.label }}</h2>
               <p class="help-text" *ngIf="question.helpText">{{ question.helpText }}</p>
             </div>
@@ -34,37 +34,37 @@
             <form [formGroup]="form" class="question-form">
               <ng-container [ngSwitch]="question.typeId">
                 <ng-container *ngSwitchCase="0">
-                  <lib-control-material class="text-control" label="Sua resposta" style="width:100%">
+                  <lib-control-material class="text-control" label="{{'YOUR_ANSWER' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" type="text" autocomplete="off" />
                   </lib-control-material>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="1">
-                  <lib-control-material-number label="Informe um número" style="width:100%">
+                  <lib-control-material-number label="{{'INSERT_NUMBER' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" type="number" />
                   </lib-control-material-number>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="2">
-                  <lib-control-material-date-time [showTime]="false" label="Selecione uma data" style="width:100%">
+                  <lib-control-material-date-time [showTime]="false" label="{{'SELECT_DATE' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="3">
-                  <lib-control-material-time label="Selecione um horário" style="width:100%">
+                  <lib-control-material-time label="{{'SELECT_TIME' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="4">
-                  <lib-control-material-date-time [showTime]="true" label="Data e Hora" style="width:100%">
+                  <lib-control-material-date-time [showTime]="true" label="{{'SELECT_DATETIME' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-date-time>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="5">
-                  <lib-control-material-radio label="Selecione" [inlineRadioLabel]="true" 
+                  <lib-control-material-radio label="{{'SELECT' | translate}}" [inlineRadioLabel]="true" 
                                     bindLabel="nome" [translate]="true"                                     
                                     [selectList]="[{nome: question.trueLabel || 'Sim', value: true}, {nome: question.falseLabel || 'Não', value: false}]">
                     <input [formControlName]="question.questionId" />
@@ -72,27 +72,27 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="6">
-                  <lib-control-material-file label="{{'SELECIONE_IMAGEM' | translate}}" (selectedFile)="selectedImageFile($event)" 
+                  <lib-control-material-file label="{{'UPLOAD_IMAGE' | translate}}" (selectedFile)="selectedImageFile($event)" 
                     [extensao]="['png', 'jpeg', 'jpg', 'gif', 'webp']" [file]="arquivoImagem">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-file>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="7">
-                  <lib-control-material-file label="{{'SELECIONE_ARQUIVO' | translate}}" (selectedFile)="selectedFile($event)" 
+                  <lib-control-material-file label="{{'UPLOAD_FILE' | translate}}" (selectedFile)="selectedFile($event)" 
                     [file]="arquivo">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-file>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="8">
-                  <lib-control-material-select [selectList]="question.options" label="Selecione uma ou mais opções" style="width:100%">
+                  <lib-control-material-select [selectList]="question.options" label="{{'SELECT' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-select>
                 </ng-container>
 
                 <ng-container *ngSwitchCase="9">
-                  <lib-control-material-radio label="Selecione uma das opções" [inlineRadioLabel]="false" 
+                  <lib-control-material-radio label="{{'SELECT_OPTION' | translate}}" [inlineRadioLabel]="false" 
                                     bindLabel="nome" [translate]="true"                                     
                                     [selectList]="question.options">
                     <input [formControlName]="question.questionId" />
@@ -102,7 +102,7 @@
                 <ng-container *ngSwitchCase="10">
                   <div class="multi-checkbox-group"
                        [class.invalid]="form.get(question.questionId)?.invalid && form.get(question.questionId)?.touched">
-                    <p class="multi-checkbox-label">Selecione uma ou mais opções</p>
+                    <p class="multi-checkbox-label">{{'SELECT_ONE_MANY_OPTIONS' | translate}}</p>
                     <div class="multi-checkbox-list">
                       @for (opt of question.options ?? []; track opt.label) {
                         <mat-checkbox
@@ -114,14 +114,14 @@
                     </div>
                     @if (form.get(question.questionId)?.invalid && form.get(question.questionId)?.touched) {
                       <small class="field-error">
-                        Selecione ao menos uma opção.
+                        {{'SELECT_AT_LEAST_ONE_OPTION' | translate}}
                       </small>
                     }
                   </div>
                 </ng-container>
 
                 <ng-container *ngSwitchDefault>
-                  <lib-control-material class="text-control" label="Sua resposta" style="width:100%">
+                  <lib-control-material class="text-control" label="{{'YOUR_ANSWER' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" type="text" autocomplete="off" />
                   </lib-control-material>
                 </ng-container>
@@ -130,10 +130,10 @@
 
             <div class="wizard-actions">
               <button mat-stroked-button color="primary" type="button" (click)="goPrevious()" [disabled]="currentIndex() === 0">
-                Anterior
+                {{'PREVIOUS' | translate}}
               </button>
               <button mat-raised-button color="primary" type="button" (click)="goNext()">
-                {{ currentIndex() === questions().length - 1 ? 'Finalizar' : 'Próxima' }}
+                {{ (currentIndex() === questions().length - 1 ? 'FINISH' : 'NEXT') | translate }}
               </button>
             </div>
           </div>
@@ -158,8 +158,8 @@
       <div class="summary-header">
         <mat-icon>celebration</mat-icon>
         <div>
-          <h2>Formulário concluído!</h2>
-          <p>Revise as suas respostas antes de finalizar o fluxo.</p>
+          <h2>{{'FORM_COMPLETED' | translate}}</h2>
+          <p>{{'REVIEW_ANSWERS_BEFORE_FINALIZING_FLOW' | translate}}</p>
         </div>
       </div>
 
@@ -181,10 +181,10 @@
 
       <div class="wizard-actions">
         <button mat-stroked-button color="primary" type="button" (click)="restart()">
-          Refazer
+          {{'REDO' | translate}}
         </button>
         <button mat-raised-button color="primary" type="button">
-          Enviar
+          {{'SEND' | translate}}
         </button>
       </div>
     </mat-card>
@@ -193,7 +193,7 @@
 
 <ng-template #singleSelect let-question>
   <lib-control-material-select
-    label="Selecione uma opção"
+    label="{{'SELECT_OPTION' | translate}}"
     style="width:100%"
     bindId="value"
     bindLabel="label"

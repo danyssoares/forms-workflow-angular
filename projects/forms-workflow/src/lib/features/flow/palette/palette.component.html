@@ -1,1 +1,20 @@
-<p>palette works!</p>
+<div class="palette">
+    <button mat-raised-button class="palette-btn palette-btn--question" [matMenuTriggerFor]="q">{{ 'QUESTION+' | translate }}</button>
+    <mat-menu #q="matMenu" class="question-menu">
+      <div class="options-container">
+        <button mat-menu-item
+                *ngFor="let option of questionDefinitions"
+                (click)="selectQuestion(option)">
+          {{ option.labelKey | translate }}
+        </button>
+      </div>
+    </mat-menu>
+
+    <button mat-raised-button class="palette-btn palette-btn--condition" [matMenuTriggerFor]="c">{{ 'CONDITION+' | translate }}</button>
+    <mat-menu #c="matMenu">
+      <button mat-menu-item (click)="add.emit({kind:'condition', conditionType: 'comparison'})">{{ 'CONDITION_COMPARISON' | translate }}</button>
+      <button mat-menu-item (click)="add.emit({kind:'condition', conditionType: 'expression'})">{{ 'CONDITION_EXPRESSION' | translate }}</button>
+    </mat-menu>
+    <button mat-raised-button class="palette-btn palette-btn--action" (click)="add.emit({kind:'action'})">{{ 'ACTION+' | translate }}</button>
+    <button mat-raised-button class="palette-btn palette-btn--end" (click)="add.emit({kind:'end'})">{{ 'END+' | translate }}</button>
+  </div>

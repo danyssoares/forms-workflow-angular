@@ -3,22 +3,24 @@ import { NgIf, NgFor, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faDiagramProject } from '@fortawesome/free-solid-svg-icons';
 import { WorkflowStorageService, WorkflowSnapshot } from '../workflow-storage.service';
+import { TranslationPipe, TranslationService } from '@angulartoolsdr/translation';
 
 @Component({
   selector: 'app-workflow-list',
   standalone: true,
-  imports: [NgIf, NgFor, MatCardModule, MatButtonModule, MatIconModule, FontAwesomeModule, DatePipe],
+  imports: [NgIf, NgFor, MatCardModule, MatButtonModule, MatIconModule, FontAwesomeModule, DatePipe, TranslationPipe],
   templateUrl: './workflow-list.component.html',
   styleUrl: './workflow-list.component.scss'
 })
 export class WorkflowListComponent {
   private readonly storage = inject(WorkflowStorageService);
-  private readonly router = inject(Router);
+  private readonly router = inject(Router);  
   private readonly library = inject(FaIconLibrary);
+  private readonly translate = inject(TranslationService);
   readonly faDiagramProject = faDiagramProject;
 
   readonly workflows = signal<WorkflowSnapshot[]>([]);
@@ -31,15 +33,19 @@ export class WorkflowListComponent {
   }
 
   createWorkflow() {
-    this.router.navigate(['/flow/designer']);
+    this.router.navigate([this.router.url + '/designer']);
   }
 
   openWorkflow(snapshot: WorkflowSnapshot) {
-    this.router.navigate(['/flow/designer'], { queryParams: { workflow: snapshot.name } });
+    this.router.navigate([this.router.url + '/designer'], {       
+      queryParams: { workflow: snapshot.name } 
+    });
   }
 
   testWorkflow(snapshot: WorkflowSnapshot) {
-    this.router.navigate(['/run'], { queryParams: { workflow: snapshot.name } });
+    this.router.navigate([this.router.url + '/run'], {       
+      queryParams: { workflow: snapshot.name } 
+    });
   }
 
   deleteWorkflow(snapshot: WorkflowSnapshot) {
@@ -53,7 +59,7 @@ export class WorkflowListComponent {
 
   questionLabel(snapshot: WorkflowSnapshot): string {
     const total = this.questionCount(snapshot);
-    return total === 1 ? '1 questão' : `${total} questões`;
+    return total === 1 ? '1 '+this.translate.instant('QUESTION') : `${total} ${this.translate.instant('QUESTIONS')}`;
   }
 
   createdDate(snapshot: WorkflowSnapshot): string {

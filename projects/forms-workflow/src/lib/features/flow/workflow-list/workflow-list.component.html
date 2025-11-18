@@ -1,12 +1,12 @@
 <section class="workflow-page">
   <header class="header">
     <div>
-      <h1>Fluxos cadastrados</h1>
-      <p>Visualize, edite e teste rapidamente os workflows que você já configurou.</p>
+      <h1>{{'WORKFLOWS_REGISTERED' | translate}}</h1>
+      <p>{{'VIEW_EDIT_AND_TEST_WORKFLOWS' | translate}}</p>
     </div>
     <button mat-raised-button color="primary" (click)="createWorkflow()">
       <mat-icon>add</mat-icon>
-      Novo Workflow
+      {{'NEW_WORKFLOW' | translate}}
     </button>
   </header>
 
@@ -31,14 +31,14 @@
             <div class="meta-item">
               <mat-icon>event_available</mat-icon>
               <div>
-                <span class="meta-label">Criado</span>
+                <span class="meta-label">{{'CREATED' | translate}}</span>
                 <strong>{{ createdDate(workflow) | date:'dd/MM/yyyy' }}</strong>
               </div>
             </div>
             <div class="meta-item">
               <mat-icon>update</mat-icon>
               <div>
-                <span class="meta-label">Atualizado</span>
+                <span class="meta-label">{{'UPDATED' | translate}}</span>
                 <strong>{{ workflow.savedAt | date:'dd/MM/yyyy' }}</strong>
               </div>
             </div>
@@ -47,11 +47,11 @@
           <div class="actions">
             <button mat-stroked-button color="primary" (click)="openWorkflow(workflow)">
               <mat-icon>edit</mat-icon>
-              Editar
+              {{'EDIT' | translate}}
             </button>
             <button mat-flat-button color="primary" (click)="testWorkflow(workflow)">
               <mat-icon>play_arrow</mat-icon>
-              Testar
+              {{'TEST' | translate}}
             </button>
             <button
               mat-icon-button
@@ -70,10 +70,10 @@
   <ng-template #emptyState>
     <div class="empty">
       <fa-icon [icon]="faDiagramProject"></fa-icon>
-      <h2>Nenhum workflow salvo ainda</h2>
-      <p>Organize suas perguntas, condições e ações criando o primeiro fluxo.</p>
+      <h2>{{'NO_WORKFLOW_SAVED_YET' | translate}}</h2>
+      <p>{{'CREATING_THE_FIRST_FLOW' | translate}}</p>
       <button mat-raised-button color="primary" (click)="createWorkflow()">
-        Começar agora
+        {{'START_NOW' | translate}}
       </button>
     </div>
   </ng-template>

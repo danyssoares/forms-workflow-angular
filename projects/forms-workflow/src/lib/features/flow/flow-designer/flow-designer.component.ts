@@ -85,9 +85,9 @@ export class FlowDesignerComponent implements OnInit {
         this.state.setGraph(snapshot.graph);
         this.formNameControl.setValue(snapshot.formName ?? snapshot.name ?? '');
         this.currentWorkflowName = snapshot.name ?? workflowName;
-        this.snack.open('Workflow carregado com sucesso!', 'Fechar', { duration: 2000 });
+        this.snack.open(this.translation.instant('WORKFLOW_LOADED_OK'), 'Fechar', { duration: 2000 });
       } else {
-        this.snack.open('Workflow não encontrado.', 'Fechar', { duration: 3000 });
+        this.snack.open(this.translation.instant('WORKFLOW_NOT_FOUND'), 'Fechar', { duration: 3000 });
         this.state.setGraph({ nodes: [], edges: [] });
         this.formNameControl.setValue('');
         this.currentWorkflowName = null;
