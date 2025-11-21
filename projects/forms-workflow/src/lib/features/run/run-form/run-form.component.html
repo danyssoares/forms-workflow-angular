@@ -86,7 +86,7 @@
                 </ng-container>
 
                 <ng-container *ngSwitchCase="8">
-                  <lib-control-material-select [selectList]="question.options" label="{{'SELECT' | translate}}" style="width:100%">
+                  <lib-control-material-select [selectList]="question.options" bindLabel="label" [translate]="true" label="{{'SELECT' | translate}}" style="width:100%">
                     <input [formControlName]="question.questionId" />
                   </lib-control-material-select>
                 </ng-container>

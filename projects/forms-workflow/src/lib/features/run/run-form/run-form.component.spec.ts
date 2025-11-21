@@ -121,6 +121,44 @@ describe('RunFormComponent', () => {
 
       expect(answer).toBe('contrato.pdf');
     });
+
+    it('deve mostrar o label informado no objeto selecionado em listas de opções', () => {
+      component.answers.set({
+        categoria: { label: 'Prioridade Alta', value: 'HIGH' }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'categoria',
+        label: 'Categoria',
+        seq: 5,
+        typeId: 8,
+        options: [
+          { label: 'Prioridade Alta', value: 'HIGH' },
+          { label: 'Prioridade Baixa', value: 'LOW' }
+        ]
+      } as any);
+
+      expect(answer).toBe('Prioridade Alta');
+    });
+
+    it('deve resolver o label da opção selecionada quando apenas o valor é informado', () => {
+      component.answers.set({
+        status: { value: 'APPROVED' }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'status',
+        label: 'Status do pedido',
+        seq: 6,
+        typeId: 9,
+        options: [
+          { label: 'Aprovado', value: 'APPROVED' },
+          { label: 'Reprovado', value: 'DENIED' }
+        ]
+      } as any);
+
+      expect(answer).toBe('Aprovado');
+    });
   });
 
   describe('quando há condições de comparação no fluxo', () => {
