@@ -10,7 +10,7 @@ export class ScoreService {
     }
     return values.reduce((a,b)=>a+b,0);
   }
-  private scoreForQuestion(q: Question, value: any): number {
+  scoreForQuestion(q: Question, value: any): number {
     if (q.scoreMap) {
       if (Array.isArray(value)) return value.map(v => q.scoreMap![String(v)] ?? 0).reduce((a,b)=>a+b,0);
       return q.scoreMap[String(value)] ?? 0;

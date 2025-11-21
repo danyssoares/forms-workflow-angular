@@ -13,9 +13,10 @@ import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/c
 import { ControlMaterialTimeComponent, ControlMaterialComponent, ControlMaterialNumberComponent, ControlMaterialSelectComponent, ControlMaterialDateTimeComponent, ControlMaterialRadioComponent, ControlMaterialFileComponent } from '@angulartoolsdr/control-material';
 import { ActivatedRoute } from '@angular/router';
 import { WorkflowStorageService, WorkflowSnapshot } from '../../flow/workflow-storage.service';
-import { GraphNode, QuestionNodeData } from '../../flow/graph.types';
-import { Option } from '../../../shared/models/form-models';
+import { ConditionNodeData, GraphModel, GraphNode, QuestionNodeData, ComparisonCondition } from '../../flow/graph.types';
+import { Option, Question } from '../../../shared/models/form-models';
 import { TranslationPipe, TranslationService } from '@angulartoolsdr/translation';
+import { ScoreService } from '../../../shared/score.service';
 
 type RunnerQuestion = {
   nodeId: string;
@@ -67,6 +68,12 @@ export class RunFormComponent implements OnInit {
   private readonly storage = inject(WorkflowStorageService);
   private readonly route = inject(ActivatedRoute);
   private readonly translation = inject(TranslationService);
+  private readonly scoreService = inject(ScoreService);
+
+  private graph: GraphModel | null = null;
+  private nodeIndex = new Map<string, GraphNode>();
+  private questionDefinitions = new Map<string, Question>();
+  private conditionResults = new Map<string, boolean>();
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -121,6 +128,26 @@ export class RunFormComponent implements OnInit {
       control.markAsDirty();
       return;
     }
+
+    if (control) {
+      this.answers.set({ ...this.answers(), [question.questionId]: control.value });
+    }
+
+    const branchedNext = this.resolveNextQuestionId(question);
+    if (branchedNext) {
+      const targetIndex = this.questions().findIndex(q => q.questionId === branchedNext);
+      if (targetIndex >= 0) {
+        this.currentIndex.set(targetIndex);
+        return;
+      }
+    }
+
+    const hasGraphEdges = this.graph?.edges.some(e => e.from === question.nodeId) ?? false;
+    if (hasGraphEdges) {
+      this.completed.set(true);
+      return;
+    }
+
     const nextIndex = this.currentIndex() + 1;
     if (nextIndex >= this.questions().length) {
       this.finish();
@@ -168,6 +195,7 @@ export class RunFormComponent implements OnInit {
     this.currentIndex.set(0);
     this.completed.set(false);
     this.answers.set({});
+    this.conditionResults.clear();
   }
 
   trackOption(_: number, opt: Option): string | number | boolean {
@@ -267,6 +295,12 @@ export class RunFormComponent implements OnInit {
 
     this.workflowName.set(snapshot.formName || snapshot.name || 'Simulação do Formulário');
 
+    this.graph = snapshot.graph;
+    this.nodeIndex = new Map(snapshot.graph.nodes.map(n => [n.id, n]));
+    this.questionDefinitions.clear();
+    this.conditionResults.clear();
+    this.answers.set({});
+
     const questionNodes = snapshot.graph.nodes
       .filter(n => n.kind === 'question') as GraphNode<QuestionNodeData>[];
 
@@ -277,7 +311,11 @@ export class RunFormComponent implements OnInit {
     }
 
     const steps = questionNodes
-      .map(node => this.toRunnerQuestion(node))
+      .map(node => {
+        const runner = this.toRunnerQuestion(node);
+        this.questionDefinitions.set(runner.questionId, this.toQuestionDefinition(node));
+        return runner;
+      })
       .sort((a, b) => a.seq - b.seq);
 
     steps.forEach(step => {
@@ -555,5 +593,164 @@ export class RunFormComponent implements OnInit {
 
   private isBrowserFile(entry: any): entry is File {
     return typeof File !== 'undefined' && entry instanceof File;
+  }
+
+  private resolveNextQuestionId(question: RunnerQuestion): string | null {
+    if (!this.graph) return null;
+    const visitedConditions = new Set<string>();
+    return this.followFromNode(question.nodeId, visitedConditions);
+  }
+
+  private followFromNode(nodeId: string, visitedConditions: Set<string>): string | null {
+    const graph = this.graph;
+    if (!graph) return null;
+    const outgoing = graph.edges.filter(e => e.from === nodeId);
+    for (const edge of outgoing) {
+      const target = this.nodeIndex.get(edge.to);
+      if (!target) continue;
+      if (target.kind === 'question') return (target.data as any)?.id ?? target.id;
+      if (target.kind === 'condition') {
+        const resolved = this.evaluateConditionNode(target as GraphNode<ConditionNodeData>, visitedConditions);
+        if (resolved) return resolved;
+      }
+    }
+    return null;
+  }
+
+  private evaluateConditionNode(node: GraphNode<ConditionNodeData>, visitedConditions: Set<string>): string | null {
+    if (visitedConditions.has(node.id)) return null;
+    visitedConditions.add(node.id);
+
+    if (node.data.conditionType !== 'comparison') return null;
+
+    for (const rawCondition of node.data.conditions || []) {
+      const comparison = rawCondition as ComparisonCondition;
+      if (comparison.type !== 'comparison') continue;
+
+      const result = this.isComparisonTrue(comparison);
+      this.conditionResults.set(comparison.id, result);
+
+      if (result) {
+        const targetEdge = (this.graph?.edges || []).find(e => e.from === node.id && e.conditionId === comparison.id);
+        if (targetEdge) {
+          const target = this.nodeIndex.get(targetEdge.to);
+          if (target?.kind === 'question') return (target.data as any)?.id ?? target.id;
+          if (target?.kind === 'condition') return this.evaluateConditionNode(target as GraphNode<ConditionNodeData>, visitedConditions);
+        }
+      }
+    }
+
+    const fallbackEdge = (this.graph?.edges || []).find(e => e.from === node.id && !e.conditionId);
+    if (fallbackEdge) {
+      const target = this.nodeIndex.get(fallbackEdge.to);
+      if (target?.kind === 'question') return (target.data as any)?.id ?? target.id;
+      if (target?.kind === 'condition') return this.evaluateConditionNode(target as GraphNode<ConditionNodeData>, visitedConditions);
+    }
+
+    return null;
+  }
+
+  private isComparisonTrue(condition: ComparisonCondition): boolean {
+    const operator = condition.operator || '==';
+    const left = this.resolveComparisonTerm(condition, 'left');
+    const right = this.resolveComparisonTerm(condition, 'right');
+
+    switch (operator) {
+      case '==':
+        return left == right;
+      case '!=':
+        return left != right;
+      case '>':
+        return this.toNumber(left) > this.toNumber(right);
+      case '>=':
+        return this.toNumber(left) >= this.toNumber(right);
+      case '<':
+        return this.toNumber(left) < this.toNumber(right);
+      case '<=':
+        return this.toNumber(left) <= this.toNumber(right);
+      case 'in':
+        return Array.isArray(right) && right.some(item => item == left);
+      case 'contains':
+        return Array.isArray(left) && left.some(item => item == right);
+      case '&&':
+        return Boolean(left) && Boolean(right);
+      case '||':
+        return Boolean(left) || Boolean(right);
+      default:
+        return false;
+    }
+  }
+
+  private resolveComparisonTerm(condition: ComparisonCondition, side: 'left' | 'right'): any {
+    const valueType = side === 'left' ? condition.valueType : condition.compareValueType;
+    if (valueType === 'fixed') {
+      return side === 'left' ? condition.value : condition.compareValue;
+    }
+
+    if (valueType === 'question') {
+      const id = side === 'left' ? condition.questionId : condition.compareQuestionId;
+      if (!id) return undefined;
+      const useScore = side === 'left'
+        ? condition.questionValueType === 'score'
+        : condition.compareQuestionValueType === 'score';
+
+      return this.resolveQuestionValue(id, useScore);
+    }
+
+    if (valueType === 'condition') {
+      const condId = side === 'left' ? condition.conditionId : condition.compareConditionId;
+      if (!condId) return undefined;
+      return this.conditionResults.get(condId);
+    }
+
+    return undefined;
+  }
+
+  private resolveQuestionValue(questionId: string, useScore: boolean): any {
+    const controlValue = this.form.get(questionId)?.value;
+    const storedAnswer = this.answers()[questionId];
+    const value = controlValue !== undefined ? controlValue : storedAnswer;
+
+    if (!useScore) {
+      return value;
+    }
+
+    const definition = this.questionDefinitions.get(questionId);
+    if (!definition) return undefined;
+    return this.scoreService.scoreForQuestion(definition, value);
+  }
+
+  private toNumber(value: any): number {
+    if (value === null || value === undefined || value === '') return NaN;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? NaN : parsed;
+  }
+
+  private toQuestionDefinition(node: GraphNode<QuestionNodeData>): Question {
+    const data = node.data as any;
+    const question: Question = {
+      id: data?.id ?? node.id,
+      label: data?.label ?? '',
+      type: data?.type as any,
+      options: data?.options,
+      trueLabel: data?.trueLabel,
+      falseLabel: data?.falseLabel,
+      weight: data?.score,
+    } as Question;
+
+    const typeId = Number(data?.type?.id ?? data?.typeId ?? 0);
+    if ([8, 9, 10].includes(typeId) && Array.isArray(data?.options)) {
+      const map: Record<string, number> = {};
+      (data.options || []).forEach((opt: any) => {
+        const key = String(opt?.value);
+        const score = Number(opt?.score);
+        if (!Number.isNaN(score)) map[key] = score;
+      });
+      if (Object.keys(map).length) question.scoreMap = map;
+    }
+
+    return question;
   }
 }
