@@ -142,6 +142,12 @@ export class RunFormComponent implements OnInit {
       }
     }
 
+    const hasGraphEdges = this.graph?.edges.some(e => e.from === question.nodeId) ?? false;
+    if (hasGraphEdges) {
+      this.completed.set(true);
+      return;
+    }
+
     const nextIndex = this.currentIndex() + 1;
     if (nextIndex >= this.questions().length) {
       this.finish();
@@ -706,17 +712,28 @@ export class RunFormComponent implements OnInit {
     const right = this.resolveComparisonTerm(condition, 'right');
 
     switch (operator) {
-      case '==': return left == right;
-      case '!=': return left != right;
-      case '>': return Number(left) > Number(right);
-      case '>=': return Number(left) >= Number(right);
-      case '<': return Number(left) < Number(right);
-      case '<=': return Number(left) <= Number(right);
-      case 'in': return Array.isArray(right) && right.includes(left);
-      case 'contains': return Array.isArray(left) && left.includes(right);
-      case '&&': return Boolean(left) && Boolean(right);
-      case '||': return Boolean(left) || Boolean(right);
-      default: return false;
+      case '==':
+        return left == right;
+      case '!=':
+        return left != right;
+      case '>':
+        return this.toNumber(left) > this.toNumber(right);
+      case '>=':
+        return this.toNumber(left) >= this.toNumber(right);
+      case '<':
+        return this.toNumber(left) < this.toNumber(right);
+      case '<=':
+        return this.toNumber(left) <= this.toNumber(right);
+      case 'in':
+        return Array.isArray(right) && right.some(item => item == left);
+      case 'contains':
+        return Array.isArray(left) && left.some(item => item == right);
+      case '&&':
+        return Boolean(left) && Boolean(right);
+      case '||':
+        return Boolean(left) || Boolean(right);
+      default:
+        return false;
     }
   }
 
@@ -732,13 +749,8 @@ export class RunFormComponent implements OnInit {
       const useScore = side === 'left'
         ? condition.questionValueType === 'score'
         : condition.compareQuestionValueType === 'score';
-      const answer = this.answers()[id];
-      if (useScore) {
-        const definition = this.questionDefinitions.get(id);
-        if (!definition) return undefined;
-        return this.scoreService.scoreForQuestion(definition, answer);
-      }
-      return answer;
+
+      return this.resolveQuestionValue(id, useScore);
     }
 
     if (valueType === 'condition') {
@@ -748,6 +760,28 @@ export class RunFormComponent implements OnInit {
     }
 
     return undefined;
+  }
+
+  private resolveQuestionValue(questionId: string, useScore: boolean): any {
+    const controlValue = this.form.get(questionId)?.value;
+    const storedAnswer = this.answers()[questionId];
+    const value = controlValue !== undefined ? controlValue : storedAnswer;
+
+    if (!useScore) {
+      return value;
+    }
+
+    const definition = this.questionDefinitions.get(questionId);
+    if (!definition) return undefined;
+    return this.scoreService.scoreForQuestion(definition, value);
+  }
+
+  private toNumber(value: any): number {
+    if (value === null || value === undefined || value === '') return NaN;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? NaN : parsed;
   }
 
   private toQuestionDefinition(node: GraphNode<QuestionNodeData>): Question {
