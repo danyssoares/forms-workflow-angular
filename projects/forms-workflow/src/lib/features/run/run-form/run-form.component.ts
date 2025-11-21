@@ -393,8 +393,64 @@ export class RunFormComponent implements OnInit {
     if (value === null || value === undefined || value === '') {
       return '—';
     }
-    const found = question.options?.find(opt => opt.value === value);
-    return found?.label ?? String(value);
+
+    const labelFromValue = this.extractOptionLabel(value);
+    if (labelFromValue) {
+      return labelFromValue;
+    }
+
+    const comparableValue = this.extractComparableOptionValue(value);
+    if (comparableValue !== undefined && comparableValue !== null && comparableValue !== '') {
+      const found = question.options?.find(opt => opt.value === comparableValue);
+      if (found?.label) {
+        return found.label;
+      }
+      if (typeof comparableValue === 'string' || typeof comparableValue === 'number' || typeof comparableValue === 'boolean') {
+        return String(comparableValue);
+      }
+    }
+
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
+    return '—';
+  }
+
+  private extractOptionLabel(value: any): string | null {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const candidateKeys = ['label', 'nome', 'text', 'description', 'title'];
+    for (const key of candidateKeys) {
+      const candidate = (value as Record<string, any>)[key];
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+
+    return null;
+  }
+
+  private extractComparableOptionValue(value: any): string | number | boolean | null | undefined {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    if (typeof value !== 'object') {
+      return value;
+    }
+
+    const candidateKeys = ['value', 'id', 'key'];
+    for (const key of candidateKeys) {
+      const candidate = (value as Record<string, any>)[key];
+      if (typeof candidate === 'string' || typeof candidate === 'number' || typeof candidate === 'boolean') {
+        return candidate;
+      }
+    }
+
+    return undefined;
   }
 
   private formatTemporalAnswer(value: any, typeId: number): string {

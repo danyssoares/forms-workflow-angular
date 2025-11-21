@@ -121,6 +121,154 @@ describe('RunFormComponent', () => {
 
       expect(answer).toBe('contrato.pdf');
     });
+
+    it('deve mostrar o label informado no objeto selecionado em listas de opções', () => {
+      component.answers.set({
+        categoria: { label: 'Prioridade Alta', value: 'HIGH' }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'categoria',
+        label: 'Categoria',
+        seq: 5,
+        typeId: 8,
+        options: [
+          { label: 'Prioridade Alta', value: 'HIGH' },
+          { label: 'Prioridade Baixa', value: 'LOW' }
+        ]
+      } as any);
+
+      expect(answer).toBe('Prioridade Alta');
+    });
+
+    it('deve resolver o label da opção selecionada quando apenas o valor é informado', () => {
+      component.answers.set({
+        status: { value: 'APPROVED' }
+      });
+
+      const answer = component.displayAnswer({
+        questionId: 'status',
+        label: 'Status do pedido',
+        seq: 6,
+        typeId: 9,
+        options: [
+          { label: 'Aprovado', value: 'APPROVED' },
+          { label: 'Reprovado', value: 'DENIED' }
+        ]
+      } as any);
+
+      expect(answer).toBe('Aprovado');
+    });
+  });
+
+  describe('quando há condições de comparação no fluxo', () => {
+    let component: RunFormComponent;
+    let fixture: ComponentFixture<RunFormComponent>;
+
+    const conditionalGraph: GraphModel = {
+      nodes: [
+        {
+          id: 'node-1',
+          kind: 'question',
+          data: {
+            id: 'q1',
+            label: 'Escolha uma opção',
+            type: { id: 9, label: 'Seleção Única' },
+            options: [
+              { value: 'sim', label: 'Sim', score: 0 },
+              { value: 'b', label: 'Opção B', score: 10 }
+            ],
+            seq: 1
+          } as any,
+          position: { x: 0, y: 0 }
+        },
+        {
+          id: 'cond-1',
+          kind: 'condition',
+          data: {
+            conditionType: 'comparison',
+            conditions: [
+              {
+                id: 'cond-yes',
+                type: 'comparison',
+                name: 'Valor igual a sim',
+                valueType: 'question',
+                questionId: 'q1',
+                questionValueType: 'value',
+                operator: '==',
+                compareValueType: 'fixed',
+                compareValue: 'sim'
+              },
+              {
+                id: 'cond-score',
+                type: 'comparison',
+                name: 'Pontuação alta',
+                valueType: 'question',
+                questionId: 'q1',
+                questionValueType: 'score',
+                operator: '>=',
+                compareValueType: 'fixed',
+                compareValue: 5
+              }
+            ]
+          } as any,
+          position: { x: 80, y: 0 }
+        },
+        {
+          id: 'node-2',
+          kind: 'question',
+          data: { id: 'q2', label: 'Caminho SIM', type: { id: 0, label: 'Texto' }, seq: 2 } as any,
+          position: { x: 160, y: -40 }
+        },
+        {
+          id: 'node-3',
+          kind: 'question',
+          data: { id: 'q3', label: 'Caminho Score', type: { id: 0, label: 'Texto' }, seq: 3 } as any,
+          position: { x: 160, y: 40 }
+        }
+      ],
+      edges: [
+        { id: 'edge-1', from: 'node-1', to: 'cond-1' },
+        { id: 'edge-2', from: 'cond-1', to: 'node-2', conditionId: 'cond-yes' },
+        { id: 'edge-3', from: 'cond-1', to: 'node-3', conditionId: 'cond-score' }
+      ]
+    };
+
+    beforeEach(async () => {
+      storage.loadLastWorkflow.and.returnValue({
+        name: 'Fluxo Condicional',
+        savedAt: new Date().toISOString(),
+        graph: conditionalGraph
+      } as WorkflowSnapshot);
+
+      await TestBed.configureTestingModule({
+        imports: [RunFormComponent, NoopAnimationsModule],
+        providers: [
+          { provide: WorkflowStorageService, useValue: storage },
+          { provide: ActivatedRoute, useValue: routeStub }
+        ]
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(RunFormComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+    });
+
+    it('deve seguir o caminho configurado quando o valor atende à condição', () => {
+      component.form.get('q1')?.setValue('sim');
+
+      component.goNext();
+
+      expect(component.currentQuestion()?.questionId).toBe('q2');
+    });
+
+    it('deve usar o score da pergunta para avaliar a condição', () => {
+      component.form.get('q1')?.setValue('b');
+
+      component.goNext();
+
+      expect(component.currentQuestion()?.questionId).toBe('q3');
+    });
   });
 
   describe('quando há condições de comparação no fluxo', () => {
