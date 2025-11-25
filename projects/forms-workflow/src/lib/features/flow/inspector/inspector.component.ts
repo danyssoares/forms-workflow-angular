@@ -41,7 +41,7 @@ export class InspectorComponent {
   availableQuestions = computed(() => {
     const g = this.graph();
     let questions = g.nodes
-      .filter(n => n.kind === 'question' && n.data.type !== 6) as GraphNode<QuestionNodeData>[];
+      .filter(n => n.kind === 'question' && this.isConditionSelectableQuestion(n as GraphNode<QuestionNodeData>)) as GraphNode<QuestionNodeData>[];
 
     const selectedNode = g.nodes.find(n => n.id === this.selectedId());
     if (selectedNode && selectedNode.kind === 'condition') {
@@ -95,6 +95,16 @@ export class InspectorComponent {
     });
     return conditions;
   });
+
+  private isConditionSelectableQuestion(question: GraphNode<QuestionNodeData>): boolean {
+    const type = question.data.type as any;
+    const typeId = typeof type === 'object' && type !== null ? type.id : type;
+
+    if (typeId === 6 || typeId === 7) return false;
+
+    const typeKey = typeof type === 'string' ? type : undefined;
+    return typeKey !== 'image' && typeKey !== 'file';
+  }
 
   fgQ: FormGroup;
   fgA: FormGroup;
