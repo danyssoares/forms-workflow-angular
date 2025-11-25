@@ -104,6 +104,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     this.conditionForm.get('questionId')?.valueChanges.subscribe(() => {
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
+      this.syncBooleanFixedCompareValue();
     });
 
     this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() => {
@@ -126,8 +127,13 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
         }
       }
 
+      this.syncBooleanFixedCompareValue();
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
+    });
+
+    this.conditionForm.get('questionValueType')?.valueChanges.subscribe(() => {
+      this.syncBooleanFixedCompareValue();
     });
 
     this.conditionForm.get('valueType')?.valueChanges.subscribe(value => {
@@ -155,6 +161,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
         this.pendingQuestionId = null;
       }
 
+      this.syncBooleanFixedCompareValue();
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
     });
@@ -172,6 +179,8 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
         }
       });
     });
+
+    this.syncBooleanFixedCompareValue();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -188,6 +197,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     this.ensureDistinctQuestionSelections();
     this.updateQuestionOptions();
+    this.syncBooleanFixedCompareValue();
   }
 
   get availableQuestionsForComparison() {
@@ -200,16 +210,27 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
   get selectedQuestionType(): any | undefined {
     const valueType = this.conditionForm.get('valueType')?.value;
-    console.log('valueType', valueType);
     if (valueType !== 'question') return undefined;
 
     if (this.conditionForm.get('questionValueType')?.value === 'score') return 'score';
 
-    const selectedQuestionId = this.extractQuestionId(this.conditionForm.get('questionId')?.value);
-    if (!selectedQuestionId) return undefined;
-
-    const question = this.availableQuestions.find(q => q.data.id === selectedQuestionId || q.id === selectedQuestionId);
+    const question = this.getSelectedQuestionNode();
     return question ? question.data.type : undefined;
+  }
+
+  get shouldShowBooleanFixedSelector(): boolean {
+    if (this.conditionForm.get('valueType')?.value !== 'question') return false;
+    if (this.conditionForm.get('questionValueType')?.value !== 'value') return false;
+    if (this.conditionForm.get('compareValueType')?.value !== 'fixed') return false;
+    return this.isBooleanQuestionSelected();
+  }
+
+  get booleanFixedLabels(): { trueLabel: string; falseLabel: string } {
+    const question = this.getSelectedQuestionNode();
+    return {
+      trueLabel: question?.data?.trueLabel || 'Verdadeiro',
+      falseLabel: question?.data?.falseLabel || 'Falso'
+    };
   }
 
   get filteredOperators() {
@@ -221,11 +242,17 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     if (valueType === 'question') {
       const questionType = this.selectedQuestionType;
-      //console.log(questionType);
-      if (!questionType || !this.questionTypeOperators[questionType?.id]) {
+      if (!questionType) {
         return [];
       }
-      return this.operators.filter(op => this.questionTypeOperators[questionType?.id].includes(op.value));
+
+      const operatorKey = typeof questionType === 'string' ? questionType : String(questionType.id);
+      const allowedOperators = this.questionTypeOperators[operatorKey];
+      if (!allowedOperators) {
+        return [];
+      }
+
+      return this.operators.filter(op => allowedOperators.includes(op.value));
     }
 
     if (valueType === 'condition') {
@@ -233,6 +260,23 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     }
 
     return [];
+  }
+
+  private isBooleanQuestionSelected(): boolean {
+    const questionType = this.selectedQuestionType;
+    if (!questionType) return false;
+
+    if (typeof questionType === 'string') {
+      const normalized = questionType.toLowerCase();
+      return normalized === 'boolean' || normalized === '5';
+    }
+
+    const typeId = Number((questionType as any).id);
+    if (!Number.isNaN(typeId)) {
+      return typeId === 5;
+    }
+
+    return false;
   }
 
   private ensureDistinctQuestionSelections(): void {
@@ -278,6 +322,66 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     this.questionOptions = nextOptions;
     this.questionOptionMap = nextMap;
+  }
+
+  private syncBooleanFixedCompareValue(): void {
+    if (!this.shouldShowBooleanFixedSelector) return;
+    const control = this.conditionForm.get('compareValue');
+    if (!control) return;
+
+    const question = this.getSelectedQuestionNode();
+    const normalized = this.parseBooleanLiteral(control.value, question);
+    if (normalized === undefined) {
+      if (control.value !== null) {
+        control.setValue(null, { emitEvent: false });
+      }
+      return;
+    }
+
+    if (control.value !== normalized) {
+      control.setValue(normalized, { emitEvent: false });
+    }
+  }
+
+  private getSelectedQuestionNode(): GraphNode<QuestionNodeData> | undefined {
+    const selectedQuestionId = this.extractQuestionId(this.conditionForm.get('questionId')?.value);
+    if (!selectedQuestionId) return undefined;
+    return this.availableQuestions.find(q => q.data.id === selectedQuestionId || q.id === selectedQuestionId);
+  }
+
+  private parseBooleanLiteral(
+    value: any,
+    question?: GraphNode<QuestionNodeData>
+  ): boolean | null | undefined {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'boolean') return value;
+
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+      return undefined;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const normalized = trimmed.toLowerCase();
+      const trueMatches = ['true', '1', 'sim', 'verdadeiro'];
+      const falseMatches = ['false', '0', 'nao', 'não', 'falso'];
+
+      if (trueMatches.includes(normalized)) return true;
+      if (falseMatches.includes(normalized)) return false;
+
+      const trueLabel = question?.data?.trueLabel?.trim().toLowerCase();
+      const falseLabel = question?.data?.falseLabel?.trim().toLowerCase();
+
+      if (trueLabel && normalized === trueLabel) return true;
+      if (falseLabel && normalized === falseLabel) return false;
+
+      return undefined;
+    }
+
+    return undefined;
   }
 
   private extractQuestionId(value: any): string | null {
@@ -338,6 +442,3 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     control.setValue(option, { emitEvent: false });
   }
 }
-
-
-

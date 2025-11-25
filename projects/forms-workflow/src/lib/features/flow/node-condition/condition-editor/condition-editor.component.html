@@ -95,9 +95,21 @@
         </ng-container>
       </div>
 
-      <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
-        <input formControlName="compareValue" />
-      </lib-control-material>
+      <ng-container *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
+        <ng-container *ngIf="shouldShowBooleanFixedSelector; else compareFixedTextField">
+          <div class="value-toggle">
+            <mat-button-toggle-group formControlName="compareValue" aria-label="Valor booleano">
+              <mat-button-toggle [value]="true">{{ booleanFixedLabels.trueLabel }}</mat-button-toggle>
+              <mat-button-toggle [value]="false">{{ booleanFixedLabels.falseLabel }}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        </ng-container>
+        <ng-template #compareFixedTextField>
+          <lib-control-material label="Valor" [smaller]="true" style="width:100%; display: grid;">
+            <input formControlName="compareValue" />
+          </lib-control-material>
+        </ng-template>
+      </ng-container>
       <!--<mat-form-field appearance="outline" style="width:100%" *ngIf="conditionForm.get('compareValueType')?.value === 'fixed'">
         <mat-label>Valor</mat-label>
         <input matInput formControlName="compareValue">

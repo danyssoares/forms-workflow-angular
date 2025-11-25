@@ -73,6 +73,7 @@ export class RunFormComponent implements OnInit {
   private graph: GraphModel | null = null;
   private nodeIndex = new Map<string, GraphNode>();
   private questionDefinitions = new Map<string, Question>();
+  private questionTypeIds = new Map<string, number>();
   private conditionResults = new Map<string, boolean>();
 
   readonly loading = signal(true);
@@ -246,8 +247,9 @@ export class RunFormComponent implements OnInit {
     }
 
     if (question.typeId === 5) {
-      if (value === true) return question.trueLabel || 'Sim';
-      if (value === false) return question.falseLabel || 'Não';
+      const normalized = this.normalizeBooleanAnswer(question.questionId, value);
+      if (normalized === true) return question.trueLabel || 'Sim';
+      if (normalized === false) return question.falseLabel || 'Não';
       return '—';
     }
 
@@ -298,6 +300,7 @@ export class RunFormComponent implements OnInit {
     this.graph = snapshot.graph;
     this.nodeIndex = new Map(snapshot.graph.nodes.map(n => [n.id, n]));
     this.questionDefinitions.clear();
+    this.questionTypeIds.clear();
     this.conditionResults.clear();
     this.answers.set({});
 
@@ -314,6 +317,7 @@ export class RunFormComponent implements OnInit {
       .map(node => {
         const runner = this.toRunnerQuestion(node);
         this.questionDefinitions.set(runner.questionId, this.toQuestionDefinition(node));
+        this.questionTypeIds.set(runner.questionId, runner.typeId);
         return runner;
       })
       .sort((a, b) => a.seq - b.seq);
@@ -768,12 +772,61 @@ export class RunFormComponent implements OnInit {
     const value = controlValue !== undefined ? controlValue : storedAnswer;
 
     if (!useScore) {
+      const typeId = this.questionTypeIds.get(questionId);
+      if (typeId === 5) {
+        return this.normalizeBooleanAnswer(questionId, value);
+      }
       return value;
     }
 
     const definition = this.questionDefinitions.get(questionId);
     if (!definition) return undefined;
     return this.scoreService.scoreForQuestion(definition, value);
+  }
+
+  private normalizeBooleanAnswer(questionId: string, value: any): boolean | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'boolean') return value;
+
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const normalized = trimmed.toLowerCase();
+      const truthyMatches = ['true', '1', 'sim', 'yes', 'verdadeiro'];
+      const falsyMatches = ['false', '0', 'nao', 'não', 'no', 'falso'];
+
+      if (truthyMatches.includes(normalized)) return true;
+      if (falsyMatches.includes(normalized)) return false;
+
+      const question = this.questionDefinitions.get(questionId);
+      const trueLabel = question?.trueLabel?.trim().toLowerCase();
+      const falseLabel = question?.falseLabel?.trim().toLowerCase();
+      if (trueLabel && normalized === trueLabel) return true;
+      if (falseLabel && normalized === falseLabel) return false;
+    }
+
+    if (typeof value === 'object') {
+      if (value && 'value' in value) {
+        return this.normalizeBooleanAnswer(questionId, (value as any).value);
+      }
+      if (value && 'label' in value) {
+        const normalized = String((value as any).label || '').trim().toLowerCase();
+        if (normalized) {
+          const question = this.questionDefinitions.get(questionId);
+          const trueLabel = question?.trueLabel?.trim().toLowerCase();
+          const falseLabel = question?.falseLabel?.trim().toLowerCase();
+          if (trueLabel && normalized === trueLabel) return true;
+          if (falseLabel && normalized === falseLabel) return false;
+        }
+      }
+    }
+
+    return Boolean(value);
   }
 
   private toNumber(value: any): number {
