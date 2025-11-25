@@ -20,7 +20,13 @@
       <fa-icon [icon]="faInfoCircle"></fa-icon>
     </span>
   </div>
-  <div class="sub">{{ node.data.type?.label | titlecase }}</div>
+  <div class="meta-row">
+    <div class="sub">{{ node.data.type?.label | titlecase }}</div>
+    <span class="required-pill" *ngIf="node.data.required">
+      <fa-icon [icon]="faAsterisk"></fa-icon>
+      Obrigatória
+    </span>
+  </div>
   <div class="score" *ngIf="(node.data.score || 0) > 0">
     <fa-icon [icon]="faStar"></fa-icon>
     {{ node.data.score }}

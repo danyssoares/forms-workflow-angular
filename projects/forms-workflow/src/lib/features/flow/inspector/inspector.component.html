@@ -15,7 +15,9 @@
           <lib-control-material-select bindId="id" bindLabel="label" [selectList]="questionTypes" label="Tipo de Resposta" [smaller]="false" style="width:100%; display: grid;">
             <input formControlName="type" />
           </lib-control-material-select>
-          
+
+          <mat-checkbox color="primary" formControlName="required">Obrigatória</mat-checkbox>
+
           <lib-control-material-number label="Pontuação da Resposta" [smaller]="true" style="width:100%; display: grid;">
             <input formControlName="score" />
           </lib-control-material-number>

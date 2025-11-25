@@ -28,6 +28,7 @@
             <div class="question-header">
               <span class="question-pill">{{'STEP' | translate}} {{ currentIndex() + 1 }}</span>
               <h2>{{ question.label }}</h2>
+              <span class="required-chip" *ngIf="question.required">Obrigatória</span>
               <p class="help-text" *ngIf="question.helpText">{{ question.helpText }}</p>
             </div>
 

@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NgIf, TitleCasePipe } from '@angular/common';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faComment, faStar, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faStar, faInfoCircle, faAsterisk } from '@fortawesome/free-solid-svg-icons';
 import { GraphNode } from '../graph.types';
 import { TranslationPipe } from '@angulartoolsdr/translation';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
@@ -23,10 +23,11 @@ export class NodeQuestionComponent implements AfterViewInit, OnChanges {
   faComment = faComment;
   faStar = faStar;
   faInfoCircle = faInfoCircle;
+  faAsterisk = faAsterisk;
   showOverflowIndicator = false;
 
   constructor() {
-    this.library.addIcons(faComment, faStar, faInfoCircle);
+    this.library.addIcons(faComment, faStar, faInfoCircle, faAsterisk);
   }
 
   ngAfterViewInit(): void {

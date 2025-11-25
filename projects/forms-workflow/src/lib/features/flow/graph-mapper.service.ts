@@ -13,6 +13,7 @@ export class GraphMapperService {
           type: n.data.type,
           label: n.data.label,
           helpText: n.data.helpText,
+          required: !!n.data.required,
           weight: n.data.score,
           trueLabel: n.data.trueLabel,
           falseLabel: n.data.falseLabel,
