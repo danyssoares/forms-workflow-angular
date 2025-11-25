@@ -472,6 +472,23 @@ export class RunFormComponent implements OnInit {
     return undefined;
   }
 
+  private normalizeOptionAnswer(value: any): string | string[] | null {
+    if (Array.isArray(value)) {
+      const mapped = value
+        .map(item => this.extractComparableOptionValue(item))
+        .filter((item): item is string | number | boolean => item !== undefined && item !== null)
+        .map(item => String(item));
+      return mapped;
+    }
+
+    const comparable = this.extractComparableOptionValue(value);
+    if (comparable === undefined || comparable === null) {
+      return null;
+    }
+
+    return String(comparable);
+  }
+
   private formatTemporalAnswer(value: any, typeId: number): string {
     if (value === null || value === undefined || value === '') {
       return '—';
@@ -790,6 +807,10 @@ export class RunFormComponent implements OnInit {
       const typeId = this.questionTypeIds.get(questionId);
       if (typeId === 5) {
         return this.normalizeBooleanAnswer(questionId, value);
+      }
+      if (typeId !== undefined && [8, 9, 10].includes(typeId)) {
+        const normalized = this.normalizeOptionAnswer(value);
+        return normalized ?? value;
       }
       return value;
     }

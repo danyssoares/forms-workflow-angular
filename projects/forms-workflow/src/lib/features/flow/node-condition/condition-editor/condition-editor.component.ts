@@ -105,6 +105,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
       this.syncBooleanFixedCompareValue();
+      this.syncOptionFixedCompareValue();
     });
 
     this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() => {
@@ -164,6 +165,11 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
       this.syncBooleanFixedCompareValue();
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
+      this.syncOptionFixedCompareValue();
+    });
+
+    this.conditionForm.get('compareValueType')?.valueChanges.subscribe(() => {
+      this.syncOptionFixedCompareValue();
     });
 
     this.conditionForm.valueChanges.subscribe(value => {
@@ -181,6 +187,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     });
 
     this.syncBooleanFixedCompareValue();
+    this.syncOptionFixedCompareValue();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -198,6 +205,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     this.ensureDistinctQuestionSelections();
     this.updateQuestionOptions();
     this.syncBooleanFixedCompareValue();
+    this.syncOptionFixedCompareValue();
   }
 
   get availableQuestionsForComparison() {
@@ -223,6 +231,27 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (this.conditionForm.get('questionValueType')?.value !== 'value') return false;
     if (this.conditionForm.get('compareValueType')?.value !== 'fixed') return false;
     return this.isBooleanQuestionSelected();
+  }
+
+  get shouldUseOptionFixedSelector(): boolean {
+    if (this.conditionForm.get('valueType')?.value !== 'question') return false;
+    if (this.conditionForm.get('compareValueType')?.value !== 'fixed') return false;
+    const question = this.getSelectedQuestionNode();
+    if (!question) return false;
+    const typeId = this.extractQuestionTypeId(question?.data?.type);
+    return [8, 9, 10].includes(typeId) && Array.isArray((question.data as any)?.options) && (question.data as any).options.length > 0;
+  }
+
+  get optionFixedChoices(): { id: string; label: string }[] {
+    const question = this.getSelectedQuestionNode();
+    if (!question || !Array.isArray((question.data as any)?.options)) {
+      return [];
+    }
+
+    return ((question.data as any).options as any[]).map((opt, index) => ({
+      id: this.normalizeOptionId(opt, index),
+      label: typeof opt?.label === 'string' && opt.label.trim() ? opt.label : `Opção ${index + 1}`
+    })).filter(choice => !!choice.id);
   }
 
   get booleanFixedLabels(): { trueLabel: string; falseLabel: string } {
@@ -277,6 +306,24 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     }
 
     return false;
+  }
+
+  private extractQuestionTypeId(type: any): number {
+    if (typeof type === 'number') return type;
+    if (typeof type === 'string') {
+      const parsed = Number(type);
+      return Number.isNaN(parsed) ? -1 : parsed;
+    }
+    if (type && typeof type === 'object' && 'id' in type) {
+      const parsed = Number((type as any).id);
+      return Number.isNaN(parsed) ? -1 : parsed;
+    }
+    return -1;
+  }
+
+  private normalizeOptionId(option: any, index: number): string {
+    const candidate = option?.id ?? option?.value ?? index;
+    return String(candidate);
   }
 
   private ensureDistinctQuestionSelections(): void {
@@ -341,6 +388,29 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (control.value !== normalized) {
       control.setValue(normalized, { emitEvent: false });
     }
+  }
+
+  private syncOptionFixedCompareValue(): void {
+    const compareControl = this.conditionForm.get('compareValue');
+    if (!compareControl) return;
+
+    if (!this.shouldUseOptionFixedSelector) {
+      if (typeof compareControl.value === 'object' && compareControl.value !== null) {
+        compareControl.setValue(null, { emitEvent: false });
+      }
+      return;
+    }
+
+    const options = this.optionFixedChoices;
+    const selectedId = this.extractQuestionId(compareControl.value) ?? undefined;
+    if (selectedId && options.some(opt => opt.id === selectedId)) {
+      if (compareControl.value !== selectedId) {
+        compareControl.setValue(selectedId, { emitEvent: false });
+      }
+      return;
+    }
+
+    compareControl.setValue(null, { emitEvent: false });
   }
 
   private getSelectedQuestionNode(): GraphNode<QuestionNodeData> | undefined {
