@@ -167,7 +167,7 @@
       <mat-divider></mat-divider>
 
       <div class="summary-list">
-        <div class="summary-item" *ngFor="let question of questions(); trackBy: trackQuestion">
+        <div class="summary-item" *ngFor="let question of summaryQuestions(); trackBy: trackQuestion">
           <span class="summary-label">{{ question.label }}</span>
           <ng-container *ngIf="displayAnswer(question) as answer">
             <span class="summary-answer" *ngIf="!isArrayAnswer(answer)">{{ answer }}</span>
