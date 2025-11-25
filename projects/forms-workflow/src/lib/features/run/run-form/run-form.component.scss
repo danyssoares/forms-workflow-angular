@@ -59,10 +59,29 @@
   gap: 24px;
 }
 
+.question-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .question-header h2 {
   margin: 12px 0 8px;
   font-size: 1.4rem;
   color: #111827;
+}
+
+.required-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-weight: 700;
+  font-size: 0.85rem;
+  align-self: flex-start;
 }
 
 .question-pill {

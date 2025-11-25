@@ -4,7 +4,7 @@ export interface GraphNode<T=any> { id:string; kind:NodeKind; data:T; position:P
 export interface GraphEdge { id:string; from:string; to:string; label?:string; conditionId?:string; }
 export interface GraphModel { nodes:GraphNode[]; edges:GraphEdge[]; }
 
-export interface QuestionNodeData { id:string; label:string; type:'text'|'integer'|'double'|'boolean'|'select'|'radio'|'checkbox'|'date'|'datetime'|'image'; score?:number; trueLabel?:string; falseLabel?:string; options?:any[]; helpText?:string; seq?:number; }
+export interface QuestionNodeData { id:string; label:string; type:'text'|'integer'|'double'|'boolean'|'select'|'radio'|'checkbox'|'date'|'datetime'|'image'; score?:number; trueLabel?:string; falseLabel?:string; options?:any[]; helpText?:string; seq?:number; required?: boolean; }
 
 export interface ComparisonCondition {
   type: 'comparison';

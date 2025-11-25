@@ -20,6 +20,29 @@
   color: #6b7280;
 }
 
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.required-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.required-pill fa-icon {
+  font-size: 10px;
+}
+
 .label-row {
   display: flex;
   align-items: flex-start;

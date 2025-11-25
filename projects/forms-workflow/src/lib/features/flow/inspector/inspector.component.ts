@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck, faTimes, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { GraphStateService } from '../graph-state.service';
@@ -23,6 +24,7 @@ import { TranslationService } from '@angulartoolsdr/translation';
   imports: [ControlMaterialNumberComponent, ControlMaterialComponent, ControlMaterialSelectComponent,
     NgIf, NgSwitch, NgSwitchCase, NgFor, ReactiveFormsModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
+    MatCheckboxModule,
     FontAwesomeModule, ConditionEditorComponent, ExpressionConditionEditorComponent,
     FormsModule,
     
@@ -117,7 +119,8 @@ export class InspectorComponent {
       trueLabel: ['Verdadeiro'],
       falseLabel: ['Falso'],
       options: this.fb.array([]),
-      seq: [1]
+      seq: [1],
+      required: [false]
     });
     this.fgA = this.fb.group({ type: ['sendNotification'] });
     this.fgEnd = this.fb.group({ conditions: this.fb.array([]) });
@@ -154,10 +157,11 @@ export class InspectorComponent {
         this.fgQ.patchValue({ 
           label: n.data.label, 
           type: this.questionTypes.find(q => q.id === n.data.type?.id), 
-          score: n.data.score || 0, 
-          trueLabel: n.data.trueLabel || 'Verdadeiro', 
+          score: n.data.score || 0,
+          trueLabel: n.data.trueLabel || 'Verdadeiro',
           falseLabel: n.data.falseLabel || 'Falso',
-          seq: n.data.seq || 1
+          seq: n.data.seq || 1,
+          required: !!n.data.required
         });
       }
       if (n.kind === 'condition') {
@@ -292,7 +296,8 @@ export class InspectorComponent {
         label: formValue.label, 
         type: formValue.type, 
         score: formValue.score,
-        seq: formValue.seq
+        seq: formValue.seq,
+        required: !!formValue.required
       };
       
       data.id = n.data.id || `q_${n.id.slice(0,4)}`;

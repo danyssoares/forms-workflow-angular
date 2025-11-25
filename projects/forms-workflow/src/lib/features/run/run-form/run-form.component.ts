@@ -843,6 +843,7 @@ export class RunFormComponent implements OnInit {
       id: data?.id ?? node.id,
       label: data?.label ?? '',
       type: data?.type as any,
+      required: !!data?.required,
       options: data?.options,
       trueLabel: data?.trueLabel,
       falseLabel: data?.falseLabel,

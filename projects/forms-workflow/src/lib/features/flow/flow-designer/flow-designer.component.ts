@@ -164,14 +164,15 @@ export class FlowDesignerComponent implements OnInit {
       );
       const labelKey = getQuestionTypePromptKey(typeOption?.id);
       const label = this.translation.instant(labelKey);
-      this.state.addNode('question', { 
-        id: 'q_' + crypto.randomUUID().slice(0,4), 
+      this.state.addNode('question', {
+        id: 'q_' + crypto.randomUUID().slice(0,4),
         label,
-        type: typeOption, 
-        score:0, 
-        trueLabel:'Verdadeiro', 
-        falseLabel:'Falso', 
-        options:[]
+        type: typeOption,
+        score:0,
+        trueLabel:'Verdadeiro',
+        falseLabel:'Falso',
+        options:[],
+        required:false
       }, pos);
     }
     if(e.kind==='condition') {
