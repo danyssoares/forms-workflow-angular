@@ -83,6 +83,12 @@ export class RunFormComponent implements OnInit {
   readonly questions = signal<RunnerQuestion[]>([]);
   readonly currentIndex = signal(0);
   readonly answers = signal<Record<string, any>>({});
+  readonly visitedQuestionIds = signal<Set<string>>(new Set());
+
+  readonly summaryQuestions = computed(() => {
+    const visited = this.visitedQuestionIds();
+    return this.questions().filter(question => visited.has(question.questionId));
+  });
 
   readonly currentQuestion = computed(() => {
     const all = this.questions();
@@ -139,6 +145,7 @@ export class RunFormComponent implements OnInit {
       const targetIndex = this.questions().findIndex(q => q.questionId === branchedNext);
       if (targetIndex >= 0) {
         this.currentIndex.set(targetIndex);
+        this.markQuestionVisited(branchedNext);
         return;
       }
     }
@@ -155,13 +162,15 @@ export class RunFormComponent implements OnInit {
       return;
     }
     this.currentIndex.set(nextIndex);
+    this.markQuestionVisited(this.questions()[nextIndex]?.questionId);
   }
 
   finish(): void {
-    const allQuestions = this.questions();
-    if (!allQuestions.length) return;
+    const visitedIds = this.visitedQuestionIds();
+    const visitedQuestions = this.questions().filter(question => visitedIds.has(question.questionId));
+    if (!visitedQuestions.length) return;
 
-    const invalidIndex = allQuestions.findIndex(q => {
+    const invalidIndex = visitedQuestions.findIndex(q => {
       const control = this.form.get(q.questionId);
       if (!control) return false;
       if (control.invalid) {
@@ -173,12 +182,14 @@ export class RunFormComponent implements OnInit {
     });
 
     if (invalidIndex >= 0) {
-      this.currentIndex.set(invalidIndex);
+      const invalidQuestion = visitedQuestions[invalidIndex];
+      const originalIndex = this.questions().findIndex(q => q.questionId === invalidQuestion.questionId);
+      this.currentIndex.set(originalIndex >= 0 ? originalIndex : invalidIndex);
       return;
     }
 
     const captured: Record<string, any> = {};
-    allQuestions.forEach(q => {
+    visitedQuestions.forEach(q => {
       captured[q.questionId] = this.form.get(q.questionId)?.value;
     });
     this.answers.set(captured);
@@ -197,6 +208,8 @@ export class RunFormComponent implements OnInit {
     this.completed.set(false);
     this.answers.set({});
     this.conditionResults.clear();
+    const firstQuestion = this.questions()[0];
+    this.visitedQuestionIds.set(firstQuestion ? new Set([firstQuestion.questionId]) : new Set());
   }
 
   trackOption(_: number, opt: Option): string | number | boolean {
@@ -330,6 +343,8 @@ export class RunFormComponent implements OnInit {
 
     this.questions.set(steps);
     this.loading.set(false);
+    const firstQuestion = steps[0];
+    this.markQuestionVisited(firstQuestion?.questionId);
   }
 
   private toRunnerQuestion(node: GraphNode<QuestionNodeData>): RunnerQuestion {
@@ -862,5 +877,13 @@ export class RunFormComponent implements OnInit {
     }
 
     return question;
+  }
+
+  private markQuestionVisited(questionId: string | null | undefined): void {
+    if (!questionId) return;
+    const current = new Set(this.visitedQuestionIds());
+    if (current.has(questionId)) return;
+    current.add(questionId);
+    this.visitedQuestionIds.set(current);
   }
 }

@@ -269,6 +269,15 @@ describe('RunFormComponent', () => {
 
       expect(component.currentQuestion()?.questionId).toBe('q3');
     });
+
+    it('não deve incluir no resumo perguntas ocultadas por condição', () => {
+      component.form.get('q1')?.setValue('c');
+
+      component.goNext();
+
+      expect(component.completed()).toBeTrue();
+      expect(component.summaryQuestions().map(question => question.questionId)).toEqual(['q1']);
+    });
   });
 
   describe('quando há condições de comparação no fluxo', () => {
