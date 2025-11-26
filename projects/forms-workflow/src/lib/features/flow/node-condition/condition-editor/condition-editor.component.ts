@@ -43,7 +43,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
   faTrash = faTrash;
 
   conditionForm: FormGroup;
-  private pendingQuestionId: string | null = null;
   private lastValueType: string | null = null;
   private lastCompareValueType: string | null = null;
 
@@ -92,7 +91,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.conditionForm.patchValue(this.condition);
 
-    this.pendingQuestionId = this.condition?.questionId ?? null;
     this.lastValueType = this.conditionForm.get('valueType')?.value ?? null;
     this.lastCompareValueType = this.conditionForm.get('compareValueType')?.value ?? null;
 
@@ -158,10 +156,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
         }
       }
 
-      if (value !== 'question') {
-        this.pendingQuestionId = null;
-      }
-
       this.syncBooleanFixedCompareValue();
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
@@ -193,7 +187,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['condition'] && !changes['condition'].firstChange) {
       this.conditionForm.patchValue(this.condition, { emitEvent: false });
-      this.pendingQuestionId = this.condition?.questionId ?? null;
     }
 
     if (changes['availableQuestions']) {
@@ -481,10 +474,9 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (!control) return;
 
     const currentId = this.extractQuestionId(control.value);
-    const desiredId = currentId ?? this.pendingQuestionId ?? this.condition?.questionId ?? null;
+    const desiredId = currentId ?? this.condition?.questionId ?? null;
 
     if (!desiredId) {
-      this.pendingQuestionId = null;
       if (control.value !== null) {
         control.setValue(null, { emitEvent: false });
       }
@@ -493,22 +485,11 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     const question = this.availableQuestions.find(q => q.data.id === desiredId || q.id === desiredId);
     if (!question) {
-      this.pendingQuestionId = desiredId;
       return;
     }
 
-    const option = this.questionOptions.find(opt => opt.id === question.data.id);
-    if (!option) {
-      this.pendingQuestionId = desiredId;
-      return;
+    if (control.value !== question.data.id) {
+      control.setValue(question.data.id, { emitEvent: false });
     }
-
-    this.pendingQuestionId = null;
-    const matchesCurrent = typeof control.value === 'object' && control.value !== null && this.extractQuestionId(control.value) === option.id;
-    if (matchesCurrent) {
-      return;
-    }
-
-    control.setValue(option, { emitEvent: false });
   }
 }
