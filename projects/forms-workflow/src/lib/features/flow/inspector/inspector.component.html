@@ -18,7 +18,11 @@
 
           <mat-checkbox color="primary" formControlName="required">Obrigatória</mat-checkbox>
 
-          <lib-control-material-number label="Pontuação da Resposta" [smaller]="true" style="width:100%; display: grid;">
+          <lib-control-material-number
+            *ngIf="![8,9,10].includes(fgQ.get('type')?.value?.id)"
+            label="Pontuação da Resposta"
+            [smaller]="true"
+            style="width:100%; display: grid;">
             <input formControlName="score" />
           </lib-control-material-number>
           

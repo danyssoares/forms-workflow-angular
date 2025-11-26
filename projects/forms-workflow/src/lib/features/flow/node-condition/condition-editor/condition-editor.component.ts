@@ -43,7 +43,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
   faTrash = faTrash;
 
   conditionForm: FormGroup;
-  private pendingQuestionId: string | null = null;
   private lastValueType: string | null = null;
   private lastCompareValueType: string | null = null;
 
@@ -92,7 +91,6 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.conditionForm.patchValue(this.condition);
 
-    this.pendingQuestionId = this.condition?.questionId ?? null;
     this.lastValueType = this.conditionForm.get('valueType')?.value ?? null;
     this.lastCompareValueType = this.conditionForm.get('compareValueType')?.value ?? null;
 
@@ -105,6 +103,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
       this.syncBooleanFixedCompareValue();
+      this.syncOptionFixedCompareValue();
     });
 
     this.conditionForm.get('compareQuestionId')?.valueChanges.subscribe(() => {
@@ -157,13 +156,14 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
         }
       }
 
-      if (value !== 'question') {
-        this.pendingQuestionId = null;
-      }
-
       this.syncBooleanFixedCompareValue();
       this.ensureDistinctQuestionSelections();
       this.updateQuestionOptions();
+      this.syncOptionFixedCompareValue();
+    });
+
+    this.conditionForm.get('compareValueType')?.valueChanges.subscribe(() => {
+      this.syncOptionFixedCompareValue();
     });
 
     this.conditionForm.valueChanges.subscribe(value => {
@@ -181,12 +181,12 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     });
 
     this.syncBooleanFixedCompareValue();
+    this.syncOptionFixedCompareValue();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['condition'] && !changes['condition'].firstChange) {
       this.conditionForm.patchValue(this.condition, { emitEvent: false });
-      this.pendingQuestionId = this.condition?.questionId ?? null;
     }
 
     if (changes['availableQuestions']) {
@@ -198,6 +198,7 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     this.ensureDistinctQuestionSelections();
     this.updateQuestionOptions();
     this.syncBooleanFixedCompareValue();
+    this.syncOptionFixedCompareValue();
   }
 
   get availableQuestionsForComparison() {
@@ -223,6 +224,27 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (this.conditionForm.get('questionValueType')?.value !== 'value') return false;
     if (this.conditionForm.get('compareValueType')?.value !== 'fixed') return false;
     return this.isBooleanQuestionSelected();
+  }
+
+  get shouldUseOptionFixedSelector(): boolean {
+    if (this.conditionForm.get('valueType')?.value !== 'question') return false;
+    if (this.conditionForm.get('compareValueType')?.value !== 'fixed') return false;
+    const question = this.getSelectedQuestionNode();
+    if (!question) return false;
+    const typeId = this.extractQuestionTypeId(question?.data?.type);
+    return [8, 9, 10].includes(typeId) && Array.isArray((question.data as any)?.options) && (question.data as any).options.length > 0;
+  }
+
+  get optionFixedChoices(): { id: string; label: string }[] {
+    const question = this.getSelectedQuestionNode();
+    if (!question || !Array.isArray((question.data as any)?.options)) {
+      return [];
+    }
+
+    return ((question.data as any).options as any[]).map((opt, index) => ({
+      id: this.normalizeOptionId(opt, index),
+      label: typeof opt?.label === 'string' && opt.label.trim() ? opt.label : `Opção ${index + 1}`
+    })).filter(choice => !!choice.id);
   }
 
   get booleanFixedLabels(): { trueLabel: string; falseLabel: string } {
@@ -277,6 +299,24 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     }
 
     return false;
+  }
+
+  private extractQuestionTypeId(type: any): number {
+    if (typeof type === 'number') return type;
+    if (typeof type === 'string') {
+      const parsed = Number(type);
+      return Number.isNaN(parsed) ? -1 : parsed;
+    }
+    if (type && typeof type === 'object' && 'id' in type) {
+      const parsed = Number((type as any).id);
+      return Number.isNaN(parsed) ? -1 : parsed;
+    }
+    return -1;
+  }
+
+  private normalizeOptionId(option: any, index: number): string {
+    const candidate = option?.id ?? option?.value ?? index;
+    return String(candidate);
   }
 
   private ensureDistinctQuestionSelections(): void {
@@ -341,6 +381,29 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (control.value !== normalized) {
       control.setValue(normalized, { emitEvent: false });
     }
+  }
+
+  private syncOptionFixedCompareValue(): void {
+    const compareControl = this.conditionForm.get('compareValue');
+    if (!compareControl) return;
+
+    if (!this.shouldUseOptionFixedSelector) {
+      if (typeof compareControl.value === 'object' && compareControl.value !== null) {
+        compareControl.setValue(null, { emitEvent: false });
+      }
+      return;
+    }
+
+    const options = this.optionFixedChoices;
+    const selectedId = this.extractQuestionId(compareControl.value) ?? undefined;
+    if (selectedId && options.some(opt => opt.id === selectedId)) {
+      if (compareControl.value !== selectedId) {
+        compareControl.setValue(selectedId, { emitEvent: false });
+      }
+      return;
+    }
+
+    compareControl.setValue(null, { emitEvent: false });
   }
 
   private getSelectedQuestionNode(): GraphNode<QuestionNodeData> | undefined {
@@ -411,10 +474,9 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
     if (!control) return;
 
     const currentId = this.extractQuestionId(control.value);
-    const desiredId = currentId ?? this.pendingQuestionId ?? this.condition?.questionId ?? null;
+    const desiredId = currentId ?? this.condition?.questionId ?? null;
 
     if (!desiredId) {
-      this.pendingQuestionId = null;
       if (control.value !== null) {
         control.setValue(null, { emitEvent: false });
       }
@@ -423,22 +485,11 @@ export class ConditionEditorComponent implements OnInit, OnChanges {
 
     const question = this.availableQuestions.find(q => q.data.id === desiredId || q.id === desiredId);
     if (!question) {
-      this.pendingQuestionId = desiredId;
       return;
     }
 
-    const option = this.questionOptions.find(opt => opt.id === question.data.id);
-    if (!option) {
-      this.pendingQuestionId = desiredId;
-      return;
+    if (control.value !== question.data.id) {
+      control.setValue(question.data.id, { emitEvent: false });
     }
-
-    this.pendingQuestionId = null;
-    const matchesCurrent = typeof control.value === 'object' && control.value !== null && this.extractQuestionId(control.value) === option.id;
-    if (matchesCurrent) {
-      return;
-    }
-
-    control.setValue(option, { emitEvent: false });
   }
 }
